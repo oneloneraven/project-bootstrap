@@ -116,8 +116,8 @@ Deliberately deleting the project's infrastructure:
 
 1. In a PR to `infra/`, set `cloudflare_zone_dnssec.app`'s `status` to
    `"disabled"` and let Infra apply it.
-2. Wait until the zone's DNSSEC status is `disabled`. The Registrar withdraws
-   the DS record once the zone's CDS records are zeroed; check with
+2. Wait until the zone's DNSSEC status is `disabled`. Cloudflare Registrar
+   withdraws the DS record once the zone's CDS records are zeroed; check with
    `dig +short DS {{zone_name}}` returning nothing.
 3. Wait at least 1.5 times the DS record's TTL before continuing.
 4. Remove `prevent_destroy` from every resource in a PR (the infra workflow
