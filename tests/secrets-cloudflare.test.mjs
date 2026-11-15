@@ -9,7 +9,7 @@ import { saveRun } from "../skills/bootstrap/scripts/state.mjs";
 import { pluginVersion } from "../skills/bootstrap/scripts/plugin-version.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import { createHash } from "node:crypto";
-import { buildPolicies, bucketResource, cfClient, resolvePermissions, s3Credentials, withBootstrapToken } from "../skills/bootstrap/scripts/secrets/cloudflare.mjs";
+import { buildPolicies, bucketResource, cfClient, policiesMatch, resolvePermissions, s3Credentials, scriptResource, withBootstrapToken } from "../skills/bootstrap/scripts/secrets/cloudflare.mjs";
 import cloudflareR2 from "../skills/bootstrap/scripts/secrets/steps/cloudflare-r2.mjs";
 import cloudflareTokens from "../skills/bootstrap/scripts/secrets/steps/cloudflare-tokens.mjs";
 import { renderReal } from "./helpers.mjs";
@@ -21,6 +21,10 @@ const BOOTSTRAP = "boot-secret-token";
 const ACCOUNT_SCOPE = "com.cloudflare.api.account";
 const ZONE_SCOPE = "com.cloudflare.api.account.zone";
 const R2_SCOPE = "com.cloudflare.edge.r2.bucket";
+const WORKER_SCOPE = "com.cloudflare.edge.worker.script";
+const EDITOR_ID = "7e79ec33834341f28dd431ab73884400";
+const ADMIN_ID = "98d78cd2433d4c3687191bc0244ef948";
+const tagOf = name => createHash("md5").update(name).digest("hex");
 
 const NAMES = {
   [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write", "Access: Organizations, Identity Providers, and Groups Read", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Read", "Access: Apps Write", "Access: Policies Read", "Access: Policies Write", "Turnstile Sites Read", "Turnstile Sites Write"],
@@ -31,6 +35,9 @@ const GROUPS = [
   { id: "pg-r2-write", name: "Workers R2 Storage Bucket Item Write", scopes: [R2_SCOPE] },
   { id: "pg-r2-read", name: "Workers R2 Storage Bucket Item Read", scopes: [R2_SCOPE] },
   { id: "decoy", name: "DNS Read", scopes: ["com.cloudflare.api.user"] },
+  { id: EDITOR_ID, name: "Individual Workers Editor", scopes: [WORKER_SCOPE] },
+  { id: "pg-individual-admin", name: "Individual Workers Admin", scopes: [WORKER_SCOPE] },
+  { id: ADMIN_ID, name: "Workers Admin", scopes: [ACCOUNT_SCOPE] },
 ];
 
 const ok = result => ({ ok: true, status: 200, json: async () => ({ success: true, errors: [], result }) });
@@ -42,25 +49,46 @@ function rendered(beta = false) {
   return dir;
 }
 
-function fakeCloudflare({ tamper, failCreateAt, groups = GROUPS } = {}) {
+function fakeCloudflare({ tamper, failCreateAt, groups = GROUPS, scripts: existing = [], failPutAt } = {}) {
   const log = [];
+  const helper = [];
   const stored = new Map();
+  const scripts = new Map(existing.map(name => [name, tagOf(name)]));
   let count = 0;
+  let puts = 0;
+  const describe = body => {
+    if (body === undefined) return undefined;
+    if (typeof body === "string") return JSON.parse(body);
+    return { metadata: JSON.parse(body.get("metadata")), parts: [...body.keys()], source: undefined };
+  };
   const fetch = async (url, init = {}) => {
     const method = init.method ?? "GET";
     const path = url.replace("https://api.cloudflare.com/client/v4", "");
-    log.push({ method, path, auth: init.headers?.Authorization, body: init.body && JSON.parse(init.body) });
+    const entry = { method, path, auth: init.headers?.Authorization, body: describe(init.body) };
+    const byHelper = entry.auth === "Bearer cfut_helper";
+    const aboutHelper = (method === "POST" && /Workers helper/.test(entry.body?.name ?? "")) || path.endsWith("/tokens/helper");
+    (byHelper || aboutHelper ? helper : log).push(entry);
     if (path === `/accounts/${ACCOUNT}/tokens/verify`) return ok({ id: "self", status: "active" });
     if (path === `/accounts/${ACCOUNT}/tokens/permission_groups`) return ok(groups);
+    if (path === `/accounts/${ACCOUNT}/workers/scripts` && method === "GET") return ok([...scripts].map(([id, tag]) => ({ id, tag })));
+    const script = path.match(new RegExp(`^/accounts/${ACCOUNT}/workers/scripts/([^/]+)$`));
+    if (script && method === "PUT") {
+      puts += 1;
+      if (puts === failPutAt) return failed(500, "upload refused");
+      entry.source = await init.body.get("worker.js").text();
+      scripts.set(script[1], tagOf(script[1]));
+      return ok({ id: script[1] });
+    }
     if (method === "POST" && path === `/accounts/${ACCOUNT}/tokens`) {
-      count += 1;
-      if (count === failCreateAt) return failed(400, "create refused");
       const body = JSON.parse(init.body);
-      const id = `tok${count}`;
+      const isHelper = /Workers helper/.test(body.name);
+      if (!isHelper) count += 1;
+      if (!isHelper && count === failCreateAt) return failed(400, "create refused");
+      const id = isHelper ? "helper" : `tok${count}`;
       const byId = Object.fromEntries(groups.map(g => [g.id, g]));
       const policies = body.policies.map(p => ({ ...p, permission_groups: p.permission_groups.map(g => ({ id: g.id, name: byId[g.id].name })) }));
       stored.set(id, { id, name: body.name, policies, expires_on: body.expires_on });
-      return ok({ id, value: `cfut_value${count}`, name: body.name, policies });
+      return ok({ id, value: isHelper ? "cfut_helper" : `cfut_value${count}`, name: body.name, policies });
     }
     const match = path.match(new RegExp(`^/accounts/${ACCOUNT}/tokens/([^/]+)$`));
     if (match && method === "GET") {
@@ -71,7 +99,7 @@ function fakeCloudflare({ tamper, failCreateAt, groups = GROUPS } = {}) {
     if (match && method === "DELETE") return ok({ id: match[1] });
     throw new Error(`unexpected ${method} ${path}`);
   };
-  return { fetch, log, stored };
+  return { fetch, log, helper, stored, scripts };
 }
 
 function harness({ beta = false, cf = fakeCloudflare(), items, skippedEnvs, passAnswers, fail, step = cloudflareTokens, dir: given } = {}) {
@@ -595,4 +623,170 @@ test("the stack's token definitions mark exactly the zone-scoped tokens", () => 
     const tokens = tokensIn(rendered(beta));
     assert.deepEqual(tokens.filter(entry => entry.zone).map(entry => entry.token), ["Deploy", "Infra plan", "Infra apply"]);
   }
+});
+
+const scriptsOf = dir => (dir ? ["preview", "production", "beta"] : []).map(env => `sample-project-${env}`);
+
+test("a per-Worker policy has the shape Cloudflare returns for a dashboard-made Editor token", () => {
+  const tag = tagOf("sample-project-preview");
+  const policies = buildPolicies([{ id: EDITOR_ID, scope: WORKER_SCOPE }], { accountId: ACCOUNT, scriptTags: [tag] });
+  assert.deepEqual(policies, [
+    {
+      effect: "allow",
+      permission_groups: [{ id: EDITOR_ID }],
+      resources: { [`com.cloudflare.api.account.${ACCOUNT}`]: { [`com.cloudflare.edge.worker.script.${tag}`]: "*" } },
+    },
+  ]);
+  assert.equal(scriptResource(tag), `com.cloudflare.edge.worker.script.${tag}`);
+});
+
+test("one policy lists every Worker's tag under the account key, beside the account and zone policies", () => {
+  const tags = ["t1", "t2"];
+  const policies = buildPolicies(
+    [{ id: EDITOR_ID, scope: WORKER_SCOPE }, { id: "s", scope: ACCOUNT_SCOPE }, { id: "r", scope: ZONE_SCOPE }],
+    { accountId: ACCOUNT, zoneId: ZONE, scriptTags: tags },
+  );
+  assert.equal(policies.length, 3);
+  const worker = policies.find(policy => policy.permission_groups[0].id === EDITOR_ID);
+  assert.deepEqual(worker.resources, { [`${ACCOUNT_SCOPE}.${ACCOUNT}`]: { [`${WORKER_SCOPE}.t1`]: "*", [`${WORKER_SCOPE}.t2`]: "*" } });
+  assert.throws(() => buildPolicies([{ id: EDITOR_ID, scope: WORKER_SCOPE }], { accountId: ACCOUNT }), /Worker/);
+});
+
+test("policiesMatch round-trips the nested form whatever order Cloudflare returns it in", () => {
+  const requested = buildPolicies([{ id: EDITOR_ID, scope: WORKER_SCOPE }, { id: "s", scope: ACCOUNT_SCOPE }], { accountId: ACCOUNT, scriptTags: ["t1", "t2"] });
+  const returned = [
+    { effect: "allow", permission_groups: [{ id: "s", name: "Account Settings Read" }], resources: { [`${ACCOUNT_SCOPE}.${ACCOUNT}`]: "*" } },
+    { effect: "allow", permission_groups: [{ id: EDITOR_ID, name: "Individual Workers Editor" }], resources: { [`${ACCOUNT_SCOPE}.${ACCOUNT}`]: { [`${WORKER_SCOPE}.t2`]: "*", [`${WORKER_SCOPE}.t1`]: "*" } } },
+  ];
+  assert.equal(policiesMatch(requested, returned), true);
+  const wrongTag = structuredClone(returned);
+  wrongTag[1].resources[`${ACCOUNT_SCOPE}.${ACCOUNT}`][`${WORKER_SCOPE}.t3`] = "*";
+  assert.equal(policiesMatch(requested, wrongTag), false);
+});
+
+test("per-Worker scope resolves for the Editor group and the Worker scope", async () => {
+  const resolved = await resolvePermissions({ get: async () => GROUPS }, ACCOUNT, ["Individual Workers Editor", "Workers Admin"]);
+  assert.deepEqual(resolved, [{ id: EDITOR_ID, scope: WORKER_SCOPE }, { id: ADMIN_ID, scope: ACCOUNT_SCOPE }]);
+});
+
+function workerRun(options = {}) {
+  const dir = options.dir ?? rendered(options.beta ?? false);
+  const cf = fakeCloudflare(options);
+  const made = harness({ ...options, dir, cf });
+  return { ...made, cf, dir };
+}
+
+test("the Workers a project needs are created as 404 stubs before the scoped tokens, and the helper token is deleted", async () => {
+  const { cf, deps, run } = workerRun({ beta: true });
+  await run();
+  const helperCreate = cf.helper.find(entry => entry.method === "POST");
+  assert.equal(helperCreate.body.policies[0].permission_groups[0].id, ADMIN_ID);
+  assert.deepEqual(Object.keys(helperCreate.body.policies[0].resources), [`${ACCOUNT_SCOPE}.${ACCOUNT}`]);
+  assert.match(helperCreate.body.expires_on, /^2026-11-08T13:00:00Z$/);
+  const puts = cf.helper.filter(entry => entry.method === "PUT");
+  assert.deepEqual(puts.map(entry => entry.path.split("/").at(-1)).sort(), ["sample-project-beta", "sample-project-preview", "sample-project-production"]);
+  for (const put of puts) {
+    assert.equal(put.auth, "Bearer cfut_helper");
+    assert.equal(put.body.metadata.main_module, "worker.js");
+    assert.match(put.body.metadata.compatibility_date, /^\d{4}-\d{2}-\d{2}$/);
+    assert.deepEqual(Object.keys(put.body.metadata).sort(), ["compatibility_date", "main_module"]);
+    assert.match(put.source, /status: 404/);
+  }
+  const deleted = cf.helper.filter(entry => entry.method === "DELETE").map(entry => entry.path.split("/").at(-1));
+  assert.deepEqual(deleted, ["helper"]);
+  const firstScoped = cf.log.findIndex(entry => entry.method === "POST");
+  assert.ok(firstScoped >= 0);
+  assert.match(deps.logs.join("\n"), /Created the stub Worker sample-project-preview/);
+  assert.doesNotMatch(deps.logs.join("\n"), /cfut_/);
+});
+
+test("a Worker that already exists is left alone and only its tag is read", async () => {
+  const { cf, deps, run } = workerRun({ scripts: ["sample-project-production"] });
+  await run();
+  const puts = cf.helper.filter(entry => entry.method === "PUT").map(entry => entry.path.split("/").at(-1));
+  assert.deepEqual(puts, ["sample-project-preview"]);
+  assert.match(deps.logs.join("\n"), /Worker sample-project-production already exists/);
+  const deploy = cf.stored.get("tok2");
+  const worker = deploy.policies.find(policy => policy.permission_groups[0].id === EDITOR_ID);
+  assert.deepEqual(worker.resources, { [`${ACCOUNT_SCOPE}.${ACCOUNT}`]: { [`${WORKER_SCOPE}.${tagOf("sample-project-production")}`]: "*" } });
+});
+
+test("scoped tokens use each Worker's tag and never its name", async () => {
+  const { cf, run } = workerRun({ beta: true });
+  await run();
+  const preview = cf.stored.get("tok1").policies.find(policy => policy.permission_groups[0].id === EDITOR_ID);
+  assert.deepEqual(Object.keys(preview.resources[`${ACCOUNT_SCOPE}.${ACCOUNT}`]), [`${WORKER_SCOPE}.${tagOf("sample-project-preview")}`]);
+  const deploy = cf.stored.get("tok2").policies.find(policy => policy.permission_groups[0].id === EDITOR_ID);
+  assert.deepEqual(Object.keys(deploy.resources[`${ACCOUNT_SCOPE}.${ACCOUNT}`]).sort(), [tagOf("sample-project-production"), tagOf("sample-project-beta")].map(tag => `${WORKER_SCOPE}.${tag}`).sort());
+  assert.ok(!JSON.stringify([...cf.stored.values()]).includes("sample-project-production"));
+  const infra = cf.stored.get("tok3");
+  assert.ok(!JSON.stringify(infra.policies).includes(WORKER_SCOPE));
+});
+
+test("the helper token is deleted even when creating a Worker fails, and no scoped token is made", async () => {
+  const { cf, run } = workerRun({ failPutAt: 2 });
+  await assert.rejects(run(), /upload refused/);
+  assert.deepEqual(cf.helper.filter(entry => entry.method === "DELETE").map(entry => entry.path.split("/").at(-1)), ["helper"]);
+  assert.equal(cf.log.filter(entry => entry.method === "POST").length, 0);
+  assert.ok(cf.log.some(entry => entry.method === "DELETE" && entry.path.endsWith("/tokens/self")));
+});
+
+test("a helper token that can't be deleted is reported for the dashboard", async () => {
+  const cf = fakeCloudflare();
+  const inner = cf.fetch;
+  cf.fetch = async (url, init = {}) => (init.method === "DELETE" && url.endsWith("/tokens/helper") ? failed(500, "nope") : inner(url, init));
+  const { deps, run } = harness({ cf, dir: rendered(false) });
+  await run();
+  assert.match(deps.logs.join("\n"), /Couldn't delete the Workers helper token.*revoke it in the dashboard/);
+});
+
+test("the Worker names follow the project's wrangler configuration", async () => {
+  const dir = rendered(false);
+  const path = join(dir, "wrangler.jsonc");
+  const text = readFileSync(path, "utf8").replace('"name": "sample-project"', '"name": "renamed"').replace('"preview": {', '"preview": {\n      "name": "renamed-pr-previews",');
+  writeFileSync(path, text);
+  const { cf, run } = workerRun({ dir });
+  await run();
+  assert.deepEqual(cf.helper.filter(entry => entry.method === "PUT").map(entry => entry.path.split("/").at(-1)).sort(), ["renamed-pr-previews", "renamed-production"]);
+});
+
+test("a wrangler configuration that can't be parsed stops the run before the bootstrap token is asked for", async () => {
+  const dir = rendered(false);
+  const path = join(dir, "wrangler.jsonc");
+  writeFileSync(path, readFileSync(path, "utf8").replace('"name": "sample-project",', '"name": "sample-project", // trailing'));
+  const { cf, run } = workerRun({ dir });
+  await assert.rejects(run(), /Can't read the Worker names from .*wrangler\.jsonc/);
+  assert.equal(cf.log.length, 0);
+});
+
+test("a stack with no per-Worker tokens makes no helper token and touches no scripts", async () => {
+  const { cf, run } = harness({ dir: stackDir(IDENTITY_TOKENS, ["core", "cloudflare-identity"]) });
+  await run();
+  assert.equal(cf.helper.length, 0);
+  assert.ok(cf.log.every(entry => !/workers\/scripts/.test(entry.path)));
+});
+
+test("a token with a Workers role but no Workers listed, or Workers listed without the role, is refused", async () => {
+  const roleOnly = [{ token: "Preview", secret: "CLOUDFLARE_PREVIEW_TOKEN", env: null, permissions: ["Individual Workers Editor"] }];
+  await assert.rejects(harness({ dir: stackDir(roleOnly, ["core", "cloudflare-opentofu"]) }).run(), /Preview.*workers/);
+  const listedOnly = [{ token: "Preview", secret: "CLOUDFLARE_PREVIEW_TOKEN", env: null, workers: ["preview"], permissions: ["Account Settings Read"] }];
+  await assert.rejects(harness({ dir: stackDir(listedOnly, ["core", "cloudflare-opentofu"]) }).run(), /Preview.*Individual Workers/);
+});
+
+test("the rendered token definitions scope preview and deploy to their own Workers and keep no Workers Scripts Write", () => {
+  for (const beta of [true, false]) {
+    const tokens = tokensIn(rendered(beta));
+    const by = name => tokens.find(entry => entry.token === name);
+    assert.deepEqual(by("Preview").workers, ["preview"]);
+    assert.deepEqual(by("Deploy").workers, beta ? ["production", "beta"] : ["production"]);
+    assert.ok(!("workers" in by("Infra plan")) && !("workers" in by("Infra apply")));
+    assert.deepEqual(by("Preview").permissions, ["Individual Workers Editor", "Account Settings Read"]);
+    assert.deepEqual(by("Deploy").permissions, ["Individual Workers Editor", "Account Settings Read", "Workers Routes Write"]);
+    assert.equal(by("Deploy").zone, true);
+    for (const entry of tokens) assert.ok(!entry.permissions.includes("Workers Scripts Write"), entry.token);
+  }
+});
+
+test("the identity stack's token definitions carry no Workers", () => {
+  for (const entry of IDENTITY_TOKENS) assert.ok(!("workers" in entry));
 });

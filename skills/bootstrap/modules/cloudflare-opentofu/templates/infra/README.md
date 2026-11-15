@@ -60,8 +60,8 @@ account and, for zone permissions, to `{{zone_name}}` only.
 
 | Token | GitHub secret | Permissions |
 |---|---|---|
-| Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Workers Scripts Edit, Account Settings Read |
-| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Workers Scripts Edit, Account Settings Read. Zone: Workers Routes Edit |
+| Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Individual Workers Editor (this project's `preview` Worker only), Account Settings Read |
+| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read. Zone: Workers Routes Edit |
 | Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
 | Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
 
@@ -70,10 +70,30 @@ Transform Rules is account-scoped, so the infra tokens' Transform Rules permissi
 If a plan or apply fails with an authorisation error, the error names the
 missing permission: add exactly that one.
 
+The preview and deploy tokens can edit only this project's own Workers, named
+by Wrangler environment: `{{slug}}-preview`, `{{slug}}-production` and, with a
+beta, `{{slug}}-beta` (the name in `wrangler.jsonc` plus the environment). The
+token script creates each as an empty stub that answers 404 before it makes
+the tokens, because a token can only be scoped to a Worker that exists; the
+first deploy replaces the stub. Scoping a token to a Worker names the Worker
+by its tag, not its name.
+
 Never add a per-Worker granular policy to an existing token by editing it in
 place: such writes have failed or silently left a token with no policies.
 Create a new token instead. Check a token's real contents with
 `GET /accounts/<account id>/tokens/<token id>`, not the dashboard labels.
+
+### Reissuing tokens with per-Worker scope
+
+A project whose preview and deploy tokens still have the account-wide
+"Workers Scripts Write" permission moves to per-Worker tokens by running
+`node <plugin>/skills/bootstrap/scripts/secrets.mjs cloudflare-tokens <project dir>`
+again, with `--rotate`. The script finds the Workers that already exist and
+leaves them untouched, creates a stub for any that don't, makes the four new
+tokens, stores them in Pass, sets the secrets, and then revokes the old
+tokens the Pass items name. Re-render `.bootstrap/` first with the current
+plugin (`render.mjs --bootstrap-only`) if the project's token definitions
+predate this change.
 
 {{fragment_r2_state_credentials}}
 

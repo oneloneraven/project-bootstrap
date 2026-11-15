@@ -4,13 +4,14 @@ export const API = "https://api.cloudflare.com/client/v4";
 export const ACCOUNT_SCOPE = "com.cloudflare.api.account";
 export const ZONE_SCOPE = "com.cloudflare.api.account.zone";
 export const R2_BUCKET_SCOPE = "com.cloudflare.edge.r2.bucket";
+export const WORKER_SCOPE = "com.cloudflare.edge.worker.script";
 
 export function cfClient(deps, token) {
-  async function request(method, path, body) {
+  async function request(method, path, body, { form } = {}) {
     const response = await deps.fetch(`${API}${path}`, {
       method,
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      ...(body !== undefined && { body: JSON.stringify(body) }),
+      headers: { Authorization: `Bearer ${token}`, ...(!form && { "Content-Type": "application/json" }) },
+      ...(body !== undefined && { body: form ? body : JSON.stringify(body) }),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload.success === false) {
@@ -22,6 +23,7 @@ export function cfClient(deps, token) {
   return {
     get: path => request("GET", path),
     post: (path, body) => request("POST", path, body),
+    putForm: (path, form) => request("PUT", path, form, { form: true }),
     del: path => request("DELETE", path),
   };
 }
@@ -46,7 +48,7 @@ export async function withBootstrapToken(deps, accountId, fn) {
   }
 }
 
-export async function resolvePermissions(client, accountId, names, scopes = [ZONE_SCOPE, ACCOUNT_SCOPE]) {
+export async function resolvePermissions(client, accountId, names, scopes = [ZONE_SCOPE, ACCOUNT_SCOPE, WORKER_SCOPE]) {
   const groups = await client.get(`/accounts/${accountId}/tokens/permission_groups`);
   return names.map(name => {
     const matches = groups.filter(group => group.name === name && scopes.some(scope => group.scopes.includes(scope)));
@@ -55,22 +57,44 @@ export async function resolvePermissions(client, accountId, names, scopes = [ZON
   });
 }
 
-export function buildPolicies(groups, { accountId, zoneId }) {
-  const resources = { [ACCOUNT_SCOPE]: `${ACCOUNT_SCOPE}.${accountId}`, [ZONE_SCOPE]: `${ZONE_SCOPE}.${zoneId}` };
-  return [ACCOUNT_SCOPE, ZONE_SCOPE]
-    .map(scope => ({ scope, ids: groups.filter(group => group.scope === scope).map(group => ({ id: group.id })) }))
+export function buildPolicies(groups, { accountId, zoneId, scriptTags }) {
+  const account = `${ACCOUNT_SCOPE}.${accountId}`;
+  const workerGroups = groups.filter(group => group.scope === WORKER_SCOPE).map(group => ({ id: group.id }));
+  if (workerGroups.length && !scriptTags?.length) throw new Error("A Worker permission needs at least one Worker tag");
+  const policies = [
+    { scope: ACCOUNT_SCOPE, resource: account },
+    { scope: ZONE_SCOPE, resource: `${ZONE_SCOPE}.${zoneId}` },
+  ]
+    .map(({ scope, resource }) => ({ resource, ids: groups.filter(group => group.scope === scope).map(group => ({ id: group.id })) }))
     .filter(({ ids }) => ids.length)
-    .map(({ scope, ids }) => ({ effect: "allow", resources: { [resources[scope]]: "*" }, permission_groups: ids }));
+    .map(({ resource, ids }) => ({ effect: "allow", resources: { [resource]: "*" }, permission_groups: ids }));
+  if (workerGroups.length) {
+    policies.push({
+      effect: "allow",
+      resources: { [account]: Object.fromEntries(scriptTags.map(tag => [scriptResource(tag), "*"])) },
+      permission_groups: workerGroups,
+    });
+  }
+  return policies;
+}
+
+function sortKeys(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  return Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : 1)).map(([key, item]) => [key, sortKeys(item)]));
 }
 
 function summarise(policies) {
   return policies
-    .map(policy => JSON.stringify([Object.entries(policy.resources).sort(), policy.permission_groups.map(group => group.id).sort(), policy.effect ?? "allow"]))
+    .map(policy => JSON.stringify([sortKeys(policy.resources), policy.permission_groups.map(group => group.id).sort(), policy.effect ?? "allow"]))
     .sort();
 }
 
 export function policiesMatch(requested, actual) {
   return JSON.stringify(summarise(requested)) === JSON.stringify(summarise(actual ?? []));
+}
+
+export function scriptResource(tag) {
+  return `${WORKER_SCOPE}.${tag}`;
 }
 
 export function bucketResource(accountId, bucket) {

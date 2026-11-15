@@ -42,6 +42,12 @@ and preview hostnames are built from it.
   stop and agree what happens to them too: the apply fails while a
   `http_request_dynamic_redirect` ruleset exists.
 - Without a beta, the first merged release deploys straight to the apex.
+- **The bootstrap creates empty Workers before the first deploy.** The preview
+  and deploy tokens may edit only this project's own Workers, and a token can
+  only be scoped to a Worker that exists, so token creation first uploads a
+  stub (it answers 404, with no routes or bindings) for the `preview`,
+  `production` and, with a beta, `beta` environments. Say so, and that the
+  first deploy replaces each stub.
 - **With `admin`, `<admin_subdomain>.<zone>` is a new hostname.** OpenTofu
   adds a proxied placeholder A record for it and production gets a Worker
   route for it. If it already has a record, stop and agree what happens to it
