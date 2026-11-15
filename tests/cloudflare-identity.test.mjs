@@ -69,7 +69,7 @@ test("the login method, the organisation and the owner policy are set as designe
   assert.match(org, /ui_read_only_toggle_reason\s*=\s*"[^"]+"/);
   assert.match(org, /ignore_changes/);
   const settingsSet = [...org.matchAll(/^\s{2}(\w+)\s*=/gm)].map(m => m[1]);
-  assert.deepEqual(settingsSet, ["account_id", "is_ui_read_only", "ui_read_only_toggle_reason"]);
+  assert.deepEqual(settingsSet, ["account_id", "is_ui_read_only", "ui_read_only_toggle_reason", "service_token_inactivity"]);
   const provider = block(identity, 'resource "cloudflare_zero_trust_access_identity_provider" "login"');
   assert.match(provider, /type\s*=\s*"cloudflare"/);
   assert.match(provider, /restrict_to_account_members\s*=\s*true/);
@@ -161,4 +161,12 @@ test("the owner email is validated and the imported login method keeps its name"
   const variables = read("infra/variables.tf");
   assert.match(variables, /variable "owner_email"[\s\S]*?validation \{[\s\S]*?var\.owner_email/);
   assert.match(read("infra/identity.tf"), /ignore_changes\s+=\s+\[name\]/);
+});
+
+test("the organisation declares service_token_inactivity in full, so the update isn't rejected", () => {
+  const identity = read("infra/identity.tf");
+  const block = identity.match(/service_token_inactivity\s+=\s+\{([\s\S]*?)\}/);
+  assert.ok(block, "service_token_inactivity is declared");
+  for (const field of ["enabled", "inactivity_threshold_days", "action"]) assert.match(block[1], new RegExp(`\\b${field}\\s+=`), field);
+  assert.doesNotMatch(identity.match(/ignore_changes = \[([\s\S]*?)\]/)[1], /service_token_inactivity/);
 });

@@ -36,11 +36,12 @@ dashboard, so a change there is refused; make it in code.
 
 ## What it manages
 
-- **The Zero Trust organisation**, adopted with an `import` block. Only
+- **The Zero Trust organisation**, adopted with an `import` block.
   `is_ui_read_only` and `ui_read_only_toggle_reason` are set, so the dashboard
-  is read-only and says why. Every other organisation setting is left as it is
-  (`ignore_changes`), so the plan after the import should show
-  changes to those two fields only.
+  is read-only and says why. `service_token_inactivity` is declared in full
+  with enforcement off, because the API rejects an update that carries only
+  part of it. Every other organisation setting is left as it is
+  (`ignore_changes`).
 - **The login method**: the Cloudflare login method (sign in with a
   Cloudflare account), adopted with an `import` block, restricted to members of
   the account.
