@@ -11,11 +11,14 @@ One Sonnet-class subagent does all delegated work, one at a time.
   issues, architecture decisions, review judgement, anything security- or
   privacy-sensitive, approvals, and the final verification before anything
   is called done.
-- **All delegated work goes to at most one Sonnet-class subagent at a time**
-  (`model: sonnet`): dependency bumps, running test suites and reporting
-  their output, board and label housekeeping, executing an agreed plan step
-  by step, bulk renames, doc updates from a settled decision, digging
-  through CI logs, and longer investigations.
+- **Delegation is a choice, not a requirement.** The main session makes
+  small, clear fixes itself, where writing a brief and checking the report
+  would cost more than the change. Substantial work goes to at most one
+  Sonnet-class subagent at a time (`model: sonnet`): dependency bumps,
+  running test suites and reporting their output, board and label
+  housekeeping, executing an agreed plan step by step, bulk renames, doc
+  updates from a settled decision, digging through CI logs, and longer
+  investigations.
 - **No sub-sessions, no mix of sessions and subagents, and no parallel
   workers**, even when their files don't overlap. Sub-sessions can't be
   governed the same way, and extra or parallel agents use up subscription
@@ -23,11 +26,14 @@ One Sonnet-class subagent does all delegated work, one at a time.
 - **Long or open-ended work is split into sequential subagent runs.** The
   main session decides between them.
 - **Follow-ups go to the existing subagent**, not a new one.
-- **A subagent gets its own worktree whenever it writes code**, and it and
-  the main session never write the same files.
+- **Subagents work in the main checkout**, not a worktree of their own.
+  Work is sequential, so there's nothing to isolate, and a fresh worktree
+  starts cold (dependencies installed again, nothing built). While a subagent
+  is running, the main session doesn't write, commit or switch branches there.
 - **Briefs are self-contained**: the files involved, what done looks like,
-  and the instruction to run slow commands (test suites, e2e) in the
-  foreground, never in the background.
+  and the instruction to run only the affected tests while working and the
+  project's full check once before pushing, with slow commands (test suites,
+  e2e) in the foreground, never in the background.
 - **The main session checks the subagent's results** (the diff, the real
   test output) before reporting them as done.
 

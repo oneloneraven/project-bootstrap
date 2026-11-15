@@ -141,3 +141,17 @@ test("renders without cloudflare-opentofu have no infrastructure rule", () => {
     assert.doesNotMatch(claude, /through an API, an MCP tool or the dashboard/, name);
   }
 });
+
+test("both copies of working-with-claude.md route subagents through the main checkout and make delegation optional", () => {
+  const copies = {
+    rendered: read("docs/working-with-claude.md"),
+    repository: readFileSync(new URL("../docs/working-with-claude.md", import.meta.url), "utf8"),
+  };
+  for (const [name, text] of Object.entries(copies)) {
+    const flat = text.replace(/\s+/g, " ");
+    assert.doesNotMatch(flat, /own worktree whenever/, name);
+    for (const phrase of ["Subagents work in the main checkout", "Delegation is a choice", "affected tests while working"]) {
+      assert.ok(flat.includes(phrase), `${name}: ${phrase}`);
+    }
+  }
+});
