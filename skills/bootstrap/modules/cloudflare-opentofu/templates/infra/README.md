@@ -37,14 +37,7 @@ The Worker's routes come from `wrangler.jsonc` and change through wrangler.
   block for anything created by hand, so the next apply adopts it instead of
   failing to create it again.
 
-## Deleting resources
-
-`infra.yml` refuses a plan that deletes or replaces anything, so a merge that
-removes a resource fails its apply and changes nothing. To apply it on
-purpose, read the failed run's plan, then run "Infra" by hand on `main` with
-`allow_deletes` ticked. It runs in the `infra` environment, so only `main` can
-do it. Resources with `prevent_destroy` still refuse: removing that is the
-teardown below.
+{{fragment_deleting_resources}}
 
 ## Setup
 
@@ -82,25 +75,9 @@ place: such writes have failed or silently left a token with no policies.
 Create a new token instead. Check a token's real contents with
 `GET /accounts/<account id>/tokens/<token id>`, not the dashboard labels.
 
-### R2 state credentials
+{{fragment_r2_state_credentials}}
 
-`node <plugin>/skills/bootstrap/scripts/secrets.mjs cloudflare-r2 <project dir>` creates both and sets the secrets. By hand, create two R2 API tokens (R2 → Manage R2 API Tokens), both limited to the
-`{{slug}}-tfstate` bucket:
-
-| Token | Permission | GitHub secrets |
-|---|---|---|
-| State read-write | Object Read & Write | `TF_STATE_ACCESS_KEY_ID`, `TF_STATE_SECRET_ACCESS_KEY` (environment `infra`) |
-| State read-only | Object Read only | `TF_STATE_READ_ACCESS_KEY_ID`, `TF_STATE_READ_SECRET_ACCESS_KEY` (repository, for PR plans) |
-
-PR plans run with the read-only pair, so code in a pull request can't
-rewrite state.
-
-### OpenTofu version
-
-`infra.yml` pins OpenTofu exactly in `tofu_version`. Dependabot doesn't bump
-it. To upgrade, take the newest `opentofu/opentofu` release that is more than
-72 hours old (not a pre-release), change `tofu_version`, and run the same
-version locally.
+{{fragment_opentofu_version}}
 
 ### Variables
 
