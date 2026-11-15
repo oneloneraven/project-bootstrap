@@ -750,6 +750,15 @@ test("the Worker names follow the project's wrangler configuration", async () =>
   assert.deepEqual(cf.helper.filter(entry => entry.method === "PUT").map(entry => entry.path.split("/").at(-1)).sort(), ["renamed-pr-previews", "renamed-production"]);
 });
 
+test("a wrangler configuration that can't be parsed stops the run before the bootstrap token is asked for", async () => {
+  const dir = rendered(false);
+  const path = join(dir, "wrangler.jsonc");
+  writeFileSync(path, readFileSync(path, "utf8").replace('"name": "sample-project",', '"name": "sample-project", // trailing'));
+  const { cf, run } = workerRun({ dir });
+  await assert.rejects(run(), /Can't read the Worker names from .*wrangler\.jsonc/);
+  assert.equal(cf.log.length, 0);
+});
+
 test("a stack with no per-Worker tokens makes no helper token and touches no scripts", async () => {
   const { cf, run } = harness({ dir: stackDir(IDENTITY_TOKENS, ["core", "cloudflare-identity"]) });
   await run();

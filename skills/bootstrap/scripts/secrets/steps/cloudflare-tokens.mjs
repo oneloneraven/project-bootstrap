@@ -20,12 +20,13 @@ async function run(ctx, deps, options) {
   const accountId = await resolveAccountId(ctx, deps, options);
   const zoneId = tokens.some(entry => entry.zone) ? await resolveZoneId(ctx, deps, options) : undefined;
   const expires = oneYearFrom(deps.now());
+  const envs = [...new Set(tokens.flatMap(entry => entry.workers ?? []))];
+  const names = scriptNames(ctx, envs);
 
   await withBootstrapToken(deps, accountId, async client => {
     const olds = (await readOldIds(vault, previous)).map((old, index) => old && { ...old, name: tokens[index].token });
-    const envs = [...new Set(tokens.flatMap(entry => entry.workers ?? []))];
-    const names = scriptNames(ctx, envs);
-    const tagByEnv = envs.length ? Object.fromEntries(Object.entries(await ensureWorkers(client, deps, accountId, Object.values(names))).map(([name, tag]) => [Object.keys(names).find(env => names[env] === name), tag])) : {};
+    const tags = envs.length ? await ensureWorkers(client, deps, accountId, [...new Set(Object.values(names))]) : {};
+    const tagByEnv = Object.fromEntries(envs.map(env => [env, tags[names[env]]]));
     const specs = [];
     for (const entry of tokens) {
       const groups = await resolvePermissions(client, accountId, entry.permissions);

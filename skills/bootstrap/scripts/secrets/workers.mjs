@@ -7,10 +7,18 @@ const STUB_COMPATIBILITY_DATE = "2026-10-01";
 const HELPER_LIFETIME_MS = 60 * 60 * 1000;
 
 function wranglerConfig(dir) {
+  const file = join(dir, "wrangler.jsonc");
+  let text;
   try {
-    return JSON.parse(readFileSync(join(dir, "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
-  } catch {
+    text = readFileSync(file, "utf8");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
     return {};
+  }
+  try {
+    return JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
+  } catch (error) {
+    throw new Error(`Can't read the Worker names from ${file} (${error.message}): only whole-line comments are supported, so move any trailing comment onto its own line and remove trailing commas`);
   }
 }
 
