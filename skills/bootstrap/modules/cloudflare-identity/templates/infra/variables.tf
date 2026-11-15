@@ -7,6 +7,11 @@ variable "owner_email" {
   description = "The one email every admin application lets in. Supplied by the OWNER_EMAIL Actions secret, never committed."
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.owner_email))
+    error_message = "owner_email must be a single email address: check the OWNER_EMAIL secret."
+  }
 }
 
 variable "login_method_id" {

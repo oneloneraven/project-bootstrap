@@ -156,3 +156,9 @@ test("no file in the render names a project or a private detail", () => {
 test("the stack module exists", () => {
   assert.ok(existsSync(join(realModulesDir, "cloudflare-identity", "MODULE.md")));
 });
+
+test("the owner email is validated and the imported login method keeps its name", () => {
+  const variables = read("infra/variables.tf");
+  assert.match(variables, /variable "owner_email"[\s\S]*?validation \{[\s\S]*?var\.owner_email/);
+  assert.match(read("infra/identity.tf"), /ignore_changes\s+=\s+\[name\]/);
+});

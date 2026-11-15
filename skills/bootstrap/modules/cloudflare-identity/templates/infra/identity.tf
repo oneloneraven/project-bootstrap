@@ -43,6 +43,7 @@ resource "cloudflare_zero_trust_access_identity_provider" "login" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [name]
   }
 }
 
