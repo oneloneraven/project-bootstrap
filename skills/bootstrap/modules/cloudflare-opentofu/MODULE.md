@@ -12,9 +12,7 @@ and state in R2.
 ## 2. Interview questions
 
 - **`zone_name`**: the domain the app is served from. It must already be an
-  active zone in the user's Cloudflare account, and the domain must be
-  registered with Cloudflare Registrar: the module relies on it to publish
-  the DNSSEC DS record. Ask them to confirm both.
+  active zone in the user's Cloudflare account. Ask them to confirm.
 - **`beta`** (yes or no): with a beta, each release tag deploys to
   `beta.<zone>` and a person promotes a chosen tag to production with
   "Promote to production". Without one, each tag deploys straight to

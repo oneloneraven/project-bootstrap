@@ -308,5 +308,5 @@ test("the DNSSEC manual step only verifies, because Cloudflare Registrar adds th
   assert.match(step, /dig \+short DS <zone_name>/);
   assert.match(step, /pending/);
   assert.doesNotMatch(step, /registrar's DNSSEC/);
-  assert.match(section(moduleDoc, "## 2. Interview questions"), /Cloudflare Registrar/);
+  assert.doesNotMatch(section(moduleDoc, "## 2. Interview questions"), /registrar/i);
 });
