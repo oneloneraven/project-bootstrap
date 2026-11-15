@@ -134,6 +134,16 @@ token.
 A token whose permissions include a zone permission sets `"zone": true` in
 its definition. The script asks for the zone id only when some token does.
 
+A token that may edit only some Workers has the "Individual Workers Editor"
+permission and `"workers": [...]`, the Wrangler environments whose Workers it
+covers. A Worker has to exist before a token can be scoped to it, so when any
+definition has `workers`, the script first creates a short-lived helper token
+with "Workers Admin", uploads an empty stub Worker (it answers 404, with no
+routes or bindings) for each named Worker that doesn't exist yet, reads each
+Worker's tag, and deletes the helper token. Workers that already exist are
+left as they are. The first real deploy replaces a stub. A Worker's name is
+`<name in wrangler.jsonc>-<environment>`, or the environment's own `name`.
+
 The ids aren't secret, so the script remembers them. The account id is the
 same for every project, so it's stored once per user in
 `${XDG_CONFIG_HOME:-~/.config}/project-bootstrap/cloudflare.json`

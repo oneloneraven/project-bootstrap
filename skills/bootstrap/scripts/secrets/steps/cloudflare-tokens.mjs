@@ -1,7 +1,8 @@
-import { ZONE_SCOPE, buildPolicies, createVerified, findEarlierItems, oneYearFrom, readOldIds, resolvePermissions, storeEach, withBootstrapToken } from "../cloudflare.mjs";
+import { WORKER_SCOPE, ZONE_SCOPE, buildPolicies, createVerified, findEarlierItems, oneYearFrom, readOldIds, resolvePermissions, storeEach, withBootstrapToken } from "../cloudflare.mjs";
 import { resolveAccountId, resolveZoneId } from "../ids.mjs";
 import { readRenderedJson } from "../context.mjs";
 import { storeThenSet } from "../order.mjs";
+import { ensureWorkers, scriptNames } from "../workers.mjs";
 
 const title = token => `Cloudflare ${token} token`;
 
@@ -22,11 +23,18 @@ async function run(ctx, deps, options) {
 
   await withBootstrapToken(deps, accountId, async client => {
     const olds = (await readOldIds(vault, previous)).map((old, index) => old && { ...old, name: tokens[index].token });
+    const envs = [...new Set(tokens.flatMap(entry => entry.workers ?? []))];
+    const names = scriptNames(ctx, envs);
+    const tagByEnv = envs.length ? Object.fromEntries(Object.entries(await ensureWorkers(client, deps, accountId, Object.values(names))).map(([name, tag]) => [Object.keys(names).find(env => names[env] === name), tag])) : {};
     const specs = [];
     for (const entry of tokens) {
       const groups = await resolvePermissions(client, accountId, entry.permissions);
       if (!entry.zone && groups.some(group => group.scope === ZONE_SCOPE)) throw new Error(`The ${entry.token} token has zone permissions, so its definition needs "zone": true`);
-      specs.push({ label: entry.token, name: `${ctx.slug} ${entry.token}`, policies: buildPolicies(groups, { accountId, zoneId }) });
+      const hasRole = groups.some(group => group.scope === WORKER_SCOPE);
+      if (hasRole && !entry.workers?.length) throw new Error(`The ${entry.token} token has a Workers role, so its definition needs "workers"`);
+      if (!hasRole && entry.workers?.length) throw new Error(`The ${entry.token} token lists workers, so it needs an Individual Workers role`);
+      const scriptTags = (entry.workers ?? []).map(env => tagByEnv[env]);
+      specs.push({ label: entry.token, name: `${ctx.slug} ${entry.token}`, policies: buildPolicies(groups, { accountId, zoneId, scriptTags }) });
     }
     const made = await createVerified(client, deps, accountId, specs);
     await storeEach(client, deps, accountId, made, (token, index) => {

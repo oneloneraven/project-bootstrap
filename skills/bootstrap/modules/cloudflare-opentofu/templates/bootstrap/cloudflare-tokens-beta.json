@@ -3,8 +3,11 @@
     "token": "Preview",
     "secret": "CLOUDFLARE_PREVIEW_TOKEN",
     "env": null,
+    "workers": [
+      "preview"
+    ],
     "permissions": [
-      "Workers Scripts Write",
+      "Individual Workers Editor",
       "Account Settings Read"
     ]
   },
@@ -15,9 +18,13 @@
       "production",
       "beta"
     ],
+    "workers": [
+      "production",
+      "beta"
+    ],
     "zone": true,
     "permissions": [
-      "Workers Scripts Write",
+      "Individual Workers Editor",
       "Account Settings Read",
       "Workers Routes Write"
     ]

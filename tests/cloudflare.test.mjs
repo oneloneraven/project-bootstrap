@@ -213,7 +213,7 @@ test("plan-dependent steps use the recorded github_plan", () => {
 
 const tokensIn = dir => JSON.parse(read(dir, ".bootstrap/cloudflare/tokens.json"));
 const dashboardLabels = { "Single Redirect": "Dynamic URL Redirects" };
-const normalise = names => names.map(name => name.replace(/\bEdit$/, "Write").replace(/^Single Redirect\b/, dashboardLabels["Single Redirect"])).sort();
+const normalise = names => names.map(name => name.replace(/\s*\(.*\)$/, "").replace(/\bEdit$/, "Write").replace(/^Single Redirect\b/, dashboardLabels["Single Redirect"])).sort();
 
 function readmeTokens(dir, beta) {
   const section = read(dir, "infra/README.md").split("### Cloudflare API tokens")[1].split("###")[0];
@@ -366,4 +366,15 @@ test("the bootstrap skill documents adopting a module in an existing repository"
   assert.match(adopting, /state\.mjs save-answers <dir> <file> <modules>/);
   assert.match(adopting, /render\.mjs --modules <modules> \\\n\s+--answers <dir>\/\.bootstrap\/answers\.json --dest <dir> --bootstrap-only/);
   assert.match(adopting, /nothing outside `\.bootstrap\/`/);
+});
+
+test("the docs say tokens are scoped to the project's own Workers, which the bootstrap creates as stubs, and how to reissue", () => {
+  const readme = read(withBeta, "infra/README.md");
+  assert.match(readme, /Individual Workers Editor \(this project's `preview` Worker only\)/);
+  assert.match(readme, /### Reissuing tokens with per-Worker scope/);
+  assert.match(readme, /`sample-project-preview`, `sample-project-production` and, with a\nbeta, `sample-project-beta`/);
+  assert.doesNotMatch(readme.split("\n").filter(line => line.startsWith("| ")).join("\n"), /Workers Scripts/);
+  assert.match(moduleDoc, /The bootstrap creates empty Workers before the first deploy/);
+  assert.match(baseDoc, /"Individual Workers Editor"\s+permission\s+and\s+`"workers": \[\.\.\.\]`/);
+  assert.match(baseDoc, /"Workers Admin"/);
 });
