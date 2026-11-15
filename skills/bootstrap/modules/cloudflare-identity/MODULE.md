@@ -22,9 +22,12 @@ None. The slug is limited to 40 characters: the state bucket is named from it.
   apply imports them (`import` blocks) instead of creating them. The
   organisation's settings other than `is_ui_read_only` and its reason are left
   as they are, and the dashboard becomes read-only for the organisation.
-  Check with the user that nothing edits Zero Trust settings in the dashboard
-  while this goes ahead, and say that the plan after the import should show
-  changes to those two fields only.
+  `service_token_inactivity` is declared in full with enforcement still off,
+  because the API rejects an update that carries only part of it. Check with
+  the user that nothing edits Zero Trust settings in the dashboard while this
+  goes ahead, and say that the plan after the import should show changes to
+  `is_ui_read_only`, its reason and `service_token_inactivity`'s threshold and
+  action only.
 - **Free private repository**: as in `cloudflare-tofu-base`.
 
 ## 3. Files
@@ -82,7 +85,8 @@ yet.)
 
 **Verify (Claude runs):** `gh run watch --repo $R --exit-status`.
 **Expected:** success. The organisation and the login method are imported, and
-the organisation's only changes are `is_ui_read_only` and its reason. On an
+the organisation's only changes are `is_ui_read_only`, its reason and
+`service_token_inactivity`'s threshold and action. On an
 authorisation error, the log names the missing permission: the user adds
 exactly that one to the infra token and Claude re-runs it. If the token
 creation step in `cloudflare-tofu-base:1` failed on the permission "Access:
