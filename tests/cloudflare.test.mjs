@@ -270,7 +270,7 @@ test("the infrastructure rule links to a real heading in the infra README", () =
 test("the infra README's change rule points wrangler-owned resources at wrangler and hand-made ones at an import", () => {
   const section = read(withBeta, "infra/README.md").split("## Changing infrastructure")[1].split("\n## ")[0];
   assert.match(section, /`wrangler\.jsonc`/);
-  assert.match(section, /`import` block/);
+  assert.match(section, /`import`\s+block/);
   assert.match(section, /explicit OK/);
   assert.doesNotMatch(section, /state bucket/);
 });
