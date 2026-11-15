@@ -128,3 +128,13 @@ test("the workflow doc explains the board views and title prefixes", () => {
     assert.ok(doc.includes(term), `${term} should be explained`);
   }
 });
+
+test("the destructive-change rule is in the CLAUDE.md index and the workflow", () => {
+  assert.match(read("CLAUDE.md"), /^- Ask before any destructive change outside the repository, even mid-task: \[workflow\]\(docs\/workflow\.md#ways-of-working\)\.$/m);
+  assert.match(read("docs/workflow.md"), /^- Ask before any destructive change outside the repository, such as deleting,\s+disabling or overwriting something in a hosted service, even mid-task and even\s+when it looks like part of the work\.$/m);
+});
+
+test("a render without cloudflare-opentofu has no infrastructure rule", () => {
+  assert.doesNotMatch(read("CLAUDE.md"), /infra\/README\.md/);
+  assert.doesNotMatch(read("CLAUDE.md"), /through an API, an MCP tool or the dashboard/);
+});

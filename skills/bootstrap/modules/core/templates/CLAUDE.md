@@ -16,6 +16,7 @@ Read a doc when the work touches it, not up front.
 - Pace GitHub API mutations and never retry into a rate limit: [workflow](docs/workflow.md#github-api).
 - Propose before building when there's an open design question; concrete fixes with clear direction go straight ahead: [workflow](docs/workflow.md#ways-of-working).
 - Change only what was asked. Flag wider improvements and wait for an answer.
+- Ask before any destructive change outside the repository, even mid-task: [workflow](docs/workflow.md#ways-of-working).
 
 ## Standards
 
