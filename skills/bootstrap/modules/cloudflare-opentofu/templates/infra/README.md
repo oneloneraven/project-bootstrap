@@ -60,8 +60,8 @@ account and, for zone permissions, to `{{zone_name}}` only.
 |---|---|---|
 | Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Workers Scripts Edit, Account Settings Read |
 | Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Workers Scripts Edit, Account Settings Read. Zone: Workers Routes Edit |
-| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Dynamic URL Redirects Read |
-| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Dynamic URL Redirects Edit |
+| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
+| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
 
 Transform Rules is account-scoped, so the infra tokens' Transform Rules permission covers every zone in the account, not just `{{zone_name}}`.
 

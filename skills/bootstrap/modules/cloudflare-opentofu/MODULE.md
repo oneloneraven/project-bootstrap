@@ -30,7 +30,9 @@ and preview hostnames are built from it.
   zone's DNS records in the dashboard. If the apex, `www.` or `beta.` already
   has a record, or the domain already serves something, stop and agree what
   happens to it before going on: apply fails on an existing CNAME and splits
-  traffic with an existing A record.
+  traffic with an existing A record. If the zone already has Redirect Rules,
+  stop and agree what happens to them too: the apply fails while a
+  `http_request_dynamic_redirect` ruleset exists.
 - Without a beta, the first merged release deploys straight to the apex.
 - **Free private repository** (the recorded `github_plan` is `free`):
   GitHub's documentation says environments need a paid plan for private

@@ -19,7 +19,7 @@ resource "cloudflare_dns_record" "app_www" {
   content = var.app_zone_name
   ttl     = 1
   proxied = true
-  comment = "Proxied so the redirect rule answers on www; traffic never reaches the apex record."
+  comment = "Proxied so the www redirect rule answers; requests never reach an origin."
 
   lifecycle {
     prevent_destroy = true

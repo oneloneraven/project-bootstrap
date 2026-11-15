@@ -207,7 +207,8 @@ test("plan-dependent steps use the recorded github_plan", () => {
 });
 
 const tokensIn = dir => JSON.parse(read(dir, ".bootstrap/cloudflare/tokens.json"));
-const normalise = names => names.map(name => name.replace(/\bEdit$/, "Write")).sort();
+const dashboardLabels = { "Single Redirect": "Dynamic URL Redirects" };
+const normalise = names => names.map(name => name.replace(/\bEdit$/, "Write").replace(/^Single Redirect\b/, dashboardLabels["Single Redirect"])).sort();
 
 function readmeTokens(dir, beta) {
   const section = read(dir, "infra/README.md").split("### Cloudflare API tokens")[1].split("###")[0];
@@ -343,12 +344,14 @@ for (const [label, dir] of [["with beta", withBeta], ["without beta", noBeta]]) 
     assert.ok(tokens.find(t => t.token === "Infra plan").permissions.includes("Dynamic URL Redirects Read"));
     assert.ok(tokens.find(t => t.token === "Infra apply").permissions.includes("Dynamic URL Redirects Write"));
     const table = read(dir, "infra/README.md");
-    assert.match(table, /Zone:[^\n|]*Dynamic URL Redirects Read/);
-    assert.match(table, /Zone:[^\n|]*Dynamic URL Redirects Edit/);
+    assert.match(table, /Zone:[^\n|]*Single Redirect Read/);
+    assert.match(table, /Zone:[^\n|]*Single Redirect Edit/);
   });
 }
 
 test("the module warns about an existing www record and the README lists the redirect rule", () => {
   assert.match(section(moduleDoc, "## 2. Interview questions"), /If the apex, `www\.`\s+or `beta\.` already\s+has a record/);
   assert.match(read(withBeta, "infra/README.md"), /the `www` redirect/);
+  assert.match(section(moduleDoc, "## 2. Interview questions"), /already has Redirect Rules/);
+  assert.match(read(withBeta, "infra/dns.tf"), /comment = "Proxied so the www redirect rule answers; requests never reach an origin\."/);
 });
