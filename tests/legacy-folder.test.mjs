@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { moveLegacyFolder } from "../skills/bootstrap/scripts/legacy-folder.mjs";
 import { resolveConfigDir } from "../skills/bootstrap/scripts/secrets/ids.mjs";
 import { resolveStateDir } from "../skills/bootstrap/scripts/migrate/state.mjs";
@@ -45,4 +47,19 @@ test("the config and state resolvers move the old folder", () => {
   assert.equal(resolveStateDir(env, "/home/u"), join(r, "state", "project-bootstrap", "migrate"));
   assert.equal(readFileSync(join(r, "config", "project-bootstrap", "f.txt"), "utf8"), "c");
   assert.equal(readFileSync(join(r, "state", "project-bootstrap", "migrate", "f.txt"), "utf8"), "s");
+});
+
+test("launching either script moves the old folder", () => {
+  const r = root();
+  seed(join(r, "config", "claude-project-bootstrap"), "c");
+  seed(join(r, "state", "claude-project-bootstrap", "migrate"), "s");
+  const env = { ...process.env, XDG_CONFIG_HOME: join(r, "config"), XDG_STATE_HOME: join(r, "state") };
+  for (const script of ["secrets.mjs", "migrate.mjs"]) {
+    const path = fileURLToPath(new URL(`../skills/bootstrap/scripts/${script}`, import.meta.url));
+    assert.equal(spawnSync(process.execPath, [path], { env, encoding: "utf8" }).status, 2, script);
+  }
+  assert.equal(readFileSync(join(r, "config", "project-bootstrap", "f.txt"), "utf8"), "c");
+  assert.equal(readFileSync(join(r, "state", "project-bootstrap", "migrate", "f.txt"), "utf8"), "s");
+  assert.equal(existsSync(join(r, "config", "claude-project-bootstrap")), false);
+  assert.equal(existsSync(join(r, "state", "claude-project-bootstrap")), false);
 });
