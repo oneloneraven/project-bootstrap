@@ -151,8 +151,8 @@ Account: Account API Tokens: Edit, and it expires today. Then run
 `node <skill dir>/scripts/secrets.mjs cloudflare-tokens <project dir>`.
 Paste the bootstrap token at the hidden prompt (the long value from the Copy
 button, not the token ID), and give the account id and zone id from the
-zone's Overview page when asked. The script creates the four tokens, reads each back to check its policies, stores them in Proton
-Pass, sets the secrets and the `CLOUDFLARE_ACCOUNT_ID` variable, and deletes
+zone's Overview page when asked. The script creates the four tokens, reads
+each back to check its policies, stores them in Proton Pass, sets the secrets and the `CLOUDFLARE_ACCOUNT_ID` variable, and deletes
 the bootstrap token.
 
 The ids aren't secret, so the script remembers them. The account id is the
