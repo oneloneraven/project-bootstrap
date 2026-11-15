@@ -43,6 +43,8 @@ function isApplicationId(value) {
   return APPLICATION_ID.test(value) && value.split(".").every(segment => !RESERVED_SEGMENTS.has(segment));
 }
 
+const DNS_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
+
 const GITHUB_PLANS = ["free", "pro", "team", "enterprise"];
 
 const OWNER_TYPES = ["User", "Organization"];
@@ -53,7 +55,8 @@ function checkQuestions(input, manifests) {
     throw new Error(`github_plan must be one of ${GITHUB_PLANS.join(", ")} for a private repository`);
   }
   if (!OWNER_TYPES.includes(input.owner_type)) throw new Error(`owner_type must be one of ${OWNER_TYPES.join(", ")}`);
-  for (const { key, type } of manifests.flatMap(m => m.questions ?? [])) {
+  for (const { key, type, when } of manifests.flatMap(m => m.questions ?? [])) {
+    if (when && !input[when]) continue;
     const value = input[key];
     if (type === "boolean") {
       if (typeof value !== "boolean") throw new Error(`${key} must be true or false`);
@@ -61,6 +64,8 @@ function checkQuestions(input, manifests) {
       throw new Error(`${key} is required`);
     } else if (type === "hostname" && !HOSTNAME.test(value)) {
       throw new Error(`${key} must be a domain name such as example.com`);
+    } else if (type === "dns_label" && !DNS_LABEL.test(value)) {
+      throw new Error(`${key} must be a single DNS label such as admin`);
     } else if (type === "application_id" && !isApplicationId(value)) {
       throw new Error(`${key} must be a lower-case reverse domain such as org.example.app, with no Java or Kotlin keyword as a segment`);
     }

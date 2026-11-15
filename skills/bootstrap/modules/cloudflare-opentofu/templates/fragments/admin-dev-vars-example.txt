@@ -1,0 +1,4 @@
+# Admin section: the Access check is off in development, and OWNER_EMAIL is checked in every other environment. Set ADMIN_HOST=localhost to serve the admin section locally.
+ADMIN_ACCESS_CHECK=off
+#ADMIN_HOST=localhost
+OWNER_EMAIL=

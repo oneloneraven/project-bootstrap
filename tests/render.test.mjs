@@ -397,6 +397,8 @@ function fragmentModules(layout) {
   return dir;
 }
 
+const renderModules = (dir, selected, answers, dest) => render({ modules: resolveModules(selected, dir), answers, modulesDir: dir, destDir: dest });
+
 const renderFragments = (dir, selected) => {
   const { answers } = validateAnswers({ name: "Demo" });
   const dest = tmp();
@@ -447,4 +449,22 @@ test("a fragment no template uses isn't rendered, so its unknown placeholder doe
     stack: { manifest: { dependsOn: ["base"], files: [{ from: "templates/doc.md", to: "doc.md" }] }, files: { "doc.md": "plain\n" } },
   });
   assert.equal(readFileSync(join(renderFragments(dir, ["stack"]), "doc.md"), "utf8"), "plain\n");
+});
+
+test("a conditional fragment is empty when its answer is false and the text when it is true", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    stack: {
+      manifest: { fragments: { extra: { path: "templates/extra.md", when: "beta" } }, files: [{ from: "templates/doc.md", to: "doc.md" }] },
+      files: { "extra.md": ", extra {{slug}}", "doc.md": "base{{fragment_extra}}\n" },
+    },
+  });
+  const render = beta => {
+    const { answers } = validateAnswers({ name: "Demo", beta });
+    const dest = tmp();
+    renderModules(dir, ["stack"], answers, dest);
+    return readFileSync(join(dest, "doc.md"), "utf8");
+  };
+  assert.equal(render(true), "base, extra demo\n");
+  assert.equal(render(false), "base\n");
 });

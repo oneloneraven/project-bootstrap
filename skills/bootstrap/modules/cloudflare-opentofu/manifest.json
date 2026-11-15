@@ -15,8 +15,41 @@
       "key": "beta",
       "type": "boolean",
       "prompt": "Do you want a beta environment, with releases deployed to beta first and promoted to production by hand?"
+    },
+    {
+      "key": "admin",
+      "type": "boolean",
+      "prompt": "Does the app have an admin section for its owner, signed in through the central identity stack and checked again in the Worker?"
+    },
+    {
+      "key": "admin_subdomain",
+      "type": "dns_label",
+      "when": "admin",
+      "prompt": "Which subdomain serves the admin section (default admin)?"
     }
   ],
+  "fragments": {
+    "admin_production_vars": {
+      "path": "templates/fragments/admin-production-vars.json",
+      "when": "admin"
+    },
+    "admin_production_route": {
+      "path": "templates/fragments/admin-production-route.json",
+      "when": "admin"
+    },
+    "admin_e2e_vars": {
+      "path": "templates/fragments/admin-e2e-vars.json",
+      "when": "admin"
+    },
+    "admin_dev_vars_example": {
+      "path": "templates/fragments/admin-dev-vars-example.txt",
+      "when": "admin"
+    },
+    "admin_readme": {
+      "path": "templates/fragments/admin-readme.md",
+      "when": "admin"
+    }
+  },
   "overrides": [],
   "files": [
     {
@@ -58,6 +91,11 @@
       "from": "templates/infra/dns-beta.tf",
       "to": "infra/dns-beta.tf",
       "when": "beta"
+    },
+    {
+      "from": "templates/infra/dns-admin.tf",
+      "to": "infra/dns-admin.tf",
+      "when": "admin"
     },
     {
       "from": "templates/infra/redirects.tf",
@@ -115,11 +153,37 @@
     {
       "from": "templates/src/worker.js",
       "to": "src/worker.js",
+      "stage": "app",
+      "when": "!admin"
+    },
+    {
+      "from": "templates/src/worker-admin.js",
+      "to": "src/worker.js",
+      "when": "admin",
+      "stage": "app"
+    },
+    {
+      "from": "templates/src/lib/access.js",
+      "to": "src/lib/access.js",
+      "when": "admin",
       "stage": "app"
     },
     {
       "from": "templates/test/worker.test.js",
       "to": "test/worker.test.js",
+      "stage": "app",
+      "when": "!admin"
+    },
+    {
+      "from": "templates/test/worker-admin.test.js",
+      "to": "test/worker.test.js",
+      "when": "admin",
+      "stage": "app"
+    },
+    {
+      "from": "templates/test/lib/access.test.js",
+      "to": "test/lib/access.test.js",
+      "when": "admin",
       "stage": "app"
     }
   ],

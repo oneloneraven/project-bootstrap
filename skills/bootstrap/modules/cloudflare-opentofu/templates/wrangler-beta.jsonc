@@ -18,7 +18,7 @@
   "env": {
     "production": {
       "vars": {
-        "APP_ENV": "production"
+        "APP_ENV": "production"{{fragment_admin_production_vars}}
       },
       "assets": {
         "directory": "./dist",
@@ -28,7 +28,7 @@
         {
           "pattern": "{{zone_name}}/*",
           "zone_name": "{{zone_name}}"
-        }
+        }{{fragment_admin_production_route}}
       ]
     },
     "beta": {
@@ -64,7 +64,7 @@
     },
     "e2e": {
       "vars": {
-        "APP_ENV": "e2e"
+        "APP_ENV": "e2e"{{fragment_admin_e2e_vars}}
       },
       "assets": {
         "directory": "./dist",

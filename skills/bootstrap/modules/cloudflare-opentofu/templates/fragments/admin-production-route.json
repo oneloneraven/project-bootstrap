@@ -1,0 +1,5 @@
+,
+        {
+          "pattern": "{{admin_subdomain}}.{{zone_name}}/*",
+          "zone_name": "{{zone_name}}"
+        }
