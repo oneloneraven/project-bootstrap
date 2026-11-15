@@ -152,7 +152,7 @@ excluding that event):
 ## Resuming
 
 State lives in
-`${XDG_STATE_HOME:-~/.local/state}/claude-project-bootstrap/migrate/<repo>.json`.
+`${XDG_STATE_HOME:-~/.local/state}/project-bootstrap/migrate/<repo>.json`.
 It records each finished phase and which new item each old item became, so
 re-running the same command carries on where it stopped. Don't edit or
 delete the file mid-migration: without it, the script would try the

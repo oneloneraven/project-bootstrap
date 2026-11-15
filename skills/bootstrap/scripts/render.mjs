@@ -65,7 +65,7 @@ function pythonPackage(slug) {
   return PYTHON_KEYWORDS.has(identifier) ? `${identifier}_` : identifier;
 }
 
-const DEFAULT_LICENSOR = "Ravendarque (https://github.com/ravendarque)";
+const DEFAULT_LICENSOR = "One Lone Raven (https://github.com/oneloneraven)";
 
 function escapeHtml(text) {
   return text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

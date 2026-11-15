@@ -28,7 +28,7 @@ write a review from the [post-incident review template](post-incident-review.md)
 
 ## Status page updates
 
-- **Investigating:** "We're looking into a problem with claude-project-bootstrap."
+- **Investigating:** "We're looking into a problem with project-bootstrap."
 - **Identified:** "We've found the cause and are fixing it."
 - **Monitoring:** "A fix is live. We're watching to make sure it holds."
 - **Resolved:** "Everything's working again."

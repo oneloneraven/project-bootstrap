@@ -1,4 +1,4 @@
-# Working in claude-project-bootstrap
+# Working in project-bootstrap
 
 Claude skill for bootstrapping new projects using Ravendarque defined patterns and practices
 

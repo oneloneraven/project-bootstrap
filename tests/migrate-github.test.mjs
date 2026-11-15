@@ -86,8 +86,8 @@ test("state names are validated and live under the XDG state directory", () => {
   assert.equal(isRepoName("beta-interpreter"), true);
   assert.equal(isRepoName("a.b_c"), true);
   for (const bad of ["", ".", "..", "a/b", "../x", "a b"]) assert.equal(isRepoName(bad), false, bad);
-  assert.equal(defaultStateDir({ XDG_STATE_HOME: "/x" }, "/home/u"), "/x/claude-project-bootstrap/migrate");
-  assert.equal(defaultStateDir({}, "/home/u"), "/home/u/.local/state/claude-project-bootstrap/migrate");
+  assert.equal(defaultStateDir({ XDG_STATE_HOME: "/x" }, "/home/u"), "/x/project-bootstrap/migrate");
+  assert.equal(defaultStateDir({}, "/home/u"), "/home/u/.local/state/project-bootstrap/migrate");
   assert.throws(() => openState(stateDir(), "../x"), /valid repository name/);
 });
 

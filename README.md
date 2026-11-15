@@ -1,4 +1,4 @@
-# claude-project-bootstrap
+# project-bootstrap
 
 A Claude Code plugin that turns an empty directory into a fully set-up
 project: GitHub repository, branch protection, project board, CI,
@@ -9,8 +9,8 @@ you through the few steps only you can do.
 ## Install
 
 ```
-/plugin marketplace add ravendarque/claude-project-bootstrap
-/plugin install project-bootstrap@ravendarque
+/plugin marketplace add oneloneraven/project-bootstrap
+/plugin install project-bootstrap@oneloneraven
 ```
 
 Each GitHub Release also carries the plugin as a zip.

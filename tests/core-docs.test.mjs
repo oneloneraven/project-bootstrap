@@ -42,7 +42,7 @@ test("every relative Markdown link resolves", () => {
 test("licence carries the standard title and handle notice", () => {
   const licence = read("LICENSE.md");
   assert.equal(licence.split("\n")[0], "# Ravendarque Noncommercial Licence 1.0.0");
-  assert.match(licence, /^Required Notice: Copyright Ravendarque \(https:\/\/github\.com\/ravendarque\)$/m);
+  assert.match(licence, /^Required Notice: Copyright One Lone Raven \(https:\/\/github\.com\/oneloneraven\)$/m);
   assert.match(licence, /https:\/\/github\.com\/sample-owner\/sample-project\/blob\/main\/LICENSE\.md/);
 });
 
@@ -112,7 +112,7 @@ test("a core-only CLAUDE.md has no empty Stack section", () => {
 });
 
 test("the licence notice uses the licensor answer", () => {
-  assert.match(read("LICENSE.md"), /^Required Notice: Copyright Ravendarque \(https:\/\/github\.com\/ravendarque\)$/m);
+  assert.match(read("LICENSE.md"), /^Required Notice: Copyright One Lone Raven \(https:\/\/github\.com\/oneloneraven\)$/m);
 });
 
 test("the workflow doc uses the board's status names", () => {

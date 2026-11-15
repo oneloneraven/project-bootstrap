@@ -3,12 +3,19 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { askId, isHexId } from "./cloudflare.mjs";
 import { getId, recordId } from "../state.mjs";
+import { FOLDER, moveLegacyFolder } from "../legacy-folder.mjs";
 
 const ACCOUNT_QUESTION = "Cloudflare account id (32 hex characters; on the zone's Overview page, bottom right) ";
 const ZONE_KEY = "cloudflare_zone_id";
 
+const configRoot = (env, home) => env.XDG_CONFIG_HOME || join(home, ".config");
+
 export function defaultConfigDir(env = process.env, home = homedir()) {
-  return join(env.XDG_CONFIG_HOME || join(home, ".config"), "claude-project-bootstrap");
+  return join(configRoot(env, home), FOLDER);
+}
+
+export function resolveConfigDir(env = process.env, home = homedir()) {
+  return moveLegacyFolder(configRoot(env, home));
 }
 
 export function checkFlagId(name, value) {

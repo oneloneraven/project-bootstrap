@@ -157,7 +157,7 @@ the bootstrap token.
 
 The ids aren't secret, so the script remembers them. The account id is the
 same for every project, so it's stored once per user in
-`${XDG_CONFIG_HOME:-~/.config}/claude-project-bootstrap/cloudflare.json`
+`${XDG_CONFIG_HOME:-~/.config}/project-bootstrap/cloudflare.json`
 (mode 600). The zone id is per project, so it's stored in the project's
 `.bootstrap/state.json` as `ids.cloudflare_zone_id`. Each run uses, in
 order, the `--account-id` or `--zone-id` flag (32 hexadecimal characters; it
