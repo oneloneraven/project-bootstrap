@@ -42,13 +42,33 @@ When a labelled PR merges, `release.yml`:
 1. reads the label (`none` stops here);
 2. finds the latest `vX.Y.Z` tag and computes the next version;
 3. tags the PR's own merge commit and pushes only the tag;
-4. creates a GitHub Release with generated notes and attaches any build
-   artefact.
+4. creates a GitHub Release whose notes are the PR's What's new lines
+   ([below](#whats-new)) and attaches any build artefact.
 
 The tag is pushed with a short-lived token from the release GitHub App,
 because a push made with the default `GITHUB_TOKEN` doesn't trigger other
 workflows. The workflow never pushes to `main`, so branch protection is
 unaffected. `workflow_dispatch` remains as a manual override.
+
+## What's new
+
+Release notes are the lines under the PR's "What's new" heading, one plain
+sentence per change a user would notice. The release workflow puts them in the
+tag message and the GitHub Release notes. A PR with an empty section, a
+`release: none` PR and a manual release with no PR have empty notes, so
+nothing is made up. `require-release-label.yml` fails a `major`, `minor` or
+`patch` PR without the heading, or with only a placeholder such as "None".
+
+### Adopting What's new in an existing project
+
+Copy these from the plugin's core templates:
+
+- `whats-new.mjs`, `check-whats-new.mjs` and the updated `plan-releases.mjs`
+  into `.github/scripts/`;
+- the What's new section and Announced item from the pull request template,
+  and the Announced item from the definition of done;
+- the What's new step in `require-release-label.yml`, and the tag message and
+  `--notes-file` lines in `release.yml`.
 
 ## Database migrations: expand and contract
 

@@ -155,3 +155,19 @@ test("both copies of working-with-claude.md route subagents through the main che
     }
   }
 });
+
+test("the PR template has a What's new section before the definition of done, and both lists carry Announced", () => {
+  const template = read(".github/pull_request_template.md");
+  assert.ok(template.indexOf("## What's new") > 0);
+  assert.ok(template.indexOf("## What's new") < template.indexOf("## Definition of done"));
+  assert.match(template, /<!-- One plain sentence per change a user would notice\. Leave empty if they won't notice anything\. -->/);
+  assert.match(template, /^- \[ \] Announced: /m);
+  assert.match(read("docs/definition-of-done.md"), /^9\. \*\*Announced\.\*\*/m);
+});
+
+test("release notes come from What's new, and the versioning doc says how to adopt them", () => {
+  const versioning = read("docs/versioning.md").replace(/\s+/g, " ");
+  assert.match(versioning, /Release notes are the lines under the PR's "What's new" heading/);
+  assert.match(versioning, /Adopting What's new in an existing project/);
+  assert.doesNotMatch(versioning, /generated notes/);
+});

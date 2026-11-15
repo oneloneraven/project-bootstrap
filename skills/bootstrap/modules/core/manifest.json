@@ -156,6 +156,14 @@
       "to": ".github/scripts/plan-releases.mjs"
     },
     {
+      "from": "templates/github/scripts/whats-new.mjs",
+      "to": ".github/scripts/whats-new.mjs"
+    },
+    {
+      "from": "templates/github/scripts/check-whats-new.mjs",
+      "to": ".github/scripts/check-whats-new.mjs"
+    },
+    {
       "from": "templates/github/scripts/check-release-paths.mjs",
       "to": ".github/scripts/check-release-paths.mjs"
     },
