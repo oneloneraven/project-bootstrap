@@ -12,6 +12,20 @@ resource "cloudflare_dns_record" "app_apex" {
   }
 }
 
+resource "cloudflare_dns_record" "app_www" {
+  zone_id = data.cloudflare_zone.app.id
+  name    = "www.${var.app_zone_name}"
+  type    = "CNAME"
+  content = var.app_zone_name
+  ttl     = 1
+  proxied = true
+  comment = "Proxied so the www redirect rule answers; requests never reach an origin."
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 locals {
   cloudflare_cas = ["letsencrypt.org", "pki.goog", "ssl.com", "sectigo.com"]
   caa_records = merge(

@@ -207,7 +207,8 @@ test("plan-dependent steps use the recorded github_plan", () => {
 });
 
 const tokensIn = dir => JSON.parse(read(dir, ".bootstrap/cloudflare/tokens.json"));
-const normalise = names => names.map(name => name.replace(/\bEdit$/, "Write")).sort();
+const dashboardLabels = { "Single Redirect": "Dynamic URL Redirects" };
+const normalise = names => names.map(name => name.replace(/\bEdit$/, "Write").replace(/^Single Redirect\b/, dashboardLabels["Single Redirect"])).sort();
 
 function readmeTokens(dir, beta) {
   const section = read(dir, "infra/README.md").split("### Cloudflare API tokens")[1].split("###")[0];
@@ -234,7 +235,7 @@ test("the deploy token's environments follow the beta answer", () => {
 
 test("the README lists the infra plan token's permissions explicitly", () => {
   const plan = readmeTokens(withBeta, true).find(t => t.token === "Infra plan");
-  assert.deepEqual(plan.permissions, normalise(["Workers R2 Storage Read", "Transform Rules Read", "DNS Read", "Zone Settings Read", "Zone WAF Read", "Cache Settings Read"]));
+  assert.deepEqual(plan.permissions, normalise(["Workers R2 Storage Read", "Transform Rules Read", "DNS Read", "Zone Settings Read", "Zone WAF Read", "Cache Settings Read", "Dynamic URL Redirects Read"]));
   assert.doesNotMatch(read(withBeta, "infra/README.md"), /read-only version of each/);
 });
 
@@ -309,4 +310,48 @@ test("the DNSSEC manual step only verifies, because Cloudflare Registrar adds th
   assert.match(step, /pending/);
   assert.doesNotMatch(step, /registrar's DNSSEC/);
   assert.doesNotMatch(section(moduleDoc, "## 2. Interview questions"), /registrar/i);
+});
+
+const block = (text, header) => {
+  const start = text.indexOf(header);
+  assert.ok(start >= 0, header);
+  const next = text.indexOf("\nresource ", start + header.length);
+  return text.slice(start, next < 0 ? undefined : next);
+};
+
+for (const [label, dir] of [["with beta", withBeta], ["without beta", noBeta]]) {
+  test(`www is a proxied CNAME to the apex ${label}`, () => {
+    const record = block(read(dir, "infra/dns.tf"), 'resource "cloudflare_dns_record" "app_www"');
+    assert.match(record, /name\s*=\s*"www\.\$\{var\.app_zone_name\}"/);
+    assert.match(record, /type\s*=\s*"CNAME"/);
+    assert.match(record, /content\s*=\s*var\.app_zone_name/);
+    assert.match(record, /proxied\s*=\s*true/);
+    assert.match(record, /prevent_destroy = true/);
+  });
+
+  test(`www redirects to the apex over https with a 301, keeping the path and query ${label}`, () => {
+    const rules = block(read(dir, "infra/redirects.tf"), 'resource "cloudflare_ruleset" "app_redirects"');
+    assert.match(rules, /phase\s*=\s*"http_request_dynamic_redirect"/);
+    assert.match(rules, /action\s*=\s*"redirect"/);
+    assert.match(rules, /http\.host eq \\"www\.\$\{var\.app_zone_name\}\\"/);
+    assert.match(rules, /status_code\s*=\s*301/);
+    assert.match(rules, /concat\(\\"https:\/\/\$\{var\.app_zone_name\}\\", http\.request\.uri\.path\)/);
+    assert.match(rules, /preserve_query_string\s*=\s*true/);
+  });
+
+  test(`the infra tokens can read and write dynamic redirects ${label}`, () => {
+    const tokens = tokensIn(dir);
+    assert.ok(tokens.find(t => t.token === "Infra plan").permissions.includes("Dynamic URL Redirects Read"));
+    assert.ok(tokens.find(t => t.token === "Infra apply").permissions.includes("Dynamic URL Redirects Write"));
+    const table = read(dir, "infra/README.md");
+    assert.match(table, /Zone:[^\n|]*Single Redirect Read/);
+    assert.match(table, /Zone:[^\n|]*Single Redirect Edit/);
+  });
+}
+
+test("the module warns about an existing www record and the README lists the redirect rule", () => {
+  assert.match(section(moduleDoc, "## 2. Interview questions"), /If the apex, `www\.`\s+or `beta\.` already\s+has a record/);
+  assert.match(read(withBeta, "infra/README.md"), /the `www` redirect/);
+  assert.match(section(moduleDoc, "## 2. Interview questions"), /already has Redirect Rules/);
+  assert.match(read(withBeta, "infra/dns.tf"), /comment = "Proxied so the www redirect rule answers; requests never reach an origin\."/);
 });

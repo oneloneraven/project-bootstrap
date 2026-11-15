@@ -1,10 +1,12 @@
 # Infrastructure
 
-Everything provisionable is managed here with [OpenTofu](https://opentofu.org), the open-source fork of Terraform (same HCL, providers and state format): DNS, TLS and HSTS,
-DNSSEC, CAA, security headers and cache rules for `{{zone_name}}`. The
-Worker itself is deployed by wrangler from the release workflows. The only
-things outside OpenTofu are the state bucket (it must exist before OpenTofu
-can use it), Worker runtime secrets and the CI credentials below.
+Everything provisionable is managed here with
+[OpenTofu](https://opentofu.org), the open-source fork of Terraform (same HCL,
+providers and state format): DNS, TLS and HSTS, DNSSEC, CAA, security headers,
+cache rules and the `www` redirect for `{{zone_name}}`. The Worker itself is
+deployed by wrangler from the release workflows. The only things outside
+OpenTofu are the state bucket (it must exist before OpenTofu can use it),
+Worker runtime secrets and the CI credentials below.
 
 State lives in the R2 bucket `{{slug}}-tfstate`, never in git.
 
@@ -21,9 +23,9 @@ State lives in the R2 bucket `{{slug}}-tfstate`, never in git.
 ## Changing infrastructure
 
 Everything `infra/` declares (the DNS records, the TLS, HTTPS, HSTS and DNSSEC
-settings, and the security header and cache rules for `{{zone_name}}`) changes
-only through a PR to `infra/`, applied by `infra.yml`. The Worker's routes come
-from `wrangler.jsonc` and change through wrangler.
+settings, and the security header, cache and redirect rules for
+`{{zone_name}}`) changes only through a PR to `infra/`, applied by `infra.yml`.
+The Worker's routes come from `wrangler.jsonc` and change through wrangler.
 
 - Before writing to Cloudflare through an API, an MCP tool or the dashboard,
   check whether `infra/` declares that resource. If it does, make the change
@@ -58,8 +60,8 @@ account and, for zone permissions, to `{{zone_name}}` only.
 |---|---|---|
 | Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Workers Scripts Edit, Account Settings Read |
 | Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Workers Scripts Edit, Account Settings Read. Zone: Workers Routes Edit |
-| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read |
-| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit |
+| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
+| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
 
 Transform Rules is account-scoped, so the infra tokens' Transform Rules permission covers every zone in the account, not just `{{zone_name}}`.
 

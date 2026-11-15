@@ -2,8 +2,8 @@
 
 A Cloudflare Worker serving the app's static assets and a `/api/health`
 endpoint, deployed by wrangler from release tags, with the zone's DNS,
-TLS, headers and cache rules in OpenTofu (the open-source Terraform fork)
-and state in R2.
+TLS, headers, cache rules and a `www` redirect in OpenTofu (the open-source
+Terraform fork) and state in R2.
 
 ## 1. Depends on
 
@@ -24,12 +24,15 @@ and preview hostnames are built from it.
 ### Plan warnings
 
 - **The app takes over the zone's apex.** OpenTofu adds a proxied
-  placeholder A record for `<zone>` (and `beta.<zone>`), and the production
-  Worker route is `<zone>/*`. Ask the user to check the zone's DNS records in
-  the dashboard. If the apex or `beta.` already has a record, or the domain
-  already serves something, stop and agree what happens to it before going
-  on: apply fails on an existing CNAME and splits traffic with an existing
-  A record.
+  placeholder A record for `<zone>` (and `beta.<zone>`), a proxied `www`
+  CNAME to the apex with a rule that 301s `www.<zone>` to `https://<zone>`,
+  and the production Worker route is `<zone>/*`. Ask the user to check the
+  zone's DNS records in the dashboard. If the apex, `www.` or `beta.` already
+  has a record, or the domain already serves something, stop and agree what
+  happens to it before going on: apply fails on an existing CNAME and splits
+  traffic with an existing A record. If the zone already has Redirect Rules,
+  stop and agree what happens to them too: the apply fails while a
+  `http_request_dynamic_redirect` ruleset exists.
 - Without a beta, the first merged release deploys straight to the apex.
 - **Free private repository** (the recorded `github_plan` is `free`):
   GitHub's documentation says environments need a paid plan for private
