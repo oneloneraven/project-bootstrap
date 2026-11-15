@@ -102,7 +102,7 @@ steps count as settled. If the saved answers lack one the interview now asks
      can't read the plan and ask which plan the owner is on. Public repos get
      these features on every plan: don't ask and record no plan;
    - the licence's copyright holder, defaulting to
-     `Ravendarque (https://github.com/ravendarque)`; never a real name
+     `One Lone Raven (https://github.com/oneloneraven)`; never a real name
      unless the user insists;
    - modules: `core` is always on; offer `js-toolchain` (any JavaScript
      project), `python-toolchain` (any Python project) or

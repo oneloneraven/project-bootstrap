@@ -27,7 +27,9 @@ node skills/bootstrap/scripts/migrate.mjs <repo> --dry-run
 
 The dry run only reads. It prints the old board's fields and item counts,
 the repository's secret and variable names, Pages, packages, and whether
-there's a release App or a board-sync workflow to switch. Read it, then run
+there's a release App or a board-sync workflow to switch. The first run of
+either script, a dry run included, also moves an old `claude-project-bootstrap`
+state or config folder to `project-bootstrap`, once. Read the output, then run
 the migration:
 
 ```bash
@@ -152,7 +154,7 @@ excluding that event):
 ## Resuming
 
 State lives in
-`${XDG_STATE_HOME:-~/.local/state}/claude-project-bootstrap/migrate/<repo>.json`.
+`${XDG_STATE_HOME:-~/.local/state}/project-bootstrap/migrate/<repo>.json`.
 It records each finished phase and which new item each old item became, so
 re-running the same command carries on where it stopped. Don't edit or
 delete the file mid-migration: without it, the script would try the

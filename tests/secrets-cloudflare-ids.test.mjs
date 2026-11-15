@@ -126,8 +126,8 @@ test("flags are validated as 32 hex characters", () => {
 });
 
 test("the config directory follows XDG_CONFIG_HOME", () => {
-  assert.equal(defaultConfigDir({ XDG_CONFIG_HOME: "/x" }, "/home/u"), "/x/claude-project-bootstrap");
-  assert.equal(defaultConfigDir({}, "/home/u"), "/home/u/.config/claude-project-bootstrap");
+  assert.equal(defaultConfigDir({ XDG_CONFIG_HOME: "/x" }, "/home/u"), "/x/project-bootstrap");
+  assert.equal(defaultConfigDir({}, "/home/u"), "/home/u/.config/project-bootstrap");
 });
 
 test("secrets.mjs passes the flags and the config directory to the step, and refuses a malformed flag", async () => {

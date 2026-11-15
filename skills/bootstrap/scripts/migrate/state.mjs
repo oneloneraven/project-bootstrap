@@ -1,13 +1,20 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { FOLDER, moveLegacyFolder } from "../legacy-folder.mjs";
 
 const REPO_NAME = /^(?!\.{1,2}$)[A-Za-z0-9._-]+$/;
 
 const fresh = repo => ({ version: 1, repo, phases: {}, inventory: null, copy: { started: false }, newBoard: null, mapping: {}, verify: null, notes: [] });
 
+const stateRoot = (env, home) => env.XDG_STATE_HOME || join(home, ".local", "state");
+
 export function defaultStateDir(env = process.env, home = homedir()) {
-  return join(env.XDG_STATE_HOME || join(home, ".local", "state"), "claude-project-bootstrap", "migrate");
+  return join(stateRoot(env, home), FOLDER, "migrate");
+}
+
+export function resolveStateDir(env = process.env, home = homedir()) {
+  return join(moveLegacyFolder(stateRoot(env, home)), "migrate");
 }
 
 export function isRepoName(value) {

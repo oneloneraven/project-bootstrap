@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { loadContext } from "./secrets/context.mjs";
 import { realDeps } from "./secrets/deps.mjs";
 import { secretsExist } from "./secrets/github.mjs";
-import { checkFlagId, defaultConfigDir } from "./secrets/ids.mjs";
+import { checkFlagId, defaultConfigDir, resolveConfigDir } from "./secrets/ids.mjs";
 import { storeThenSet } from "./secrets/order.mjs";
 import { Vault } from "./secrets/vault.mjs";
 
@@ -91,5 +91,5 @@ function launchedDirectly() {
 }
 
 if (launchedDirectly()) {
-  process.exitCode = await runCli(process.argv.slice(2), realDeps);
+  process.exitCode = await runCli(process.argv.slice(2), realDeps, { configDir: resolveConfigDir() });
 }

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { realDeps } from "./secrets/deps.mjs";
 import { createGithub } from "./migrate/github.mjs";
 import { runMigration } from "./migrate/phases.mjs";
-import { defaultStateDir, isRepoName, openState } from "./migrate/state.mjs";
+import { defaultStateDir, resolveStateDir, isRepoName, openState } from "./migrate/state.mjs";
 
 export const DEFAULT_ORG = "oneloneraven";
 
@@ -57,5 +57,5 @@ function launchedDirectly() {
 
 if (launchedDirectly()) {
   const deps = { ...realDeps, sleep: ms => new Promise(resolve => setTimeout(resolve, ms)) };
-  process.exitCode = await runCli(process.argv.slice(2), deps);
+  process.exitCode = await runCli(process.argv.slice(2), deps, { stateDir: resolveStateDir() });
 }

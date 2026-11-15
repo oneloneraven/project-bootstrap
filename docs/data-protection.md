@@ -1,6 +1,6 @@
 # Data protection: record of processing
 
-What personal data claude-project-bootstrap processes, why, where it goes and how long it's
+What personal data project-bootstrap processes, why, where it goes and how long it's
 kept. Keep this current: a change that collects new data or adds a processor
 updates it in the same PR.
 

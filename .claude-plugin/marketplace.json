@@ -1,6 +1,6 @@
 {
-  "name": "ravendarque",
-  "owner": { "name": "Ravendarque", "url": "https://github.com/ravendarque" },
+  "name": "oneloneraven",
+  "owner": { "name": "One Lone Raven", "url": "https://github.com/oneloneraven" },
   "plugins": [
     {
       "name": "project-bootstrap",

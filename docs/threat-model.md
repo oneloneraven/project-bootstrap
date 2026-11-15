@@ -1,6 +1,6 @@
 # Threat model
 
-What claude-project-bootstrap protects, from whom, and how. Update it in the same PR as any
+What project-bootstrap protects, from whom, and how. Update it in the same PR as any
 change that adds or moves a trust boundary ([coding standards](coding-standards.md#security)).
 
 ## The system
