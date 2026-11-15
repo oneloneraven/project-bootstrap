@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { loadContext } from "./secrets/context.mjs";
 import { realDeps } from "./secrets/deps.mjs";
 import { secretsExist } from "./secrets/github.mjs";
-import { checkFlagId, resolveConfigDir } from "./secrets/ids.mjs";
+import { checkFlagId, defaultConfigDir, resolveConfigDir } from "./secrets/ids.mjs";
 import { storeThenSet } from "./secrets/order.mjs";
 import { Vault } from "./secrets/vault.mjs";
 
@@ -38,7 +38,7 @@ async function loadStep(name, steps) {
   return (await import(url)).default;
 }
 
-export async function runCli(argv, deps, { steps, configDir = resolveConfigDir() } = {}) {
+export async function runCli(argv, deps, { steps, configDir = defaultConfigDir() } = {}) {
   let parsed;
   try {
     parsed = parseArgs({ args: argv, allowPositionals: true, options: { vault: { type: "string", default: "Dev" }, rotate: { type: "boolean", default: false }, "account-id": { type: "string" }, "zone-id": { type: "string" } } });
@@ -91,5 +91,5 @@ function launchedDirectly() {
 }
 
 if (launchedDirectly()) {
-  process.exitCode = await runCli(process.argv.slice(2), realDeps);
+  process.exitCode = await runCli(process.argv.slice(2), realDeps, { configDir: resolveConfigDir() });
 }

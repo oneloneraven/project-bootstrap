@@ -237,7 +237,7 @@ test("only a GitHub failure marks the error as stored", async () => {
 test("the script runs when launched through a symlinked directory", () => {
   const link = join(mkdtempSync(join(tmpdir(), "link-")), "scripts");
   symlinkSync(fileURLToPath(new URL("../skills/bootstrap/scripts", import.meta.url)), link);
-  const result = spawnSync(process.execPath, [join(link, "secrets.mjs")], { encoding: "utf8" });
+  const result = spawnSync(process.execPath, [join(link, "secrets.mjs")], { encoding: "utf8", env: { ...process.env, XDG_CONFIG_HOME: mkdtempSync(join(tmpdir(), "xdg-")) } });
   assert.equal(result.status, 2);
   assert.match(result.stdout, /Usage: secrets\.mjs/);
 });

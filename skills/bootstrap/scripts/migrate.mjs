@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { realDeps } from "./secrets/deps.mjs";
 import { createGithub } from "./migrate/github.mjs";
 import { runMigration } from "./migrate/phases.mjs";
-import { resolveStateDir, isRepoName, openState } from "./migrate/state.mjs";
+import { defaultStateDir, resolveStateDir, isRepoName, openState } from "./migrate/state.mjs";
 
 export const DEFAULT_ORG = "oneloneraven";
 
@@ -17,7 +17,7 @@ async function checkGh(deps) {
   if (status !== 0) throw new Error("gh is not signed in: run gh auth login");
 }
 
-export async function runCli(argv, deps, { stateDir = resolveStateDir() } = {}) {
+export async function runCli(argv, deps, { stateDir = defaultStateDir() } = {}) {
   let parsed;
   try {
     parsed = parseArgs({
@@ -57,5 +57,5 @@ function launchedDirectly() {
 
 if (launchedDirectly()) {
   const deps = { ...realDeps, sleep: ms => new Promise(resolve => setTimeout(resolve, ms)) };
-  process.exitCode = await runCli(process.argv.slice(2), deps);
+  process.exitCode = await runCli(process.argv.slice(2), deps, { stateDir: resolveStateDir() });
 }
