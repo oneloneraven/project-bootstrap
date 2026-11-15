@@ -137,7 +137,7 @@
   },
   "claudeIndexLines": [
     "- Cloudflare Workers, deployed by wrangler from release tags; infrastructure in OpenTofu: [coding standards](docs/coding-standards.md#cloudflare-and-opentofu), [infra](infra/README.md). Merging `infra/` is a production change.",
-    "- Never change anything `infra/` manages through an API, an MCP tool or the dashboard, even an addition OpenTofu would leave alone. Change it in `infra/` through a PR: [infra](infra/README.md#changing-infrastructure)."
+    "- Never change anything `infra/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: [infra](infra/README.md#changing-infrastructure)."
   ],
   "screening": [
     {

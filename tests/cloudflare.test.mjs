@@ -251,26 +251,26 @@ test("every DNS record comment fits Cloudflare's 100-character Free plan limit",
   for (const { file, text } of comments) assert.ok(text.length <= 100, `${file}: ${text.length} characters: ${text}`);
 });
 
-test("every render's CLAUDE.md keeps the destructive-change rule alongside the infrastructure rule", () => {
+test("every render's CLAUDE.md has the infrastructure rule", () => {
   for (const dir of [withBeta, noBeta]) {
-    assert.match(read(dir, "CLAUDE.md"), /^- Ask before any destructive change outside the repository, even mid-task:/m);
-    assert.match(read(dir, "CLAUDE.md"), /^- Never change anything `infra\/` manages through an API, an MCP tool or the dashboard, even an addition OpenTofu would leave alone\. Change it in `infra\/` through a PR: \[infra\]\(infra\/README\.md#changing-infrastructure\)\.$/m);
+    assert.match(read(dir, "CLAUDE.md"), /^- Never change anything `infra\/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard\. Change it in `infra\/` through a PR: \[infra\]\(infra\/README\.md#changing-infrastructure\)\.$/m);
   }
 });
 
 test("the infrastructure rule links to a real heading in the infra README", () => {
   const slug = heading => heading.toLowerCase().replace(/[^a-z0-9 -]/g, "").replace(/ /g, "-");
-  for (const dir of [withBeta, noBeta]) {
-    const target = read(dir, "CLAUDE.md").match(/\(infra\/README\.md#([^)]+)\)/g).map(link => link.match(/#([^)]+)/)[1]);
-    assert.ok(target.includes("changing-infrastructure"));
+  for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
+    const links = [...read(dir, "CLAUDE.md").matchAll(/\(infra\/README\.md#([^)]+)\)/g)].map(m => m[1]);
+    assert.ok(links.length, `${name}: CLAUDE.md links to no infra/README.md heading`);
     const headings = [...read(dir, "infra/README.md").matchAll(/^#{1,6} (.+)$/gm)].map(m => slug(m[1]));
-    assert.ok(headings.includes("changing-infrastructure"));
+    for (const link of links) assert.ok(headings.includes(link), `${name}: no heading for #${link}`);
   }
 });
 
-test("the infra README names only resources the module declares", () => {
+test("the infra README's change rule points wrangler-owned resources at wrangler and hand-made ones at an import", () => {
   const section = read(withBeta, "infra/README.md").split("## Changing infrastructure")[1].split("\n## ")[0];
-  assert.match(section, /`infra\.yml`/);
+  assert.match(section, /`wrangler\.jsonc`/);
+  assert.match(section, /`import` block/);
   assert.match(section, /explicit OK/);
-  assert.doesNotMatch(section, /state bucket|Worker's routes/);
+  assert.doesNotMatch(section, /state bucket/);
 });

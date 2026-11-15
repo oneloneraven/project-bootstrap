@@ -134,7 +134,10 @@ test("the destructive-change rule is in the CLAUDE.md index and the workflow", (
   assert.match(read("docs/workflow.md"), /^- Ask before any destructive change outside the repository, such as deleting,\s+disabling or overwriting something in a hosted service, even mid-task and even\s+when it looks like part of the work\.$/m);
 });
 
-test("a render without cloudflare-opentofu has no infrastructure rule", () => {
-  assert.doesNotMatch(read("CLAUDE.md"), /infra\/README\.md/);
-  assert.doesNotMatch(read("CLAUDE.md"), /through an API, an MCP tool or the dashboard/);
+test("renders without cloudflare-opentofu have no infrastructure rule", () => {
+  for (const [name, dir] of [["core", dest], ["web-app", renderReal(["web-app"])]]) {
+    const claude = readFileSync(join(dir, "CLAUDE.md"), "utf8");
+    assert.doesNotMatch(claude, /infra\/README\.md/, name);
+    assert.doesNotMatch(claude, /through an API, an MCP tool or the dashboard/, name);
+  }
 });

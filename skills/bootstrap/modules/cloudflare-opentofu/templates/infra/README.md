@@ -22,15 +22,18 @@ State lives in the R2 bucket `{{slug}}-tfstate`, never in git.
 
 Everything `infra/` declares (the DNS records, the TLS, HTTPS, HSTS and DNSSEC
 settings, and the security header and cache rules for `{{zone_name}}`) changes
-only through a PR to `infra/`, applied by `infra.yml`.
+only through a PR to `infra/`, applied by `infra.yml`. The Worker's routes come
+from `wrangler.jsonc` and change through wrangler.
 
 - Before writing to Cloudflare through an API, an MCP tool or the dashboard,
-  check whether `infra/` declares that resource or that zone. If it does, make
-  the change there instead. That includes additions OpenTofu wouldn't touch,
-  because the repository stops being the record of what's live.
+  check whether `infra/` declares that resource. If it does, make the change
+  there instead. Anything new in a zone `infra/` manages goes into `infra/`
+  too, even when OpenTofu would leave it alone, because otherwise the
+  repository stops being the record of what's live.
 - In an emergency, a change by hand needs the maintainer's explicit OK first.
-  Put the same change into `infra/` straight away, so the next plan shows no
-  drift.
+  Then declare the same resource in `infra/` straight away, with an `import`
+  block for anything created by hand, so the next apply adopts it instead of
+  failing to create it again.
 
 ## Setup
 
