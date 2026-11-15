@@ -54,10 +54,12 @@ and preview hostnames are built from it.
   too; a test checks they match.
 - `infra/`: provider and R2 backend, DNS placeholder records (and `beta.`),
   CAA, TLS 1.2 minimum, HSTS, always HTTPS, DNSSEC, security headers, cache
-  rules, and a README with setup, disaster recovery and teardown.
+  rules, and a README with setup, deleting resources, disaster recovery and
+  teardown.
 - `scripts/bootstrap-state.mjs` and the workflows `infra.yml`,
   `bootstrap-state.yml`, `preview.yml`, `deploy.yml`, and `promote.yml`
-  (beta only).
+  (beta only). `infra.yml` refuses plans that delete or replace; a manual run
+  with `allow_deletes` applies one on purpose.
 - Merges into `package.json`: adds wrangler, and its `e2e:server` script
   runs `wrangler dev`, so e2e tests the real Worker. Allows `workerd`'s
   install script in `pnpm-workspace.yaml`.

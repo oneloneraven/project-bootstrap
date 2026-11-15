@@ -12,7 +12,8 @@ whether the design is idiomatic for the platform rather than fighting it.
 - **State is in R2, never in git.** A `sensitive` value is still written to
   state in plain text.
 - **Data-bearing resources have `prevent_destroy`.** The infra workflow
-  refuses any plan that deletes.
+  refuses any plan that deletes, unless a person runs it by hand with
+  `allow_deletes`.
 - **Tools and runners are pinned exactly.** `tofu_version` in `infra.yml`
   is an exact release more than 72 hours old, upgraded by hand because
   Dependabot doesn't track it; every workflow runs on `ubuntu-26.04`, moved
