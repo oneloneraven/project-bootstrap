@@ -1,2 +1,2 @@
 { "name": "f", "dependsOn": [], "files": [{ "from": "templates/out.md", "to": "out.md" }], "requiredChecks": [], "claudeIndexLines": [],
-  "screening": [{ "dependency": "toolf", "maintainer": "Org F", "listed": "N", "note": "" }] }
+  "screening": [{ "dependency": "toolf", "usedFor": "Testing", "maintainer": "Org F", "listed": "N", "decision": "Allowed", "screenedOn": "2026-01-02" }] }

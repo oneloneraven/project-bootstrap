@@ -76,27 +76,35 @@
   "screening": [
     {
       "dependency": "pnpm",
+      "usedFor": "Installing packages and running scripts",
       "maintainer": "pnpm project (independent open source)",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "Vitest",
+      "usedFor": "Running unit tests",
       "maintainer": "VoidZero Inc.",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "Biome",
+      "usedFor": "Linting and formatting",
       "maintainer": "Biome project (independent open source)",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "TypeScript (`tsc`)",
+      "usedFor": "Type checking",
       "maintainer": "Microsoft",
       "listed": "Y",
-      "note": "Free, dev-only, no maintained non-Microsoft JavaScript type checker: allowed under the free-tool exception."
+      "decision": "Free, dev-only, no maintained non-Microsoft JavaScript type checker: allowed under the free-tool exception.",
+      "screenedOn": "2026-10-28"
     }
   ],
   "allowBuilds": {

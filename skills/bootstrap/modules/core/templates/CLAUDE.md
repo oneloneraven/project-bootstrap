@@ -24,7 +24,7 @@ Read a doc when the work touches it, not up front.
 - No comments by default; one line for a "why" the code can't express: [comments](docs/coding-standards.md#comments-and-docs).
 - Privacy and data rules: [privacy](docs/privacy.md), [record of processing](docs/data-protection.md).
 - Keep the [threat model](docs/threat-model.md) current whenever a trust boundary moves.
-- Screen new dependencies and vendors: [ADR-0002](docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md).
+- Screen new dependencies and vendors and record each in [the register](docs/dependency-register.md): [ADR-0002](docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md).
 - Significant decisions get an [ADR](docs/adr/README.md).
 - Verify before claiming anything works; report failures and unverified steps plainly.
 

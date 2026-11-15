@@ -70,57 +70,75 @@
   "screening": [
     {
       "dependency": "mise",
+      "usedFor": "Installing and pinning the toolchain",
       "maintainer": "jdx (independent open source maintainer)",
       "listed": "N",
-      "note": "MIT licence."
+      "decision": "Allowed. MIT licence.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "aqua registry (mise's aqua backend)",
+      "usedFor": "Resolving tool release downloads for mise",
       "maintainer": "aqua project (independent open source)",
       "listed": "N",
-      "note": "MIT licence. Only resolves release downloads; the tools themselves are screened separately."
+      "decision": "Allowed. MIT licence. Only resolves release downloads; the tools themselves are screened separately.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "jdx/mise-action",
+      "usedFor": "Installing the toolchain in CI",
       "maintainer": "jdx (independent open source maintainer)",
       "listed": "N",
-      "note": "MIT licence."
+      "decision": "Allowed. MIT licence.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "uv and ruff",
+      "usedFor": "Managing Python packages, linting and formatting",
       "maintainer": "Astral",
       "listed": "N",
-      "note": "Open source (Apache-2.0 or MIT). Astral announced on 19 March 2026 that it is joining OpenAI, with the deal pending when checked; OpenAI is on neither list. Re-check once the deal closes."
+      "decision": "Allowed. Open source (Apache-2.0 or MIT). Astral announced on 19 March 2026 that it is joining OpenAI, with the deal pending when checked; OpenAI is on neither list. Re-check once the deal closes.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "CPython",
+      "usedFor": "Running the project's Python code",
       "maintainer": "Python Software Foundation",
       "listed": "N",
-      "note": "PSF licence."
+      "decision": "Allowed. PSF licence.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "pytest",
+      "usedFor": "Running tests",
       "maintainer": "pytest-dev (community open source)",
       "listed": "N",
-      "note": "MIT licence."
+      "decision": "Allowed. MIT licence.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "pytest-asyncio",
+      "usedFor": "Testing asynchronous code",
       "maintainer": "pytest-dev (community open source)",
       "listed": "N",
-      "note": "Apache-2.0 licence."
+      "decision": "Allowed. Apache-2.0 licence.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "PyYAML",
+      "usedFor": "Reading dependabot.yml in the toolchain tests",
       "maintainer": "The YAML Project (community open source)",
       "listed": "N",
-      "note": "MIT licence. Dev-only: the toolchain tests read dependabot.yml with it."
+      "decision": "Allowed. MIT licence. Dev-only: the toolchain tests read dependabot.yml with it.",
+      "screenedOn": "2026-10-29"
     },
     {
       "dependency": "shellcheck",
+      "usedFor": "Checking shell scripts",
       "maintainer": "koalaman (independent open source maintainer)",
       "listed": "N",
-      "note": "GPL-3.0 licence. Dev tool only."
+      "decision": "Allowed. GPL-3.0 licence. Dev tool only.",
+      "screenedOn": "2026-10-29"
     }
   ]
 }

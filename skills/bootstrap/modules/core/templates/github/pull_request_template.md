@@ -16,7 +16,7 @@ See [the definition of done](../docs/definition-of-done.md).
 - [ ] Reviewed: `/code-review` run, blocking and should-fix findings fixed
 - [ ] Tested: covered at the right layer; the suite passes
 - [ ] Verified: user-facing changes driven in a browser, light and dark, desktop and phone
-- [ ] Screened: new dependencies and vendors checked and recorded
+- [ ] Screened: new dependencies and vendors checked, with their rows added to docs/dependency-register.md
 - [ ] Documented: docs and ADRs updated; no narrative comments
 - [ ] Clean: nothing the change replaced is left behind
 - [ ] Labelled: correct release label

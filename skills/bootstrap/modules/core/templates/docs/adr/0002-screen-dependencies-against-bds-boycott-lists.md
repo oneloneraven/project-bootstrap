@@ -41,6 +41,6 @@ project's copy.
 
 ## Screening record
 
-Checked at bootstrap for the project's default dependencies and vendors.
-
-{{screening_table}}
+Every dependency and vendor, with what it is used for and the decision, is
+in the [dependency register](../dependency-register.md). A PR that adds one
+adds its row.

@@ -90,6 +90,10 @@
       "to": "docs/adr/README.md"
     },
     {
+      "from": "templates/docs/dependency-register.md",
+      "to": "docs/dependency-register.md"
+    },
+    {
       "from": "templates/docs/adr/0001-record-architecture-decisions.md",
       "to": "docs/adr/0001-record-architecture-decisions.md"
     },
@@ -231,9 +235,11 @@
   "screening": [
     {
       "dependency": "GitHub (repository, Actions, Dependabot, Projects)",
+      "usedFor": "Hosting the repository, CI, dependency updates and the project board",
       "maintainer": "Microsoft",
       "listed": "Y",
-      "note": "Free tier, industry standard, no viable alternative: allowed under the free-tool exception. Nothing is paid."
+      "decision": "Free tier, industry standard, no viable alternative: allowed under the free-tool exception. Nothing is paid.",
+      "screenedOn": "2026-10-28"
     }
   ]
 }

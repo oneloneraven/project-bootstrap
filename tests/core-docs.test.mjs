@@ -4,7 +4,8 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { brokenLinks, files, renderReal } from "./helpers.mjs";
+import { resolveModules } from "../skills/bootstrap/scripts/render.mjs";
+import { brokenLinks, files, realModulesDir, renderReal } from "./helpers.mjs";
 
 const dest = renderReal([]);
 const read = path => readFileSync(join(dest, path), "utf8");
@@ -66,8 +67,54 @@ test("model routing names tiers, not model IDs", () => {
   assert.doesNotMatch(claude, /claude-(opus|sonnet)-\d/);
 });
 
-test("screening ADR has a record table", () => {
-  assert.match(read("docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md"), /\| Dependency \| Maintainer \|/);
+test("the screening ADR points at the register and no longer holds the table", () => {
+  const adr = read("docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md");
+  assert.doesNotMatch(adr, /\| Dependency/);
+  assert.match(adr, /## Screening record\n\n[^|]*\(\.\.\/dependency-register\.md\)/);
+});
+
+test("the CLAUDE.md index, definition of done and PR template point at the register", () => {
+  assert.match(read("CLAUDE.md"), /^- Screen new dependencies and vendors and record each in \[the register\]\(docs\/dependency-register\.md\): \[ADR-0002\]/m);
+  assert.match(read("docs/definition-of-done.md").replace(/\s+/g, " "), /row added to \[the dependency register\]\(dependency-register\.md\)/);
+  assert.match(read(".github/pull_request_template.md"), /^- \[ \] Screened: .*rows? added to docs\/dependency-register\.md/m);
+});
+
+const COMBINATIONS = [
+  [[], {}],
+  [["js-toolchain"], {}],
+  [["web-app"], {}],
+  [["python-toolchain"], {}],
+  [["android-toolchain"], { application_id: "org.example.sample" }],
+  [["cloudflare-opentofu"], { zone_name: "example.test", beta: false }],
+];
+
+for (const [selected, extra] of COMBINATIONS) {
+  test(`the register for ${selected.join(", ") || "core"} has every selected module's rows and the latest check date`, () => {
+    const dir = renderReal(selected, extra);
+    const register = readFileSync(join(dir, "docs/dependency-register.md"), "utf8");
+    const rows = resolveModules(selected, realModulesDir).flatMap(m => m.screening);
+    assert.ok(rows.length > 0);
+    assert.match(register, /^\| Dependency or vendor \| Used for \| Maintainer \| On a list\? \| Decision \|\n\|---\|---\|---\|---\|---\|$/m);
+    for (const row of rows) {
+      const line = `| ${row.dependency} | ${row.usedFor} | ${row.maintainer} | ${row.listed === "Y" ? "Yes" : "No"} | ${row.decision} |`;
+      assert.ok(register.includes(line), row.dependency);
+    }
+    const latest = rows.map(row => row.screenedOn).sort().at(-1);
+    assert.match(register, new RegExp(`Last checked against both lists on ${latest}\\.`));
+    assert.equal([...register.matchAll(/^\| /gm)].length, rows.length + 1);
+  });
+}
+
+test("every module's screening rows say what they are used for, the decision and when they were screened", () => {
+  const manifests = ["js-toolchain", "web-app", "python-toolchain", "android-toolchain", "cloudflare-opentofu"].flatMap(name => resolveModules([name], realModulesDir));
+  for (const manifest of manifests) {
+    for (const row of manifest.screening) {
+      for (const key of ["dependency", "usedFor", "maintainer", "decision"]) assert.ok(typeof row[key] === "string" && row[key].trim(), `${manifest.name} ${row.dependency} ${key}`);
+      assert.match(row.screenedOn, /^\d{4}-\d{2}-\d{2}$/, `${manifest.name} ${row.dependency}`);
+      assert.ok(["Y", "N"].includes(row.listed), `${manifest.name} ${row.dependency}`);
+      assert.equal(row.note, undefined);
+    }
+  }
 });
 
 test("gitignore covers local state and secrets", () => {
