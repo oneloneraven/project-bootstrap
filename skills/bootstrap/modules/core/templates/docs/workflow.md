@@ -91,6 +91,9 @@ minute and 500 per hour.
 - Propose before building when there's an open design question. A concrete
   fix with a clear direction goes straight ahead.
 - Change only what was asked. Flag wider improvements and wait for an answer.
+- Ask before any destructive change outside the repository, such as deleting,
+  disabling or overwriting something in a hosted service, even mid-task and even
+  when it looks like part of the work.
 - Verify before claiming something works. For anything user-facing, drive it
   in a browser. For platform behaviour, check it empirically rather than
   trusting docs.
