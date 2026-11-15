@@ -14,10 +14,11 @@ One Sonnet-class subagent does all delegated work, one at a time.
 - **Delegation is a choice, not a requirement.** The main session makes
   small, clear fixes itself, where writing a brief and checking the report
   would cost more than the change. Substantial work goes to at most one
-  Sonnet-class subagent at a time (`model: sonnet`): dependency bumps, running test suites and reporting
-  their output, board and label housekeeping, executing an agreed plan step
-  by step, bulk renames, doc updates from a settled decision, digging
-  through CI logs, and longer investigations.
+  Sonnet-class subagent at a time (`model: sonnet`): dependency bumps,
+  running test suites and reporting their output, board and label
+  housekeeping, executing an agreed plan step by step, bulk renames, doc
+  updates from a settled decision, digging through CI logs, and longer
+  investigations.
 - **No sub-sessions, no mix of sessions and subagents, and no parallel
   workers**, even when their files don't overlap. Extra or parallel agents
   use up subscription token limits too quickly. Sub-sessions were tried
