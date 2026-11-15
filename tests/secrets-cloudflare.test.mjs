@@ -518,3 +518,13 @@ test("a project with no recorded plugin version is called an older plugin's", ()
   const dir = withoutTokens(null);
   assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), /rendered by an older plugin and the current plugin is /);
 });
+
+test("a malformed token definitions file reports the parse error, not a missing file", () => {
+  const dir = withoutTokens("0123456789ab");
+  writeFileSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"), "{ not json");
+  assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), error => {
+    assert.match(error.message, /tokens\.json/);
+    assert.doesNotMatch(error.message, /--bootstrap-only/);
+    return true;
+  });
+});
