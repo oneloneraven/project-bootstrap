@@ -15,6 +15,7 @@
       "production",
       "beta"
     ],
+    "zone": true,
     "permissions": [
       "Workers Scripts Write",
       "Account Settings Read",
@@ -25,6 +26,7 @@
     "token": "Infra plan",
     "secret": "CLOUDFLARE_INFRA_PLAN_TOKEN",
     "env": null,
+    "zone": true,
     "permissions": [
       "Workers R2 Storage Read",
       "Transform Rules Read",
@@ -41,6 +43,7 @@
     "env": [
       "infra"
     ],
+    "zone": true,
     "permissions": [
       "Workers R2 Storage Write",
       "Transform Rules Write",

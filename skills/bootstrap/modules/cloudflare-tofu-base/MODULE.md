@@ -131,6 +131,9 @@ each back to check its policies, stores them in Proton Pass, sets the
 secrets and the `CLOUDFLARE_ACCOUNT_ID` variable, and deletes the bootstrap
 token.
 
+A token whose permissions include a zone permission sets `"zone": true` in
+its definition. The script asks for the zone id only when some token does.
+
 The ids aren't secret, so the script remembers them. The account id is the
 same for every project, so it's stored once per user in
 `${XDG_CONFIG_HOME:-~/.config}/project-bootstrap/cloudflare.json`

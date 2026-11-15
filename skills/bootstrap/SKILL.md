@@ -1,6 +1,6 @@
 ---
 name: bootstrap
-description: Set up a new project from an empty directory - GitHub repo, branch protection, project board, CI, tag-based releases, coding standards, privacy and security docs, and Claude configuration - from selectable modules (core, js-toolchain, python-toolchain, android-toolchain, web-app, cloudflare-opentofu). Use when the user asks to bootstrap, scaffold or set up a new project or repository.
+description: Set up a new project from an empty directory - GitHub repo, branch protection, project board, CI, tag-based releases, coding standards, privacy and security docs, and Claude configuration - from selectable modules (core, js-toolchain, python-toolchain, android-toolchain, web-app, cloudflare-opentofu, cloudflare-identity). Use when the user asks to bootstrap, scaffold or set up a new project or repository.
 ---
 
 # Bootstrap a project
@@ -132,7 +132,9 @@ needs is missing.
      `android-toolchain` (a native Android app) as the project's one stack,
      never more than one; then `web-app` (a browser app; needs
      `js-toolchain`) and `cloudflare-opentofu` (needs `web-app`), which
-     rule out the other two stacks;
+     rule out the other two stacks; or `cloudflare-identity` alone (a
+     central identity stack: it needs none of the app modules and rules out
+     `cloudflare-opentofu`);
    - each selected module's questions from its MODULE.md.
    - after the module questions, `merge_policy`: who merges a PR, and when.
      Explain that a merge to `main` that carries a release label cuts a

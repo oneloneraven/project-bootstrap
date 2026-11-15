@@ -238,7 +238,7 @@ function substitute(text, values, to) {
   });
 }
 
-function fragmentValues(modules, modulesDir, values) {
+function withFragments(modules, modulesDir, base) {
   const declared = new Map();
   for (const module of modules) {
     for (const [name, path] of Object.entries(module.fragments ?? {})) {
@@ -246,14 +246,20 @@ function fragmentValues(modules, modulesDir, values) {
       declared.set(name, { module: module.name, path: join(modulesDir, module.name, path) });
     }
   }
-  return Object.fromEntries(
-    [...declared].map(([name, { path }]) => [`fragment_${name}`, substitute(readFileSync(path, "utf8"), values, `fragment ${name}`)]),
-  );
+  const values = { ...base };
+  for (const [name, { path }] of declared) {
+    let text;
+    Object.defineProperty(values, `fragment_${name}`, {
+      enumerable: true,
+      get: () => (text ??= substitute(readFileSync(path, "utf8"), base, `fragment ${name}`)),
+    });
+  }
+  return values;
 }
 
 export function render({ modules, answers, modulesDir, destDir, dryRun = false, stage, bootstrapOnly = false }) {
   const base = { ...answers, ...deriveKeys(modules, answers, modulesDir) };
-  const values = { ...base, ...fragmentValues(modules, modulesDir, base) };
+  const values = withFragments(modules, modulesDir, base);
   const root = resolve(destDir);
   const outputs = new Map();
   const owners = new Map();

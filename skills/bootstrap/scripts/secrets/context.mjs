@@ -24,7 +24,7 @@ export function readRenderedJson(ctx, relativePath, module) {
 }
 
 export function loadContext(dir) {
-  const { answers, ids } = loadState(dir);
+  const { answers, ids, modules } = loadState(dir);
   const missing = ["owner", "slug", "name"].filter(key => !answers?.[key]);
   if (missing.length) {
     throw new Error(`No bootstrap answers for ${missing.join(", ")} in ${dir}/.bootstrap/state.json: run this against a bootstrapped project directory`);
@@ -39,6 +39,7 @@ export function loadContext(dir) {
     ...(zoneName && { zoneName }),
     skippedEnvs: (ids.skipped_envs ?? "").split(",").map(env => env.trim()).filter(Boolean),
     answers,
+    modules,
   };
 }
 

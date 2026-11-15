@@ -86,6 +86,7 @@ const COMBINATIONS = [
   [["python-toolchain"], {}],
   [["android-toolchain"], { application_id: "org.example.sample" }],
   [["cloudflare-opentofu"], { zone_name: "example.test", beta: false }],
+  [["cloudflare-identity"], {}],
 ];
 
 for (const [selected, extra] of COMBINATIONS) {
@@ -106,7 +107,7 @@ for (const [selected, extra] of COMBINATIONS) {
 }
 
 test("every module's screening rows say what they are used for, the decision and when they were screened", () => {
-  const manifests = ["js-toolchain", "web-app", "python-toolchain", "android-toolchain", "cloudflare-opentofu"].flatMap(name => resolveModules([name], realModulesDir));
+  const manifests = ["js-toolchain", "web-app", "python-toolchain", "android-toolchain", "cloudflare-opentofu", "cloudflare-identity"].flatMap(name => resolveModules([name], realModulesDir));
   for (const manifest of manifests) {
     for (const row of manifest.screening) {
       for (const key of ["dependency", "usedFor", "maintainer", "decision"]) assert.ok(typeof row[key] === "string" && row[key].trim(), `${manifest.name} ${row.dependency} ${key}`);

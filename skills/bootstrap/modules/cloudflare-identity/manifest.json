@@ -1,0 +1,80 @@
+{
+  "name": "cloudflare-identity",
+  "dependsOn": [
+    "core",
+    "cloudflare-tofu-base"
+  ],
+  "conflictsWith": [
+    "cloudflare-opentofu"
+  ],
+  "maxSlugLength": 40,
+  "questions": [],
+  "overrides": [],
+  "files": [
+    {
+      "from": "templates/infra/main.tf",
+      "to": "infra/main.tf"
+    },
+    {
+      "from": "templates/infra/variables.tf",
+      "to": "infra/variables.tf"
+    },
+    {
+      "from": "templates/infra/identity.tf",
+      "to": "infra/identity.tf"
+    },
+    {
+      "from": "templates/infra/apps.tf",
+      "to": "infra/apps.tf"
+    },
+    {
+      "from": "templates/infra/widgets.tf",
+      "to": "infra/widgets.tf"
+    },
+    {
+      "from": "templates/infra/outputs.tf",
+      "to": "infra/outputs.tf"
+    },
+    {
+      "from": "templates/infra/terraform.tfvars.json",
+      "to": "infra/terraform.tfvars.json"
+    },
+    {
+      "from": "templates/infra/README.md",
+      "to": "infra/README.md"
+    },
+    {
+      "from": "templates/bootstrap/cloudflare-tokens.json",
+      "to": ".bootstrap/cloudflare/tokens.json"
+    },
+    {
+      "from": "templates/github/workflows/infra.yml",
+      "to": ".github/workflows/infra.yml"
+    },
+    {
+      "from": "templates/github/workflows/rotate-turnstile-secret.yml",
+      "to": ".github/workflows/rotate-turnstile-secret.yml"
+    }
+  ],
+  "requiredChecks": [],
+  "releasePaths": {
+    "noneAllowed": [],
+    "noneForbidden": [
+      "infra/"
+    ]
+  },
+  "claudeIndexLines": [
+    "- Cloudflare identity stack: every project's admin Access application, the login method, the Zero Trust organisation and the Turnstile widgets, in OpenTofu: [infra](infra/README.md). Merging `infra/` is a production change.",
+    "- Never change anything `infra/` manages through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: [infra](infra/README.md#changing-infrastructure)."
+  ],
+  "screening": [
+    {
+      "dependency": "Cloudflare Zero Trust Access and Turnstile",
+      "usedFor": "Signing in to admin sections and protecting forms from bots",
+      "maintainer": "Cloudflare, Inc.",
+      "listed": "N",
+      "decision": "Allowed",
+      "screenedOn": "2026-11-15"
+    }
+  ]
+}

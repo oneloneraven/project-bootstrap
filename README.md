@@ -43,6 +43,7 @@ A run can stop and resume: progress is kept in `.bootstrap/state.json`.
 | `android-toolchain` | A native Android app, as the alternative to the other stacks: Kotlin and Jetpack Compose, Gradle with a version catalog, Spotless (ktlint), detekt, Android Lint, Robolectric and Roborazzi tests, a `./gradlew check` that is exactly what CI runs, and signed release APKs attached to GitHub Releases |
 | `web-app` | A browser app: Vite, and WebdriverIO end-to-end tests in Chromium and Firefox with axe-core accessibility checks |
 | `cloudflare-opentofu` | A Cloudflare Worker deployed from release tags, optional beta environment with promotion, PR previews, and the zone's DNS, TLS, headers and cache rules in OpenTofu |
+| `cloudflare-identity` | A central identity stack in OpenTofu, as the alternative to `cloudflare-opentofu`: the Zero Trust organisation, its login method, one admin Access application per project with a shared owner policy, Turnstile widgets, and a manual workflow that rotates a widget's secret |
 
 To add a stack, see [adding a module](docs/adding-a-module.md).
 
