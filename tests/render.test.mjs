@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, existsSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadState, saveRun } from "../skills/bootstrap/scripts/state.mjs";
+import { pluginVersion } from "../skills/bootstrap/scripts/plugin-version.mjs";
 import { formatJson, maxSlugLength, resolveModules, validateAnswers, render } from "../skills/bootstrap/scripts/render.mjs";
 
 const modulesDir = fileURLToPath(new URL("./fixtures/modules", import.meta.url));
@@ -326,4 +329,45 @@ test("formatJson keeps short scalar arrays on one line and expands objects and l
     out,
     `{\n  "short": ["a", "b"],\n  "empty": [],\n  "nested": {\n    "n": 1\n  },\n  "long": [\n${long.map(p => `    "${p}"`).join(",\n")}\n  ],\n  "items": [\n    {\n      "x": 1\n    }\n  ]\n}`,
   );
+});
+
+const answersFile = (dir, extra = {}) => {
+  const path = join(dir, "answers.json");
+  const base = JSON.parse(readFileSync(new URL("./fixtures/answers-core.json", import.meta.url), "utf8"));
+  writeFileSync(path, JSON.stringify({ ...base, zone_name: "example.test", beta: false, ...extra }));
+  return path;
+};
+
+test("bootstrapOnly writes only the .bootstrap files and leaves the project's own files alone", () => {
+  const project = tmp();
+  writeFileSync(join(project, "CLAUDE.md"), "mine\n");
+  mkdirSync(join(project, "infra"));
+  writeFileSync(join(project, "infra", "main.tf"), "mine\n");
+  const real = fileURLToPath(new URL("../skills/bootstrap/modules", import.meta.url));
+  const { answers } = validateAnswers({ ...JSON.parse(readFileSync(new URL("./fixtures/answers-core.json", import.meta.url), "utf8")), zone_name: "example.test", beta: false });
+  const written = render({ modules: resolveModules(["cloudflare-opentofu"], real), answers, modulesDir: real, destDir: project, bootstrapOnly: true });
+  assert.ok(written.includes(".bootstrap/cloudflare/tokens.json"));
+  assert.ok(written.every(path => path.startsWith(".bootstrap/")), written.join(", "));
+  assert.equal(readFileSync(join(project, "CLAUDE.md"), "utf8"), "mine\n");
+  assert.equal(readFileSync(join(project, "infra", "main.tf"), "utf8"), "mine\n");
+  assert.deepEqual(readdirSync(project).sort(), [".bootstrap", "CLAUDE.md", "infra"]);
+  assert.deepEqual(readdirSync(join(project, "infra")), ["main.tf"]);
+});
+
+test("render.mjs --bootstrap-only writes the token definitions and records the plugin version and modules", () => {
+  const scratch = tmp();
+  const project = tmp();
+  writeFileSync(join(project, "README.md"), "mine\n");
+  saveRun(project, { answers: { name: "Sample Project" }, modules: ["core"] }, "0123456789ab");
+  const script = fileURLToPath(new URL("../skills/bootstrap/scripts/render.mjs", import.meta.url));
+  const result = spawnSync("node", [script, "--modules", "cloudflare-opentofu", "--answers", answersFile(scratch), "--dest", project, "--bootstrap-only"], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(existsSync(join(project, ".bootstrap", "cloudflare", "tokens.json")));
+  assert.equal(readFileSync(join(project, "README.md"), "utf8"), "mine\n");
+  assert.ok(!existsSync(join(project, "package.json")));
+  const state = loadState(project);
+  assert.equal(state.pluginVersion, pluginVersion());
+  assert.notEqual(state.pluginVersion, "0123456789ab");
+  assert.deepEqual(state.modules, ["core", "cloudflare-opentofu"]);
+  assert.equal(state.answers.zone_name, "example.test");
 });

@@ -77,6 +77,29 @@ steps count as settled. If the saved answers lack one the interview now asks
   (`gh project list --owner <owner>`, `gh issue list --repo $R --search "<title> in:title"`)
   before creating either.
 
+## Adopting a module in an existing repository
+
+Adopting a module in a project that wasn't bootstrapped with it (or was
+bootstrapped by an older plugin) needs only its `.bootstrap/` files, such as
+`.bootstrap/cloudflare/tokens.json`, never a render over the project's own
+files. `<dir>` is the existing project:
+
+1. Write the answers to a temporary JSON file, as in the interview, and run
+   `node scripts/state.mjs save-answers <dir> <file> <modules>`.
+2. Run the renderer:
+
+   ```
+   node scripts/render.mjs --modules <modules> \
+     --answers <dir>/.bootstrap/answers.json --dest <dir> --bootstrap-only
+   ```
+
+   It writes the selected modules' files whose destination is under
+   `.bootstrap/` and nothing outside `.bootstrap/`, then records the modules
+   and this plugin's version in `.bootstrap/state.json`.
+
+The same command is what `secrets.mjs` prints when a `.bootstrap/` file it
+needs is missing.
+
 ## Phases and step ids
 
 1. **`preflight`**: `node scripts/preflight.mjs <dir>`. It must be an empty

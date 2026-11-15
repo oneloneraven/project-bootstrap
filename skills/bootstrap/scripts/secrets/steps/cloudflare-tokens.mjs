@@ -1,19 +1,11 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { buildPolicies, createVerified, findEarlierItems, oneYearFrom, readOldIds, resolvePermissions, storeEach, withBootstrapToken } from "../cloudflare.mjs";
 import { resolveAccountId, resolveZoneId } from "../ids.mjs";
+import { readRenderedJson } from "../context.mjs";
 import { storeThenSet } from "../order.mjs";
 
 const title = token => `Cloudflare ${token} token`;
 
-function readTokens(ctx) {
-  const file = join(ctx.dir, ".bootstrap", "cloudflare", "tokens.json");
-  try {
-    return JSON.parse(readFileSync(file, "utf8"));
-  } catch {
-    throw new Error(`Can't read ${file}: render the cloudflare-opentofu module into this project first`);
-  }
-}
+const readTokens = ctx => readRenderedJson(ctx, ".bootstrap/cloudflare/tokens.json", "cloudflare-opentofu");
 
 const secretsFor = (entry, value) => (entry.env ?? [undefined]).map(env => ({ name: entry.secret, ...(env && { env }), value }));
 

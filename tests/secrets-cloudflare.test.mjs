@@ -1,10 +1,12 @@
 import { test } from "node:test";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { loadContext } from "../skills/bootstrap/scripts/secrets/context.mjs";
 import { saveRun } from "../skills/bootstrap/scripts/state.mjs";
+import { pluginVersion } from "../skills/bootstrap/scripts/plugin-version.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import { createHash } from "node:crypto";
 import { buildPolicies, bucketResource, cfClient, resolvePermissions, s3Credentials, withBootstrapToken } from "../skills/bootstrap/scripts/secrets/cloudflare.mjs";
@@ -486,4 +488,43 @@ test("a second project on the same account asks only for its zone id, and the fi
   };
   await r2.run({ configDir: config });
   assert.equal(r2Asked.some(question => /account id/i.test(question)), false);
+});
+
+function withoutTokens(version) {
+  const dir = rendered(false);
+  rmSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"));
+  const path = join(dir, ".bootstrap", "state.json");
+  const state = JSON.parse(readFileSync(path, "utf8"));
+  if (version) state.pluginVersion = version;
+  else delete state.pluginVersion;
+  writeFileSync(path, JSON.stringify(state));
+  return dir;
+}
+
+test("a missing token definitions file names both plugin versions and the command to write it", () => {
+  const dir = withoutTokens("0123456789ab");
+  const current = pluginVersion();
+  const render = fileURLToPath(new URL("../skills/bootstrap/scripts/render.mjs", import.meta.url));
+  assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), error => {
+    assert.ok(error.message.startsWith(`Can't read ${join(dir, ".bootstrap", "cloudflare", "tokens.json")}: `));
+    assert.match(error.message, /rendered by plugin 0123456789ab/);
+    assert.ok(error.message.includes(`the current plugin is ${current}`));
+    assert.ok(error.message.includes(`node ${render} --modules core,cloudflare-opentofu --answers ${join(dir, ".bootstrap", "answers.json")} --dest ${dir} --bootstrap-only`));
+    return true;
+  });
+});
+
+test("a project with no recorded plugin version is called an older plugin's", () => {
+  const dir = withoutTokens(null);
+  assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), /rendered by an older plugin and the current plugin is /);
+});
+
+test("a malformed token definitions file reports the parse error, not a missing file", () => {
+  const dir = withoutTokens("0123456789ab");
+  writeFileSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"), "{ not json");
+  assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), error => {
+    assert.match(error.message, /tokens\.json/);
+    assert.doesNotMatch(error.message, /--bootstrap-only/);
+    return true;
+  });
 });

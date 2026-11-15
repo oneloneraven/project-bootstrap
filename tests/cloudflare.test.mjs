@@ -355,3 +355,10 @@ test("the module warns about an existing www record and the README lists the red
   assert.match(section(moduleDoc, "## 2. Interview questions"), /already has Redirect Rules/);
   assert.match(read(withBeta, "infra/dns.tf"), /comment = "Proxied so the www redirect rule answers; requests never reach an origin\."/);
 });
+
+test("the bootstrap skill documents adopting a module in an existing repository", () => {
+  const adopting = section(skillDoc, "## Adopting a module in an existing repository");
+  assert.match(adopting, /state\.mjs save-answers <dir> <file> <modules>/);
+  assert.match(adopting, /render\.mjs --modules <modules> \\\n\s+--answers <dir>\/\.bootstrap\/answers\.json --dest <dir> --bootstrap-only/);
+  assert.match(adopting, /nothing outside `\.bootstrap\/`/);
+});
