@@ -227,3 +227,36 @@ test("every workflow that runs PR checks cancels superseded runs, and never canc
   assert.ok(checked >= 8, String(checked));
   assert.match(read(renders.core, ".github/workflows/release.yml"), /cancel-in-progress: false/);
 });
+
+for (const [name, key] of [["beta", "cfBeta"], ["no beta", "cfNoBeta"]]) {
+  test(`infra.yml has a boolean allow_deletes input that defaults to false ${name}`, () => {
+    const infra = read(renders[key], ".github/workflows/infra.yml");
+    const input = infra.match(/workflow_dispatch:\n {4}inputs:\n {6}allow_deletes:\n((?: {8}.*\n)+)/);
+    assert.ok(input, "allow_deletes under workflow_dispatch inputs");
+    assert.match(input[1], /^ {8}type: boolean$/m);
+    assert.match(input[1], /^ {8}default: false$/m);
+    assert.match(input[1], /^ {8}description: ".*infra\/README\.md.*"$/m);
+  });
+
+  test(`the delete guard is skipped only by allow_deletes, and still runs on push ${name}`, () => {
+    const infra = read(renders[key], ".github/workflows/infra.yml");
+    const step = infra.match(/- name: Refuse unplanned deletes or replacements\n((?: {8}.*\n)+)/)[1];
+    assert.match(step, /^ {8}if: \$\{\{ !inputs\.allow_deletes \}\}$/m);
+    assert.doesNotMatch(step, /github\.event_name/);
+    assert.match(step, /with allow_deletes/);
+    assert.match(step, /Deleting resources/);
+    assert.match(step, /jq -r '\(\.resource_changes \/\/ \[\]\)\[\] \| select\(\.change\.actions \| index\("delete"\)\)/);
+    assert.match(infra, /environment: \$\{\{ github\.event_name != 'pull_request' && 'infra' \|\| '' \}\}/);
+    assert.match(infra, /- name: Apply\n {8}if: github\.event_name != 'pull_request'/);
+  });
+
+  test(`the infra README explains deliberate deletes ${name}`, () => {
+    const readme = read(renders[key], "infra/README.md");
+    const text = readme.split("## Deleting resources")[1]?.split("\n## ")[0];
+    assert.ok(text, "Deleting resources section");
+    assert.match(text, /fails its apply and changes nothing/);
+    assert.match(text, /`allow_deletes`/);
+    assert.match(text, /`prevent_destroy`/);
+    assert.match(readme, /\(see \[Deleting resources\]|\[Deleting resources\]\(#deleting-resources\)/);
+  });
+}
