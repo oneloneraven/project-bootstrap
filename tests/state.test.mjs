@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getId, loadState, markDone, markSkipped, nextStep, recordId, saveAnswers, saveRun } from "../skills/bootstrap/scripts/state.mjs";
+import { pluginRoot, pluginVersion } from "../skills/bootstrap/scripts/plugin-version.mjs";
 import { realModulesDir } from "./helpers.mjs";
 
 const tmp = () => mkdtempSync(join(tmpdir(), "state-"));
@@ -234,4 +235,42 @@ test("saveAnswers requires owner_type to be User or Organization", () => {
   const dir = tmp();
   saveAnswers(dir, { owner_type: "Organization", name: "A", visibility: "public", merge_policy: "claude" }, [], realModulesDir);
   assert.equal(loadState(dir).answers.owner_type, "Organization");
+});
+
+const gitThrows = () => {
+  throw new Error("not a git checkout");
+};
+
+test("the plugin version is the cache directory name when it is 12 hex characters", () => {
+  const root = "/home/sample/.claude/plugins/cache/market/project-bootstrap/0123456789ab";
+  assert.equal(pluginVersion({ root, git: gitThrows }), "0123456789ab");
+});
+
+test("a development checkout takes its version from git", () => {
+  const asked = [];
+  const git = root => {
+    asked.push(root);
+    return "abcdef012345\n";
+  };
+  assert.equal(pluginVersion({ root: "/work/project-bootstrap", git }), "abcdef012345");
+  assert.deepEqual(asked, ["/work/project-bootstrap"]);
+});
+
+test("the plugin version is unknown when there is neither a cache name nor git", () => {
+  assert.equal(pluginVersion({ root: "/work/project-bootstrap", git: gitThrows }), "unknown");
+  assert.equal(pluginVersion({ root: "/work/project-bootstrap", git: () => "\n" }), "unknown");
+  assert.equal(pluginVersion({ root: "/work/0123456789abc", git: gitThrows }), "unknown");
+});
+
+test("the plugin root is three levels above the scripts folder", () => {
+  assert.equal(pluginRoot, fileURLToPath(new URL("../", import.meta.url)).replace(/\/$/, ""));
+});
+
+test("saveRun records the plugin version beside the answers", () => {
+  const dir = tmp();
+  saveRun(dir, { answers: { name: "Demo" }, modules: ["core"] }, "0123456789ab");
+  assert.equal(loadState(dir).pluginVersion, "0123456789ab");
+  saveRun(dir, { answers: { name: "Demo" }, modules: ["core"] }, "fedcba987654");
+  assert.equal(loadState(dir).pluginVersion, "fedcba987654");
+  assert.equal(loadState(tmp()).pluginVersion, undefined);
 });

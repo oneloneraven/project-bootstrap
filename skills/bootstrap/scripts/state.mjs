@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { pluginVersion } from "./plugin-version.mjs";
 import { maxSlugLength, mergePolicies, resolveModules, validateAnswers } from "./render.mjs";
 
 const EMPTY = { steps: {}, answers: null, modules: [], ids: {}, skipped: {} };
@@ -27,8 +28,8 @@ function save(dir, state) {
   writeAtomic(file(dir), `${JSON.stringify(state, null, 2)}\n`);
 }
 
-export function saveRun(dir, { answers, modules }) {
-  save(dir, { ...loadState(dir), answers, modules });
+export function saveRun(dir, { answers, modules }, version = pluginVersion()) {
+  save(dir, { ...loadState(dir), answers, modules, pluginVersion: version });
 }
 
 const HOSTNAME = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;

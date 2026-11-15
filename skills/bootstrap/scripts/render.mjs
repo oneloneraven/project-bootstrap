@@ -217,7 +217,7 @@ function substitute(text, values, to) {
   });
 }
 
-export function render({ modules, answers, modulesDir, destDir, dryRun = false, stage }) {
+export function render({ modules, answers, modulesDir, destDir, dryRun = false, stage, bootstrapOnly = false }) {
   const values = { ...answers, ...deriveKeys(modules, answers, modulesDir) };
   const root = resolve(destDir);
   const outputs = new Map();
@@ -234,6 +234,7 @@ export function render({ modules, answers, modulesDir, destDir, dryRun = false, 
       if (rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
         throw new Error(`Path escapes destination: ${to}`);
       }
+      if (bootstrapOnly && !rel.startsWith(`.bootstrap${sep}`)) continue;
       const source = join(modulesDir, module.name, file.from);
       const content = BINARY.test(source)
         ? readFileSync(source)
@@ -273,7 +274,7 @@ export function render({ modules, answers, modulesDir, destDir, dryRun = false, 
   return [...outputs.keys()];
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+async function main() {
   const { values } = parseArgs({
     options: {
       modules: { type: "string", default: "" },
@@ -282,6 +283,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       "modules-dir": { type: "string", default: fileURLToPath(new URL("../modules", import.meta.url)) },
       "dry-run": { type: "boolean", default: false },
       stage: { type: "string" },
+      "bootstrap-only": { type: "boolean", default: false },
     },
   });
   const selected = values.modules.split(",").filter(Boolean);
@@ -294,6 +296,19 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     destDir: values.dest,
     dryRun: values["dry-run"],
     stage: values.stage,
+    bootstrapOnly: values["bootstrap-only"],
   });
+  if (values["bootstrap-only"] && !values["dry-run"]) {
+    const { loadState, saveRun } = await import("./state.mjs");
+    const recorded = loadState(values.dest).modules;
+    saveRun(values.dest, { answers, modules: [...new Set([...recorded, ...selected])] });
+  }
   console.log(written.sort().join("\n"));
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
 }

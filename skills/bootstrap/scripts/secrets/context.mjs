@@ -1,4 +1,20 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pluginRoot, pluginVersion } from "../plugin-version.mjs";
 import { loadState } from "../state.mjs";
+
+export function readRenderedJson(ctx, relativePath, module) {
+  const file = join(ctx.dir, relativePath);
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    const { pluginVersion: recorded, modules } = loadState(ctx.dir);
+    const selected = [...new Set([...modules, "core", module])].join(",");
+    const rendering = recorded ? `plugin ${recorded}` : "an older plugin";
+    const command = `node ${join(pluginRoot, "skills", "bootstrap", "scripts", "render.mjs")} --modules ${selected} --answers ${join(ctx.dir, ".bootstrap", "answers.json")} --dest ${ctx.dir} --bootstrap-only`;
+    throw new Error(`Can't read ${file}: this project's .bootstrap/ was rendered by ${rendering} and the current plugin is ${pluginVersion()}. Run \`${command}\` to write the missing files.`);
+  }
+}
 
 export function loadContext(dir) {
   const { answers, ids } = loadState(dir);
