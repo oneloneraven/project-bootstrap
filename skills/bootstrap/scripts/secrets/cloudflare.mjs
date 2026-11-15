@@ -27,8 +27,9 @@ export function cfClient(deps, token) {
 }
 
 export async function withBootstrapToken(deps, accountId, fn) {
-  const token = (await deps.prompt("Paste the bootstrap token: ", { hidden: true })).trim();
+  const token = (await deps.prompt("Paste the bootstrap token (the long value from the Copy button, not the token ID): ", { hidden: true })).trim();
   if (!token) throw new Error("No bootstrap token pasted");
+  if (isHexId(token.toLowerCase())) throw new Error("That looks like a token ID, not the token: paste the long value from the Copy button");
   const client = cfClient(deps, token);
   const self = await client.get(`/accounts/${accountId}/tokens/verify`).catch(error => {
     throw new Error(`${error.message}: the bootstrap token didn't verify. If it exists, revoke it in the dashboard.`);

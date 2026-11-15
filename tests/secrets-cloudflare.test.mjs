@@ -144,6 +144,29 @@ test("withBootstrapToken tells the user to revoke it by hand when the deletion f
   assert.match(deps.logs.join("\n"), /revoke it in the dashboard/);
 });
 
+test("the bootstrap token prompt asks for the secret value, not the token ID", async () => {
+  const cf = fakeCloudflare();
+  const deps = stubDeps();
+  deps.fetch = cf.fetch;
+  const questions = [];
+  deps.prompt = async question => {
+    questions.push(question);
+    return BOOTSTRAP;
+  };
+  await withBootstrapToken(deps, ACCOUNT, async () => {});
+  assert.match(questions[0], /Copy button, not the token ID/);
+});
+
+test("a pasted token ID is refused before any API call", async () => {
+  for (const pasted of ["c".repeat(32), "C".repeat(32)]) {
+    const deps = stubDeps();
+    deps.prompt = async () => pasted;
+    let work = false;
+    await assert.rejects(withBootstrapToken(deps, ACCOUNT, async () => { work = true; }), /looks like a token ID/);
+    assert.equal(work, false);
+  }
+});
+
 test("cloudflare-tokens creates four tokens, reads each back, stores, then sets", async () => {
   const { ctx, deps, cf, run } = harness();
   await run();
