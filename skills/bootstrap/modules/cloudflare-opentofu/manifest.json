@@ -59,6 +59,10 @@
       "when": "beta"
     },
     {
+      "from": "templates/infra/redirects.tf",
+      "to": "infra/redirects.tf"
+    },
+    {
       "from": "templates/infra/security.tf",
       "to": "infra/security.tf"
     },

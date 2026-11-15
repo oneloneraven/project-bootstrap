@@ -31,7 +31,8 @@
       "DNS Read",
       "Zone Settings Read",
       "Zone WAF Read",
-      "Cache Settings Read"
+      "Cache Settings Read",
+      "Dynamic URL Redirects Read"
     ]
   },
   {
@@ -46,7 +47,8 @@
       "DNS Write",
       "Zone Settings Write",
       "Zone WAF Write",
-      "Cache Settings Write"
+      "Cache Settings Write",
+      "Dynamic URL Redirects Write"
     ]
   }
 ]

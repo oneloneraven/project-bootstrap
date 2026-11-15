@@ -22,7 +22,7 @@ const R2_SCOPE = "com.cloudflare.edge.r2.bucket";
 
 const NAMES = {
   [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write"],
-  [ZONE_SCOPE]: ["Workers Routes Write", "DNS Read", "DNS Write", "Zone Settings Read", "Zone Settings Write", "Zone WAF Read", "Zone WAF Write", "Cache Settings Read", "Cache Settings Write"],
+  [ZONE_SCOPE]: ["Workers Routes Write", "DNS Read", "DNS Write", "Zone Settings Read", "Zone Settings Write", "Zone WAF Read", "Zone WAF Write", "Cache Settings Read", "Cache Settings Write", "Dynamic URL Redirects Read", "Dynamic URL Redirects Write"],
 };
 const GROUPS = [
   ...Object.entries(NAMES).flatMap(([scope, names]) => names.map(name => ({ id: `pg-${name.replaceAll(" ", "-")}`, name, scopes: [scope] }))),
