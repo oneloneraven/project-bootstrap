@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderReal } from "./helpers.mjs";
 
-const renders = { beta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: true }), nobeta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: false }) };
+const renders = { beta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: true }), nobeta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: false }), identity: renderReal(["cloudflare-identity"]) };
+const stacks = { "cloudflare-opentofu": "github/workflows/infra.yml", "cloudflare-identity": "github/workflows/infra.yml" };
 
 test("the base's manual steps run in the order the work needs: tokens, then the state bucket, then R2 credentials", () => {
   const doc = readFileSync(new URL("../skills/bootstrap/modules/cloudflare-tofu-base/MODULE.md", import.meta.url), "utf8");
@@ -21,9 +22,12 @@ const stackTemplates = new URL("../skills/bootstrap/modules/cloudflare-opentofu/
 const skeleton = readFileSync(new URL("infra.skeleton.yml", baseTemplates), "utf8");
 const withoutTfVars = text => text.split("\n").filter(line => !/^\s+TF_VAR_/.test(line)).join("\n");
 
-test("a stack's infra.yml equals the base skeleton apart from its TF_VAR_ lines", () => {
-  assert.equal(withoutTfVars(readFileSync(new URL("github/workflows/infra.yml", stackTemplates), "utf8")), withoutTfVars(skeleton));
-});
+for (const stack of Object.keys(stacks)) {
+  test(`${stack}'s infra.yml equals the base skeleton apart from its TF_VAR_ lines`, () => {
+    const stackFile = new URL(`../skills/bootstrap/modules/${stack}/templates/github/workflows/infra.yml`, import.meta.url);
+    assert.equal(withoutTfVars(readFileSync(stackFile, "utf8")), withoutTfVars(skeleton));
+  });
+}
 
 test("the skeleton comparison fails on drift outside the TF_VAR_ lines and ignores changes to them", () => {
   const stack = readFileSync(new URL("github/workflows/infra.yml", stackTemplates), "utf8");

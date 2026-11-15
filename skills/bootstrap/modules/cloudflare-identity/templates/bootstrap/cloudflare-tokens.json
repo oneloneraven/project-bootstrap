@@ -1,0 +1,28 @@
+[
+  {
+    "token": "Infra plan",
+    "secret": "CLOUDFLARE_INFRA_PLAN_TOKEN",
+    "env": null,
+    "permissions": [
+      "Workers R2 Storage Read",
+      "Access: Organizations, Identity Providers, and Groups Read",
+      "Access: Apps Read",
+      "Access: Policies Read",
+      "Turnstile Sites Read"
+    ]
+  },
+  {
+    "token": "Infra apply",
+    "secret": "CLOUDFLARE_INFRA_APPLY_TOKEN",
+    "env": [
+      "infra"
+    ],
+    "permissions": [
+      "Workers R2 Storage Write",
+      "Access: Organizations, Identity Providers, and Groups Write",
+      "Access: Apps Write",
+      "Access: Policies Write",
+      "Turnstile Sites Write"
+    ]
+  }
+]

@@ -1,5 +1,5 @@
 import { test } from "node:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -23,7 +23,7 @@ const ZONE_SCOPE = "com.cloudflare.api.account.zone";
 const R2_SCOPE = "com.cloudflare.edge.r2.bucket";
 
 const NAMES = {
-  [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write"],
+  [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write", "Access: Organizations, Identity Providers, and Groups Read", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Read", "Access: Apps Write", "Access: Policies Read", "Access: Policies Write", "Turnstile Sites Read", "Turnstile Sites Write"],
   [ZONE_SCOPE]: ["Workers Routes Write", "DNS Read", "DNS Write", "Zone Settings Read", "Zone Settings Write", "Zone WAF Read", "Zone WAF Write", "Cache Settings Read", "Cache Settings Write", "Dynamic URL Redirects Read", "Dynamic URL Redirects Write"],
 };
 const GROUPS = [
@@ -74,8 +74,8 @@ function fakeCloudflare({ tamper, failCreateAt, groups = GROUPS } = {}) {
   return { fetch, log, stored };
 }
 
-function harness({ beta = false, cf = fakeCloudflare(), items, skippedEnvs, passAnswers, fail, step = cloudflareTokens } = {}) {
-  const dir = rendered(beta);
+function harness({ beta = false, cf = fakeCloudflare(), items, skippedEnvs, passAnswers, fail, step = cloudflareTokens, dir: given } = {}) {
+  const dir = given ?? rendered(beta);
   if (skippedEnvs) {
     saveRun(dir, { answers: { owner: "sample-owner", name: "Sample Project", slug: "sample-project", zone_name: "example.test", beta }, modules: ["core"] });
   }
@@ -527,4 +527,72 @@ test("a malformed token definitions file reports the parse error, not a missing 
     assert.doesNotMatch(error.message, /--bootstrap-only/);
     return true;
   });
+});
+
+const IDENTITY_TOKENS = [
+  { token: "Infra plan", secret: "CLOUDFLARE_INFRA_PLAN_TOKEN", env: null, permissions: ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Turnstile Sites Read"] },
+  { token: "Infra apply", secret: "CLOUDFLARE_INFRA_APPLY_TOKEN", env: ["infra"], permissions: ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Turnstile Sites Write"] },
+];
+
+const tokensIn = dir => JSON.parse(readFileSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"), "utf8"));
+
+function stackDir(tokens, modules, { tokensFile = true } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), "secrets-"));
+  saveRun(dir, { answers: { owner: "sample-owner", name: "Sample Project", slug: "sample-project" }, modules }, "0123456789ab");
+  if (tokensFile) {
+    mkdirSync(join(dir, ".bootstrap", "cloudflare"), { recursive: true });
+    writeFileSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"), JSON.stringify(tokens));
+  }
+  return dir;
+}
+
+test("a stack with no zone-scoped tokens is never asked for a zone id and gets account-only policies", async () => {
+  const asked = [];
+  const { deps, cf, run } = harness({ dir: stackDir(IDENTITY_TOKENS, ["core", "cloudflare-identity"]) });
+  const prompt = deps.prompt;
+  deps.prompt = async question => {
+    asked.push(question);
+    return prompt(question);
+  };
+  await run();
+  assert.equal(asked.some(question => /zone id/i.test(question)), false);
+  const created = cf.log.filter(entry => entry.method === "POST");
+  assert.equal(created.length, 2);
+  for (const entry of created) assert.deepEqual([...new Set(entry.body.policies.flatMap(policy => Object.keys(policy.resources)))], [`${ACCOUNT_SCOPE}.${ACCOUNT}`]);
+  const secrets = deps.calls.filter(c => c.cmd === "gh" && c.args[0] === "secret").map(c => [c.args[2], c.args.includes("--env") ? c.args[c.args.indexOf("--env") + 1] : null]);
+  assert.deepEqual(secrets, [["CLOUDFLARE_INFRA_PLAN_TOKEN", null], ["CLOUDFLARE_INFRA_APPLY_TOKEN", "infra"]]);
+  assert.ok(deps.logs.some(line => /The two Cloudflare tokens are stored/.test(line)));
+});
+
+test("a stack with zone-scoped tokens is still asked for its zone id", async () => {
+  const asked = [];
+  const { deps, run } = harness({});
+  const prompt = deps.prompt;
+  deps.prompt = async question => {
+    asked.push(question);
+    return prompt(question);
+  };
+  await run();
+  assert.equal(asked.filter(question => /zone id/i.test(question)).length, 1);
+});
+
+test("a token with zone permissions that its definition doesn't mark as zone-scoped is refused before anything is created", async () => {
+  const tokens = [{ token: "Infra plan", secret: "CLOUDFLARE_INFRA_PLAN_TOKEN", env: null, permissions: ["DNS Read"] }];
+  const { cf, run } = harness({ dir: stackDir(tokens, ["core", "cloudflare-identity"]) });
+  await assert.rejects(run(), /Infra plan.*zone/);
+  assert.equal(cf.log.filter(entry => entry.method === "POST").length, 0);
+});
+
+test("the missing token definitions message names the stack module that was rendered", () => {
+  for (const stack of ["cloudflare-identity", "cloudflare-opentofu"]) {
+    const dir = stackDir([], ["core", stack], { tokensFile: false });
+    assert.throws(() => cloudflareTokens.secrets(loadContext(dir)), error => error.message.includes(`--modules core,${stack} `));
+  }
+});
+
+test("the stack's token definitions mark exactly the zone-scoped tokens", () => {
+  for (const beta of [true, false]) {
+    const tokens = tokensIn(rendered(beta));
+    assert.deepEqual(tokens.filter(entry => entry.zone).map(entry => entry.token), ["Deploy", "Infra plan", "Infra apply"]);
+  }
 });

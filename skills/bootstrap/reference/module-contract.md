@@ -18,7 +18,7 @@ and `templates/`.
 | `allowBuilds` | pnpm install-script decisions: `{ "<package>": { "allow": true or false, "reason": "…" } }`, rendered into `pnpm-workspace.yaml` |
 | `requiredChecks` | Status check names added to the default branch ruleset: a name, or `{ "context": name, "when": key }` to depend on an answer |
 | `releasePaths` | `{ noneAllowed, noneForbidden }` globs for the `release: none` guard |
-| `fragments` | `{ "<name>": "templates/<file>" }`: text other modules' templates can place with `{{fragment_<name>}}`. The fragment is rendered with the same values as the file it lands in, so `{{slug}}` and the other keys work inside it; it can't contain another fragment. A fragment name is declared once across the selected modules, and an unknown `{{fragment_<name>}}` fails the render |
+| `fragments` | `{ "<name>": "templates/<file>" }`: text other modules' templates can place with `{{fragment_<name>}}`. The fragment is rendered only when a file uses it, with the same values as that file, so `{{slug}}` and the other keys work inside it; it can't contain another fragment. A fragment name is declared once across the selected modules, and an unknown `{{fragment_<name>}}` fails the render |
 | `claudeIndexLines` | Lines added to the generated `CLAUDE.md` index |
 | `screening` | Dependency and vendor screening rows: `{ dependency, usedFor, maintainer, listed, decision, screenedOn }`, all required: `listed` is `Y` or `N`, `decision` says what was decided and why, and `screenedOn` is `YYYY-MM-DD` |
 

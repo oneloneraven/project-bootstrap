@@ -431,10 +431,20 @@ test("two modules declaring the same fragment fail the render and name both", ()
   assert.throws(() => renderFragments(dir, ["b"]), /Fragment "shared" is declared by both a and b/);
 });
 
-test("a fragment that uses an unresolved placeholder fails the render naming the fragment", () => {
+test("a fragment that a template uses and that has an unresolved placeholder fails the render naming the fragment", () => {
   const dir = fragmentModules({
     core: { manifest: { files: [] } },
     base: { manifest: { fragments: { bad: "templates/bad.md" }, files: [] }, files: { "bad.md": "{{nope}}\n" } },
+    stack: { manifest: { dependsOn: ["base"], files: [{ from: "templates/doc.md", to: "doc.md" }] }, files: { "doc.md": "{{fragment_bad}}\n" } },
   });
-  assert.throws(() => renderFragments(dir, ["base"]), /Unresolved placeholder \{\{nope\}\} in fragment bad/);
+  assert.throws(() => renderFragments(dir, ["stack"]), /Unresolved placeholder \{\{nope\}\} in fragment bad/);
+});
+
+test("a fragment no template uses isn't rendered, so its unknown placeholder doesn't fail the render", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    base: { manifest: { fragments: { unused: "templates/unused.md" }, files: [] }, files: { "unused.md": "{{zone_name}}\n" } },
+    stack: { manifest: { dependsOn: ["base"], files: [{ from: "templates/doc.md", to: "doc.md" }] }, files: { "doc.md": "plain\n" } },
+  });
+  assert.equal(readFileSync(join(renderFragments(dir, ["stack"]), "doc.md"), "utf8"), "plain\n");
 });

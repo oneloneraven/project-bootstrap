@@ -63,6 +63,12 @@ test("tool checks cover core and dependencies of the selected modules", () => {
   }
 });
 
+test("the identity stack checks for OpenTofu and nothing from an app stack", () => {
+  const names = toolsFor(["cloudflare-identity"], realModulesDir);
+  assert.ok(names.includes("tofu"));
+  for (const tool of ["wrangler", "pnpm", "node >= 22"]) assert.ok(!names.includes(tool), tool);
+});
+
 test("the cloudflare module checks for OpenTofu", () => {
   assert.ok(toolsFor(["cloudflare-opentofu"], realModulesDir).includes("tofu"));
 });

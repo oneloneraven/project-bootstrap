@@ -63,7 +63,9 @@ module, such as `cloudflare-opentofu`, builds on it like this:
    its questions, resources and manual steps. The base's manual steps run
    first and cover creating the tokens from those definitions, the state
    bucket and the R2 credentials (`cloudflare-tofu-base:1` to `:3`). Number
-   the stack's own steps from 1 in its `MODULE.md`. The stack's
+   the stack's own steps from 1 in its `MODULE.md`. A token with a zone
+   permission sets `"zone": true` in its definition; with none, the token
+   script never asks for a zone id. The stack's
    `infra/README.md` needs a "Cloudflare API tokens" table with one row per
    token, giving its permissions, secret name and where the secret belongs.
 
