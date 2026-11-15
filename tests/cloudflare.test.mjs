@@ -274,3 +274,39 @@ test("the infra README's change rule points wrangler-owned resources at wrangler
   assert.match(section, /explicit OK/);
   assert.doesNotMatch(section, /state bucket/);
 });
+
+test("DNSSEC relies on Cloudflare Registrar and nothing tells anyone to handle the DS record by hand", () => {
+  for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
+    const readme = read(dir, "infra/README.md");
+    const outputs = read(dir, "infra/outputs.tf");
+    assert.doesNotMatch(readme, /(add|remove) the DS record/i, name);
+    assert.doesNotMatch(readme, /at the (domain )?registrar/i, name);
+    assert.doesNotMatch(outputs, /at the (domain )?registrar/i, name);
+    assert.match(outputs, /Cloudflare Registrar publishes/, name);
+    const setup = section(readme, "## Setup");
+    assert.match(setup, /Cloudflare Registrar/, name);
+    assert.match(setup, /pending/, name);
+  }
+});
+
+test("teardown disables DNSSEC through infra before it destroys", () => {
+  for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
+    const teardown = section(read(dir, "infra/README.md"), "## Teardown");
+    const disable = teardown.search(/`"disabled"`/);
+    const destroy = teardown.indexOf("tofu destroy");
+    assert.ok(disable >= 0, `${name}: no DNSSEC disable step`);
+    assert.ok(destroy >= 0, `${name}: no destroy step`);
+    assert.ok(disable < destroy, name);
+    assert.match(teardown, /1\.5 times the DS record's TTL/, name);
+  }
+});
+
+test("the DNSSEC manual step only verifies, because Cloudflare Registrar adds the DS record", () => {
+  const step = moduleDoc.slice(moduleDoc.indexOf("### cloudflare-opentofu:5 "), moduleDoc.indexOf("### cloudflare-opentofu:6 "));
+  assert.match(step, /^### cloudflare-opentofu:5 Confirm DNSSEC$/m);
+  assert.match(step, /\*\*Do:\*\* nothing by hand/);
+  assert.match(step, /dig \+short DS <zone_name>/);
+  assert.match(step, /pending/);
+  assert.doesNotMatch(step, /registrar's DNSSEC/);
+  assert.doesNotMatch(section(moduleDoc, "## 2. Interview questions"), /registrar/i);
+});

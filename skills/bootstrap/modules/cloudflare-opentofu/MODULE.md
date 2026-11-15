@@ -244,17 +244,18 @@ yet.)
 permission: the user adds exactly that one to the infra token and Claude
 re-runs it.
 
-### cloudflare-opentofu:5 Add the DNSSEC DS record
+### cloudflare-opentofu:5 Confirm DNSSEC
 
-**Why:** DNSSEC isn't active until the registrar publishes the DS record.
+**Why:** DNSSEC isn't fully active until the DS record is published.
+Cloudflare Registrar adds it itself, from the zone's CDS and CDNSKEY
+records, within one to two days of DNSSEC being enabled.
 
-**Do:** copy the `app_dnssec_ds_record` output from the Infra run's log (or
-the dashboard's DNS → Settings → DNSSEC) into the registrar's DNSSEC
-settings.
+**Do:** nothing by hand.
 
-**Verify (Claude runs):** `dig +short DS <zone_name>` after a few minutes.
-**Expected:** a DS record. Propagation can take hours; if it hasn't appeared,
-note it in the hand-over rather than blocking.
+**Verify (Claude runs):** `dig +short DS <zone_name>`.
+**Expected:** a DS record. If it isn't there yet, note it in the hand-over
+rather than blocking, along with the fact that infra plans show
+`status: "pending" -> "active"` on the DNSSEC resource until it is.
 
 ### cloudflare-opentofu:6 Check Worker preview URLs (after the first PR)
 
