@@ -94,21 +94,27 @@
   "screening": [
     {
       "dependency": "Vite",
+      "usedFor": "Building and serving the web app",
       "maintainer": "VoidZero Inc.",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "axe-core",
+      "usedFor": "Automated accessibility checks",
       "maintainer": "Deque Systems",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "WebdriverIO",
+      "usedFor": "Running end-to-end tests in a browser",
       "maintainer": "OpenJS Foundation",
       "listed": "N",
-      "note": "Chosen over Playwright, whose maintainer Microsoft is a consumer boycott target."
+      "decision": "Allowed. Chosen over Playwright, whose maintainer Microsoft is a consumer boycott target.",
+      "screenedOn": "2026-10-28"
     }
   ]
 }

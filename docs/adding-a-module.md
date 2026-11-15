@@ -6,7 +6,10 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
 
 1. **Open an issue** describing the stack and what the module sets up.
 2. **Screen its default dependencies and vendors** against the BDS lists and
-   record them in the manifest's `screening`.
+   record them in the manifest's `screening`. Each row needs `dependency`,
+   `usedFor`, `maintainer`, `listed` (`Y` or `N`), `decision` and `screenedOn`
+   (`YYYY-MM-DD`, the day it was screened); the render fails without them.
+   Core renders the rows into the project's `docs/dependency-register.md`.
 3. **Write `manifest.json`**: `dependsOn`, `conflictsWith` (for a stack that excludes another), `questions`, `files` (mark
    application files `"stage": "app"` so they ship in the first PR),
    `merge: true` to extend another module's JSON (such as `package.json`),

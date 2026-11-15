@@ -98,7 +98,7 @@ test("the coding standards gain the Python section without domain-specific rules
 });
 
 test("the screening table lists every new dependency and vendor", () => {
-  const table = read("docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md");
+  const table = read("docs/dependency-register.md");
   for (const name of ["mise", "aqua registry", "jdx/mise-action", "uv and ruff", "CPython", "pytest", "pytest-asyncio", "PyYAML", "shellcheck"]) {
     assert.ok(table.includes(`| ${name}`), name);
   }

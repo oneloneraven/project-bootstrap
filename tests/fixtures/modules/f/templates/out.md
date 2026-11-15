@@ -3,5 +3,6 @@ Standards:
 
 Table:
 {{screening_table}}
+Last checked: {{screening_checked}}
 
 Repo: {{repo_url}}

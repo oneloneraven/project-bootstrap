@@ -19,7 +19,7 @@ and `templates/`.
 | `requiredChecks` | Status check names added to the default branch ruleset: a name, or `{ "context": name, "when": key }` to depend on an answer |
 | `releasePaths` | `{ noneAllowed, noneForbidden }` globs for the `release: none` guard |
 | `claudeIndexLines` | Lines added to the generated `CLAUDE.md` index |
-| `screening` | Dependency and vendor screening rows: `{ dependency, maintainer, listed, note }` |
+| `screening` | Dependency and vendor screening rows: `{ dependency, usedFor, maintainer, listed, decision, screenedOn }`, all required: `listed` is `Y` or `N`, `decision` says what was decided and why, and `screenedOn` is `YYYY-MM-DD` |
 
 Templates use `{{key}}` for answers and derived keys, and so does a file's
 `to` path. `${{ … }}` (GitHub

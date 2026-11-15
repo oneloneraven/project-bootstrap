@@ -161,63 +161,83 @@
   "screening": [
     {
       "dependency": "Android SDK, Android Gradle Plugin, Jetpack (AndroidX, Compose), Android Lint, Android Studio and emulator images",
+      "usedFor": "Building, linting and running the Android app",
       "maintainer": "Google",
       "listed": "Y",
-      "note": "Google is a pressure target in the BDS boycott guide and a No Tech for Apartheid target (Project Nimbus). Free, industry standard, and there is no viable alternative for building a native Android app: allowed under the free-tool exception. Nothing is paid; there is no Google Play listing."
+      "decision": "Google is a pressure target in the BDS boycott guide and a No Tech for Apartheid target (Project Nimbus). Free, industry standard, and there is no viable alternative for building a native Android app: allowed under the free-tool exception. Nothing is paid; there is no Google Play listing.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Robolectric",
+      "usedFor": "Running Android UI tests on the JVM",
       "maintainer": "Google (open source, Robolectric project)",
       "listed": "Y",
-      "note": "MIT licence, maintained by Google engineers. Free, dev-only, and the only maintained way to run Android UI tests on the JVM: allowed under the free-tool exception."
+      "decision": "MIT licence, maintained by Google engineers. Free, dev-only, and the only maintained way to run Android UI tests on the JVM: allowed under the free-tool exception.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Kotlin and the Kotlin Gradle plugins",
+      "usedFor": "The language and its build plugins",
       "maintainer": "JetBrains",
       "listed": "N",
-      "note": "Apache-2.0 licence."
+      "decision": "Allowed. Apache-2.0 licence.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Gradle and gradle/actions",
+      "usedFor": "Building the app, locally and in CI",
       "maintainer": "Gradle Inc.",
       "listed": "N",
-      "note": "Apache-2.0 and MIT licences. CI uses setup-gradle's open-source basic cache provider, not the proprietary enhanced one."
+      "decision": "Allowed. Apache-2.0 and MIT licences. CI uses setup-gradle's open-source basic cache provider, not the proprietary enhanced one.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Eclipse Temurin (JDK 21)",
+      "usedFor": "The JDK that builds and tests the app",
       "maintainer": "Eclipse Adoptium (Eclipse Foundation)",
       "listed": "N",
-      "note": "GPL-2.0 with Classpath Exception."
+      "decision": "Allowed. GPL-2.0 with Classpath Exception.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Roborazzi",
+      "usedFor": "Screenshot tests",
       "maintainer": "takahirom (independent open source maintainer)",
       "listed": "N",
-      "note": "Apache-2.0 licence. Dev-only."
+      "decision": "Allowed. Apache-2.0 licence. Dev-only.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "ktlint",
+      "usedFor": "Kotlin linting and formatting",
       "maintainer": "ktlint project (community open source, started at Pinterest)",
       "listed": "N",
-      "note": "MIT licence. Dev-only."
+      "decision": "Allowed. MIT licence. Dev-only.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "detekt",
+      "usedFor": "Static analysis of Kotlin code",
       "maintainer": "detekt project (community open source)",
       "listed": "N",
-      "note": "Apache-2.0 licence. Dev-only."
+      "decision": "Allowed. Apache-2.0 licence. Dev-only.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "Spotless",
+      "usedFor": "Applying formatting rules",
       "maintainer": "DiffPlug (open source)",
       "listed": "N",
-      "note": "Apache-2.0 licence. Dev-only."
+      "decision": "Allowed. Apache-2.0 licence. Dev-only.",
+      "screenedOn": "2026-11-07"
     },
     {
       "dependency": "JUnit 4",
+      "usedFor": "Running unit tests",
       "maintainer": "JUnit team (community open source)",
       "listed": "N",
-      "note": "EPL-1.0 licence. Dev-only."
+      "decision": "Allowed. EPL-1.0 licence. Dev-only.",
+      "screenedOn": "2026-11-07"
     }
   ]
 }

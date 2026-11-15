@@ -152,7 +152,8 @@ test("render derives standards fragments, screening table and repo URL", () => {
   render({ modules: resolveModules(["f"], modulesDir), answers, modulesDir, destDir: dest });
   const out = readFileSync(join(dest, "out.md"), "utf8");
   assert.match(out, /### F standards\n\n- Rule F/);
-  assert.match(out, /\| Dependency \| Maintainer \| On a list \| Note \|\n\|---\|---\|---\|---\|\n\| toolf \| Org F \| N \|  \|/);
+  assert.match(out, /\| Dependency or vendor \| Used for \| Maintainer \| On a list\? \| Decision \|\n\|---\|---\|---\|---\|---\|\n\| toolf \| Testing \| Org F \| No \| Allowed \|/);
+  assert.match(out, /Last checked: 2026-01-02/);
   assert.match(out, /Repo: https:\/\/github\.com\/someone\/demo/);
 });
 
@@ -370,4 +371,18 @@ test("render.mjs --bootstrap-only writes the token definitions and records the p
   assert.notEqual(state.pluginVersion, "0123456789ab");
   assert.deepEqual(state.modules, ["core", "cloudflare-opentofu"]);
   assert.equal(state.answers.zone_name, "example.test");
+});
+
+test("a screening row missing a required field fails the render and names the field", () => {
+  const dir = tmp();
+  mkdirSync(join(dir, "core"));
+  const row = { dependency: "x", usedFor: "Testing", maintainer: "Org", listed: "N", decision: "Allowed", screenedOn: "2026-01-01" };
+  const { answers } = validateAnswers({ name: "Demo" });
+  for (const field of ["usedFor", "decision", "screenedOn"]) {
+    const { [field]: _omitted, ...incomplete } = row;
+    writeFileSync(join(dir, "core", "manifest.json"), JSON.stringify({ name: "core", files: [], screening: [incomplete] }));
+    assert.throws(() => render({ modules: resolveModules([], dir), answers, modulesDir: dir, destDir: tmp() }), new RegExp(`core's screening row "x" needs ${field}`));
+  }
+  writeFileSync(join(dir, "core", "manifest.json"), JSON.stringify({ name: "core", files: [], screening: [{ ...row, screenedOn: "13/11/2026" }] }));
+  assert.throws(() => render({ modules: resolveModules([], dir), answers, modulesDir: dir, destDir: tmp() }), /needs screenedOn as YYYY-MM-DD/);
 });

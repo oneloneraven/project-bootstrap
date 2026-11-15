@@ -147,11 +147,11 @@ test("the coding standards gain the Android section, which redefines browser ver
 });
 
 test("the screening table lists every new dependency and vendor", () => {
-  const table = read("docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md");
+  const table = read("docs/dependency-register.md");
   for (const name of ["Android SDK", "Robolectric", "Kotlin", "Gradle", "Eclipse Temurin", "Roborazzi", "ktlint", "detekt", "Spotless", "JUnit 4"]) {
     assert.ok(table.includes(`| ${name}`), name);
   }
-  assert.match(table, /\| Robolectric \| [^|]+ \| Y \|/);
+  assert.match(table, /\| Robolectric \| [^|]+ \| [^|]+ \| Yes \|/);
 });
 
 test("no node or python tooling is rendered", () => {

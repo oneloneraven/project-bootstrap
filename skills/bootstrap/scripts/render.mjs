@@ -114,12 +114,28 @@ export function validateAnswers(input, { maxSlugLength: limit = 63 } = {}) {
   return { answers, slug };
 }
 
-function screeningTable(modules) {
-  const rows = modules.flatMap(m => m.screening ?? []);
+const SCREENING_FIELDS = ["dependency", "usedFor", "maintainer", "listed", "decision", "screenedOn"];
+
+function screeningRows(modules) {
+  return modules.flatMap(module =>
+    (module.screening ?? []).map(row => {
+      for (const field of SCREENING_FIELDS) {
+        if (typeof row[field] !== "string" || !row[field].trim()) {
+          throw new Error(`${module.name}'s screening row "${row.dependency ?? "?"}" needs ${field}`);
+        }
+      }
+      if (!["Y", "N"].includes(row.listed)) throw new Error(`${module.name}'s screening row "${row.dependency}" needs listed to be Y or N`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.screenedOn)) throw new Error(`${module.name}'s screening row "${row.dependency}" needs screenedOn as YYYY-MM-DD`);
+      return row;
+    }),
+  );
+}
+
+function screeningTable(rows) {
   return [
-    "| Dependency | Maintainer | On a list | Note |",
-    "|---|---|---|---|",
-    ...rows.map(r => `| ${r.dependency} | ${r.maintainer} | ${r.listed} | ${r.note ?? ""} |`),
+    "| Dependency or vendor | Used for | Maintainer | On a list? | Decision |",
+    "|---|---|---|---|---|",
+    ...rows.map(r => `| ${r.dependency} | ${r.usedFor} | ${r.maintainer} | ${r.listed === "Y" ? "Yes" : "No"} | ${r.decision} |`),
   ].join("\n");
 }
 
@@ -176,6 +192,7 @@ function mergePolicyKeys(modules, policy) {
 }
 
 function deriveKeys(modules, answers, modulesDir) {
+  const screening = screeningRows(modules);
   const checks = [
     ...new Set(
       modules
@@ -192,7 +209,8 @@ function deriveKeys(modules, answers, modulesDir) {
       ? `\n## Stack\n\n${modules.flatMap(m => m.claudeIndexLines ?? []).join("\n")}\n`
       : "",
     coding_standards_modules: standardsFragments(modules, modulesDir),
-    screening_table: screeningTable(modules),
+    screening_table: screeningTable(screening),
+    screening_checked: screening.map(row => row.screenedOn).sort().at(-1) ?? "",
     allow_builds_yaml: allowBuildsYaml(modules),
     release_paths_json: formatJson({
       noneAllowed: [...new Set(modules.flatMap(m => m.releasePaths?.noneAllowed ?? []))],

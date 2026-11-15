@@ -146,21 +146,27 @@
   "screening": [
     {
       "dependency": "Cloudflare (hosting, DNS, R2)",
+      "usedFor": "Hosting the Worker, DNS and the infrastructure state bucket",
       "maintainer": "Cloudflare, Inc.",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "wrangler",
+      "usedFor": "Deploying and previewing the Worker",
       "maintainer": "Cloudflare, Inc.",
       "listed": "N",
-      "note": ""
+      "decision": "Allowed",
+      "screenedOn": "2026-10-28"
     },
     {
       "dependency": "OpenTofu",
+      "usedFor": "Managing the zone's DNS and settings as code",
       "maintainer": "OpenTofu project (Linux Foundation)",
       "listed": "N",
-      "note": "Chosen over Terraform, whose owner IBM is a No Tech for Apartheid target."
+      "decision": "Allowed. Chosen over Terraform, whose owner IBM is a No Tech for Apartheid target.",
+      "screenedOn": "2026-10-28"
     }
   ],
   "allowBuilds": {
