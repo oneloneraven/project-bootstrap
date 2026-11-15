@@ -1,5 +1,9 @@
 Closes #
 
+## What's new
+
+<!-- One plain sentence per change a user would notice. Leave empty if they won't notice anything. -->
+
 ## What changed
 
 ## How it was verified
@@ -16,3 +20,4 @@ See [the definition of done](../docs/definition-of-done.md).
 - [ ] Documented: docs and ADRs updated; no narrative comments
 - [ ] Clean: nothing the change replaced is left behind
 - [ ] Labelled: correct release label
+- [ ] Announced: "What's new" filled in if users will notice the change, empty if not

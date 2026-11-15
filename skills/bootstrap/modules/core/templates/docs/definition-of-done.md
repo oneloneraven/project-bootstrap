@@ -20,3 +20,9 @@ same list.
 7. **Clean.** Nothing the change replaced is left behind: no unused exports,
    styles, fixtures, scripts or tests.
 8. **Labelled.** The PR has the right release label ([versioning](versioning.md)).
+9. **Announced.** Every PR that makes a release has a "What's new" heading,
+   with one plain sentence per change a user would notice, written for them:
+   it's what the release notes say. Leave it empty only when they won't
+   notice anything. CI fails a released PR without the heading, so a body
+   written with `--body-file`, which skips the template, has to include it
+   ([versioning](versioning.md#whats-new)).

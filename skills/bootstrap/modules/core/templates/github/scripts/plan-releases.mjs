@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { whatsNewFromPrBody } from "./whats-new.mjs";
 
 const BUMPS = ["major", "minor", "patch"];
 
@@ -14,6 +15,18 @@ export function nextVersion(version, bump) {
   return `v${major}.${minor}.${patch + 1}`;
 }
 
+export function tagMessage(version, changes) {
+  return [version, "", ...changes].join("\n").trimEnd();
+}
+
+export function releaseNotes(changes) {
+  return changes.map(change => `- ${change}\n`).join("");
+}
+
+function entry(sha, version, pr, changes) {
+  return { sha, version, pr, message: tagMessage(version, changes), notes: releaseNotes(changes) };
+}
+
 export function planReleases({ commits, latestVersion, isTagged, prFor }) {
   const plan = [];
   let version = latestVersion;
@@ -23,7 +36,7 @@ export function planReleases({ commits, latestVersion, isTagged, prFor }) {
     const bump = pr && bumpOf(pr.labels);
     if (!bump) continue;
     version = nextVersion(version, bump);
-    plan.push({ sha, version, pr: pr.number });
+    plan.push(entry(sha, version, pr.number, whatsNewFromPrBody(pr.body ?? "")));
   }
   return plan;
 }
@@ -44,7 +57,7 @@ export function planFromRepo({ git, prFor, mergeSha, bumpInput }) {
       .split("\n")
       .find(tag => /^v\d+\.\d+\.\d+$/.test(tag));
     if (existing) throw new Error(`HEAD is already released as ${existing}`);
-    return [{ sha: git(["rev-parse", "HEAD"]), version: nextVersion(latestTag, bumpInput), pr: null }];
+    return [entry(git(["rev-parse", "HEAD"]), nextVersion(latestTag, bumpInput), null, [])];
   }
   if (latestTag && !isAncestor(git, latestTag, mergeSha)) {
     throw new Error(`${latestTag} isn't in ${mergeSha}'s history, so there's no safe range to release from`);
@@ -81,7 +94,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     prFor: sha => {
       const prs = parsePulls(run("gh", ["api", `repos/${GITHUB_REPOSITORY}/commits/${sha}/pulls`]), sha);
       const pr = prs.find(p => p.merge_commit_sha === sha);
-      return pr ? { number: pr.number, labels: pr.labels.map(l => l.name) } : null;
+      return pr ? { number: pr.number, labels: pr.labels.map(l => l.name), body: pr.body ?? "" } : null;
     },
   });
   process.stdout.write(`${JSON.stringify(plan)}\n`);

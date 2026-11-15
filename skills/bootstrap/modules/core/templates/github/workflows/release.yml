@@ -65,8 +65,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           jq -c '.[]' "$RUNNER_TEMP/plan.json" | while read -r release; do
             version=$(jq -r .version <<< "$release")
-            git tag -a "$version" -m "$version" "$(jq -r .sha <<< "$release")"
+            git tag -a "$version" -m "$(jq -r .message <<< "$release")" "$(jq -r .sha <<< "$release")"
             git push "https://x-access-token:${APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$version"
-            gh release create "$version" --repo "$GITHUB_REPOSITORY" --title "$version" --generate-notes \
+            jq -j .notes <<< "$release" > "$RUNNER_TEMP/notes.md"
+            gh release create "$version" --repo "$GITHUB_REPOSITORY" --title "$version" --notes-file "$RUNNER_TEMP/notes.md" \
               || echo "::warning::Tag $version pushed, but its GitHub Release wasn't created."
           done

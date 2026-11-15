@@ -44,3 +44,21 @@ test("repo settings pair the squash title with the only message GitHub accepts a
     assert.equal(settings.squash_merge_commit_message, "COMMIT_MESSAGES", visibility);
   }
 });
+
+test("the release workflow publishes the PR's What's new lines, not generated notes", () => {
+  const release = read(".github/workflows/release.yml");
+  assert.match(release, /--notes-file/);
+  assert.doesNotMatch(release, /--generate-notes/);
+  assert.match(release, /git tag -a "\$version" -m "\$\(jq -r \.message <<< "\$release"\)"/);
+  assert.ok([...files(dest)].includes(".github/scripts/whats-new.mjs"));
+  assert.ok([...files(dest)].includes(".github/scripts/check-whats-new.mjs"));
+});
+
+test("the release label check also checks What's new, with the token kept away from the script", () => {
+  const check = read(".github/workflows/require-release-label.yml");
+  assert.match(check, /name: Verify a released PR has a What's new section/);
+  assert.match(check, /gh pr view "\$PR_NUMBER" --repo "\$GITHUB_REPOSITORY" --json body,labels/);
+  assert.match(check, /env -u GH_TOKEN PR_JSON="\$PR_JSON" node \.github\/scripts\/check-whats-new\.mjs/);
+  assert.match(check, /actions\/checkout@[0-9a-f]{40}/);
+  assert.match(check, /pull-requests: read/);
+});
