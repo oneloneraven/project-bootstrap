@@ -43,8 +43,10 @@ from `wrangler.jsonc` and change through wrangler.
    does the CI tokens, or follow this page by hand.
 3. Run "Bootstrap OpenTofu state bucket".
 4. Run "Infra" (dispatch it, or merge a change under `infra/`).
-5. Add the DS record from `tofu output app_dnssec_ds_record` at the
-   registrar.
+5. Cloudflare Registrar adds the DS record within one to two days; check it
+   with `dig +short DS {{zone_name}}`. Until then, plans show the DNSSEC
+   status as `pending -> active`. That's expected, and it clears once the
+   registry has the record.
 6. In the dashboard, check the Worker's Preview URLs setting is on.
 
 ### Cloudflare API tokens
@@ -112,14 +114,19 @@ gitignored.
 
 Deliberately deleting the project's infrastructure:
 
-1. Remove `prevent_destroy` from every resource in a PR (the infra workflow
+1. In a PR to `infra/`, set `cloudflare_zone_dnssec.app`'s `status` to
+   `"disabled"` and let Infra apply it.
+2. Wait until the zone's DNSSEC status is `disabled`. The Registrar withdraws
+   the DS record once the zone's CDS records are zeroed; check with
+   `dig +short DS {{zone_name}}` returning nothing.
+3. Wait at least 1.5 times the DS record's TTL before continuing.
+4. Remove `prevent_destroy` from every resource in a PR (the infra workflow
    refuses plans that delete, so run the destroy locally).
-2. Locally, with the infra apply token and state credentials in your
+5. Locally, with the infra apply token and state credentials in your
    environment:
    `tofu init -backend-config="endpoints={s3=\"https://<account id>.r2.cloudflarestorage.com\"}"`
    then `tofu destroy`.
-3. Delete the Workers: `pnpm exec wrangler delete --env <env>` for each
+6. Delete the Workers: `pnpm exec wrangler delete --env <env>` for each
    environment.
-4. Empty and delete the `{{slug}}-tfstate` bucket in the dashboard.
-5. Revoke the four Cloudflare tokens and the R2 credentials.
-6. Remove the DS record at the registrar.
+7. Empty and delete the `{{slug}}-tfstate` bucket in the dashboard.
+8. Revoke the four Cloudflare tokens and the R2 credentials.
