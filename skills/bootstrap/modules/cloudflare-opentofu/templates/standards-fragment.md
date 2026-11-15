@@ -26,6 +26,12 @@ whether the design is idiomatic for the platform rather than fighting it.
   production's. A binding on `env.preview` is also repeated under
   `env.preview.previews`, because a Workers Preview inherits nothing from its
   environment.
+- **An admin section is checked twice.** Access decides who may sign in; the
+  Worker then verifies the Access token (RS256 only, signature, `aud`, `iss`,
+  `exp` and `nbf`) and accepts only `OWNER_EMAIL`, failing closed when
+  anything is missing. `ADMIN_ACCESS_CHECK` is `"off"` only in e2e and
+  development, never in production or beta. This applies where the project
+  has an admin section.
 - **API responses for changing data send `Cache-Control: no-store`.**
 - **Verify platform behaviour empirically** (a real request, `wrangler dev`,
   `--dry-run`) rather than trusting documentation alone.

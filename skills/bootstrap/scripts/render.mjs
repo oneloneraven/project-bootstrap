@@ -241,17 +241,18 @@ function substitute(text, values, to) {
 function withFragments(modules, modulesDir, base) {
   const declared = new Map();
   for (const module of modules) {
-    for (const [name, path] of Object.entries(module.fragments ?? {})) {
+    for (const [name, declaration] of Object.entries(module.fragments ?? {})) {
       if (declared.has(name)) throw new Error(`Fragment "${name}" is declared by both ${declared.get(name).module} and ${module.name}`);
-      declared.set(name, { module: module.name, path: join(modulesDir, module.name, path) });
+      const { path, when } = typeof declaration === "string" ? { path: declaration } : declaration;
+      declared.set(name, { module: module.name, path: join(modulesDir, module.name, path), when });
     }
   }
   const values = { ...base };
-  for (const [name, { path }] of declared) {
+  for (const [name, { path, when }] of declared) {
     let text;
     Object.defineProperty(values, `fragment_${name}`, {
       enumerable: true,
-      get: () => (text ??= substitute(readFileSync(path, "utf8"), base, `fragment ${name}`)),
+      get: () => (text ??= included({ when }, base) ? substitute(readFileSync(path, "utf8"), base, `fragment ${name}`) : ""),
     });
   }
   return values;

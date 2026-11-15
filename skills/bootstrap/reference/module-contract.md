@@ -11,14 +11,14 @@ and `templates/`.
 | `dependsOn` | Modules that must also be selected; the renderer pulls them in first |
 | `conflictsWith` | Modules that cannot be selected together with this one, whether chosen directly or pulled in through `dependsOn`; resolution fails naming both |
 | `maxSlugLength` | The longest slug the module's derived names allow (default 63) |
-| `questions` | Interview questions: `{ key, type, prompt }`, where `type` is `boolean`, `string`, `hostname` or `application_id` (a lower-case reverse domain with no Java or Kotlin keyword as a segment); answers are checked against it |
+| `questions` | Interview questions: `{ key, type, prompt }`, where `type` is `boolean`, `string`, `hostname`, `dns_label` (one lower-case DNS label) or `application_id` (a lower-case reverse domain with no Java or Kotlin keyword as a segment); answers are checked against it. A question with `when: <answer key>` is asked, and checked, only when that answer is truthy |
 | `mergePolicies` | Core only: `{ "<policy>": { rule, index } }`, the allowed `merge_policy` answers, each with its `docs/workflow.md` rule (an array of lines) and CLAUDE.md index line |
 | `files` | `{ from, to, when?, stage? }`; `when` is an answer key (truthy) or `!key` (falsy); `stage` is `initial` (default, pushed with the initial commit) or `app` (shipped in the first PR); `merge: true` deep-merges a JSON file into the one an earlier module writes |
 | `overrides` | Destination paths of other modules' files that this module replaces wholesale; prefer `merge` |
 | `allowBuilds` | pnpm install-script decisions: `{ "<package>": { "allow": true or false, "reason": "…" } }`, rendered into `pnpm-workspace.yaml` |
 | `requiredChecks` | Status check names added to the default branch ruleset: a name, or `{ "context": name, "when": key }` to depend on an answer |
 | `releasePaths` | `{ noneAllowed, noneForbidden }` globs for the `release: none` guard |
-| `fragments` | `{ "<name>": "templates/<file>" }`: text other modules' templates can place with `{{fragment_<name>}}`. The fragment is rendered only when a file uses it, with the same values as that file, so `{{slug}}` and the other keys work inside it; it can't contain another fragment. A fragment name is declared once across the selected modules, and an unknown `{{fragment_<name>}}` fails the render |
+| `fragments` | `{ "<name>": "templates/<file>" }`, or `{ "path": "templates/<file>", "when": "<answer key>" }` for a fragment that is empty unless that answer is truthy: text other modules' templates can place with `{{fragment_<name>}}`. The fragment is rendered only when a file uses it, with the same values as that file, so `{{slug}}` and the other keys work inside it; it can't contain another fragment. A fragment name is declared once across the selected modules, and an unknown `{{fragment_<name>}}` fails the render |
 | `claudeIndexLines` | Lines added to the generated `CLAUDE.md` index |
 | `screening` | Dependency and vendor screening rows: `{ dependency, usedFor, maintainer, listed, decision, screenedOn }`, all required: `listed` is `Y` or `N`, `decision` says what was decided and why, and `screenedOn` is `YYYY-MM-DD` |
 
