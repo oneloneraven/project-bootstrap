@@ -1,6 +1,6 @@
 # Working in project-bootstrap
 
-Claude skill for bootstrapping new projects using Ravendarque defined patterns and practices
+Claude skill for bootstrapping new projects using One Lone Raven defined patterns and practices
 
 This file is an index. Each line is a rule; the linked doc has the detail.
 Read a doc when the work touches it, not up front.

@@ -41,7 +41,7 @@ test("every relative Markdown link resolves", () => {
 
 test("licence carries the standard title and handle notice", () => {
   const licence = read("LICENSE.md");
-  assert.equal(licence.split("\n")[0], "# Ravendarque Noncommercial Licence 1.0.0");
+  assert.equal(licence.split("\n")[0], "# One Lone Raven Noncommercial Licence 1.0.0");
   assert.match(licence, /^Required Notice: Copyright One Lone Raven \(https:\/\/github\.com\/oneloneraven\)$/m);
   assert.match(licence, /https:\/\/github\.com\/sample-owner\/sample-project\/blob\/main\/LICENSE\.md/);
 });

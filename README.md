@@ -52,4 +52,4 @@ To add a stack, see [adding a module](docs/adding-a-module.md).
 
 ## Licence
 
-[Ravendarque Noncommercial Licence](LICENSE.md).
+[One Lone Raven Noncommercial Licence](LICENSE.md).
