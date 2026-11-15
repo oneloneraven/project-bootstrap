@@ -171,11 +171,12 @@ test("the repository-level fallback is conditional on the check failing", () => 
 
 test("secret commands use --env normally and repository level only on the fallback", () => {
   const manual = section(moduleDoc, "## 5. Manual steps");
-  assert.match(manual, /CLOUDFLARE_DEPLOY_TOKEN --repo \$R --env production/);
-  assert.match(manual, /CLOUDFLARE_INFRA_APPLY_TOKEN --repo \$R --env infra/);
-  assert.match(section(baseDoc, "## 5. Manual steps"), /TF_STATE_ACCESS_KEY_ID --repo \$R --env infra/);
-  assert.match(manual, /recorded\s+an environment as skipped/);
-  assert.doesNotMatch(manual, /On a free private repo/);
+  const baseManual = section(baseDoc, "## 5. Manual steps");
+  assert.match(baseManual, /CLOUDFLARE_INFRA_APPLY_TOKEN --repo \$R --env infra/);
+  assert.match(baseManual, /TF_STATE_ACCESS_KEY_ID --repo \$R --env infra/);
+  assert.match(baseManual, /recorded\s+an\s+environment as skipped/);
+  assert.doesNotMatch(baseManual, /On a free private repo/);
+  assert.doesNotMatch(manual, /secret set/);
 });
 
 test("the bootstrap skill checks environments on a free private repo rather than assuming", () => {
@@ -307,8 +308,8 @@ test("teardown disables DNSSEC through infra before it destroys", () => {
 });
 
 test("the DNSSEC manual step only verifies, because Cloudflare Registrar adds the DS record", () => {
-  const step = moduleDoc.slice(moduleDoc.indexOf("### cloudflare-opentofu:3 "), moduleDoc.indexOf("### cloudflare-opentofu:4 "));
-  assert.match(step, /^### cloudflare-opentofu:3 Confirm DNSSEC$/m);
+  const step = moduleDoc.slice(moduleDoc.indexOf("### cloudflare-opentofu:2 "), moduleDoc.indexOf("### cloudflare-opentofu:3 "));
+  assert.match(step, /^### cloudflare-opentofu:2 Confirm DNSSEC$/m);
   assert.match(step, /\*\*Do:\*\* nothing by hand/);
   assert.match(step, /dig \+short DS <zone_name>/);
   assert.match(step, /pending/);

@@ -30,7 +30,8 @@ None. The slug is limited to 40 characters: the state bucket is named from it.
 ## 3. Files
 
 - `scripts/bootstrap-state.mjs` and the workflow `bootstrap-state.yml`,
-  which create the state bucket.
+  which create the state bucket. The stack supplies the token definitions
+  (`.bootstrap/cloudflare/tokens.json`) that step 1 creates the tokens from.
 - `templates/infra.skeleton.yml`: the shape every stack's `infra.yml`
   follows. It isn't rendered; a test checks each stack's `infra.yml` matches
   it apart from the `TF_VAR_*` lines.
@@ -110,33 +111,84 @@ After core's configuration. Steps `github:cloudflare-tofu-base:<n>`.
 
 ## 5. Manual steps
 
-Do these after the stack module's token step. `infra/README.md` (rendered
-into the project) has the same steps for later rebuilds.
+Do these in order. `infra/README.md` (rendered into the project) has the
+same steps for later rebuilds.
 
-### cloudflare-tofu-base:1 Create the state bucket
+### cloudflare-tofu-base:1 Create the Cloudflare API tokens
+
+**Why:** CI needs separate least-privilege credentials, including the
+infrastructure plan and apply tokens.
+
+**Do:** make the bootstrap token: Cloudflare dashboard → Manage Account →
+Account API Tokens → Create Token → Custom token. Its only permission is
+Account: Account API Tokens: Edit, and it expires today. Then run
+`node <skill dir>/scripts/secrets.mjs cloudflare-tokens <project dir>`.
+Paste the bootstrap token at the hidden prompt (the long value from the Copy
+button, not the token ID), and give the account id and, when the tokens
+have zone permissions, the zone id from the zone's Overview page when asked.
+The script creates the tokens in `.bootstrap/cloudflare/tokens.json`, reads
+each back to check its policies, stores them in Proton Pass, sets the
+secrets and the `CLOUDFLARE_ACCOUNT_ID` variable, and deletes the bootstrap
+token.
+
+The ids aren't secret, so the script remembers them. The account id is the
+same for every project, so it's stored once per user in
+`${XDG_CONFIG_HOME:-~/.config}/project-bootstrap/cloudflare.json`
+(mode 600). The zone id is per project, so it's stored in the project's
+`.bootstrap/state.json` as `ids.cloudflare_zone_id`. Each run uses, in
+order, the `--account-id` or `--zone-id` flag (32 hexadecimal characters; it
+replaces the stored value), then the stored value, then a prompt whose
+answer is stored. It logs which it used, and ignores a stored value that
+isn't 32 hexadecimal characters, with a warning. A second project on the
+same account is asked only for its zone id.
+
+**By hand:** In the Cloudflare dashboard → My Profile → API Tokens (or Manage
+Account → Account API Tokens for account-owned tokens) → Create Token →
+Custom token. Create each token the "Cloudflare API tokens" table in
+`infra/README.md` lists, each with a one-year expiry, scoped to this account
+and, for zone permissions, to the stack's zone only. The table gives each
+token's permissions, its secret name, and whether it belongs to the
+repository or to named environments. Then set each secret, with
+`--env <name>` for each environment its row names:
+- `gh secret set CLOUDFLARE_INFRA_PLAN_TOKEN --repo $R`
+- `gh secret set CLOUDFLARE_INFRA_APPLY_TOKEN --repo $R --env infra`
+- `gh secret set <SECRET> --repo $R` for every other token in the table
+
+Never add a per-Worker granular policy by editing an existing token.
+
+If github:cloudflare-tofu-base:1 or a stack's environment step recorded an
+environment as skipped (its fallback), drop `--env <name>` for that
+environment's secrets and set them at repository level.
+
+**Verify (Claude runs):** `gh secret list --repo $R` and
+`gh secret list --repo $R --env <name>` for each environment in the table.
+**Expected:** every secret is listed in the
+right place.
+
+### cloudflare-tofu-base:2 Create the state bucket
 
 **Why:** the state bucket must exist before OpenTofu can run.
 
 **Do:** nothing by hand. Claude runs
-`gh workflow run bootstrap-state.yml --repo $R` once core:1 and the
-stack's token step are done.
+`gh workflow run bootstrap-state.yml --repo $R` once core:1 and step 1 are
+done.
 
 **Verify (Claude runs):** `gh run watch --repo $R --exit-status` on that run.
 **Expected:** success, with "Created bucket" or "already exists" in the log.
 
-### cloudflare-tofu-base:2 Create the R2 state credentials
+### cloudflare-tofu-base:3 Create the R2 state credentials
 
 **Why:** the state backend reads and writes state through R2's S3 API.
 PR plans get a read-only pair, so PR code can't rewrite state.
 
-**Do:** make a fresh bootstrap token as in the stack's token step (only
-Account: Account API Tokens: Edit, expiring today), then run
+**Do:** make a fresh bootstrap token as in step 1 (only Account:
+Account API Tokens: Edit, expiring today), then run
 `node <skill dir>/scripts/secrets.mjs cloudflare-r2 <project dir>` and paste
 it at the hidden prompt, with the account id when asked. The script creates
 the two bucket-scoped tokens, derives the S3 key pairs, stores them in
 Proton Pass, sets the four secrets, and deletes the bootstrap token. The
-account id comes from the flag, the stored value or the prompt, as in the
-stack's token step (`--account-id` overrides it).
+account id comes from the flag, the stored value or the prompt, as in step
+1 (`--account-id` overrides it).
 
 **By hand:** Cloudflare dashboard → R2 → Manage R2 API Tokens. Create two
 tokens, both applied to the `<slug>-tfstate` bucket only:

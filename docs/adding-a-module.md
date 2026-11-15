@@ -59,9 +59,13 @@ module, such as `cloudflare-opentofu`, builds on it like this:
    `templates/infra.skeleton.yml` apart from its `TF_VAR_*` lines, which a
    test checks. Keep the `@@TOFU_VERSION@@` token in it: the base's scaffold
    step fills it in.
-5. Write the stack's tokens, questions, resources and manual steps. Number
-   them from 1 in the stack's own `MODULE.md`; the base's steps are
-   `cloudflare-tofu-base:<n>`, run after the stack's token step.
+5. Write the stack's token definitions (`.bootstrap/cloudflare/tokens.json`),
+   its questions, resources and manual steps. The base's manual steps run
+   first and cover creating the tokens from those definitions, the state
+   bucket and the R2 credentials (`cloudflare-tofu-base:1` to `:3`). Number
+   the stack's own steps from 1 in its `MODULE.md`. The stack's
+   `infra/README.md` needs a "Cloudflare API tokens" table with one row per
+   token, giving its permissions, secret name and where the secret belongs.
 
 Two stack modules that write the same files, such as the token definitions,
 declare `conflictsWith` on each other.

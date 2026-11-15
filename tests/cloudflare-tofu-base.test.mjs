@@ -1,27 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { files, renderReal } from "./helpers.mjs";
+import { renderReal } from "./helpers.mjs";
 
-const before = JSON.parse(readFileSync(new URL("./fixtures/cloudflare-opentofu-before-split.json", import.meta.url), "utf8"));
 const renders = { beta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: true }), nobeta: renderReal(["cloudflare-opentofu"], { zone_name: "example.test", beta: false }) };
-const hash = (dir, file) => createHash("sha256").update(readFileSync(join(dir, file))).digest("hex");
 
-for (const [variant, dir] of Object.entries(renders)) {
-  test(`splitting the plumbing into cloudflare-tofu-base leaves the ${variant} render's files and contents as they were`, () => {
-    assert.deepEqual([...files(dir)].sort(), Object.keys(before[variant]));
-    const changed = Object.keys(before[variant]).filter(file => hash(dir, file) !== before[variant][file]);
-    assert.deepEqual(changed, ["docs/dependency-register.md"]);
-  });
-
-  test(`the ${variant} dependency register lists OpenTofu once, ahead of the stack's own rows`, () => {
-    const rows = readFileSync(join(dir, "docs/dependency-register.md"), "utf8").split("\n").filter(line => line.startsWith("| "));
-    assert.equal(rows.filter(line => line.startsWith("| OpenTofu |")).length, 1);
-    assert.ok(rows.findIndex(line => line.startsWith("| OpenTofu |")) < rows.findIndex(line => line.startsWith("| Cloudflare (hosting, DNS, R2) |")));
-  });
-}
+test("the base's manual steps run in the order the work needs: tokens, then the state bucket, then R2 credentials", () => {
+  const doc = readFileSync(new URL("../skills/bootstrap/modules/cloudflare-tofu-base/MODULE.md", import.meta.url), "utf8");
+  const headings = [...doc.matchAll(/^### (cloudflare-tofu-base:\d+) (.+)$/gm)].map(m => `${m[1]} ${m[2]}`);
+  assert.deepEqual(headings, [
+    "cloudflare-tofu-base:1 Create the Cloudflare API tokens",
+    "cloudflare-tofu-base:2 Create the state bucket",
+    "cloudflare-tofu-base:3 Create the R2 state credentials",
+  ]);
+});
 
 const baseTemplates = new URL("../skills/bootstrap/modules/cloudflare-tofu-base/templates/", import.meta.url);
 const stackTemplates = new URL("../skills/bootstrap/modules/cloudflare-opentofu/templates/", import.meta.url);

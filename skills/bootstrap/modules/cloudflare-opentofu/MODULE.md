@@ -78,62 +78,10 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
 
 ## 5. Manual steps
 
-Do these in order, with `cloudflare-tofu-base`'s steps after step 1.
-`infra/README.md` (rendered into the project) has the same steps for later
-rebuilds.
+Do these in order. `infra/README.md` (rendered into the project) has the
+same steps for later rebuilds.
 
-### cloudflare-opentofu:1 Create the Cloudflare API tokens
-
-**Why:** CI needs separate least-privilege credentials for previews,
-deploys, and the infrastructure plan and apply.
-
-**Do:** make the bootstrap token: Cloudflare dashboard → Manage Account →
-Account API Tokens → Create Token → Custom token. Its only permission is
-Account: Account API Tokens: Edit, and it expires today. Then run
-`node <skill dir>/scripts/secrets.mjs cloudflare-tokens <project dir>`.
-Paste the bootstrap token at the hidden prompt (the long value from the Copy
-button, not the token ID), and give the account id and zone id from the
-zone's Overview page when asked. The script creates the four tokens, reads
-each back to check its policies, stores them in Proton Pass, sets the
-secrets and the `CLOUDFLARE_ACCOUNT_ID` variable, and deletes the bootstrap
-token.
-
-The ids aren't secret, so the script remembers them. The account id is the
-same for every project, so it's stored once per user in
-`${XDG_CONFIG_HOME:-~/.config}/project-bootstrap/cloudflare.json`
-(mode 600). The zone id is per project, so it's stored in the project's
-`.bootstrap/state.json` as `ids.cloudflare_zone_id`. Each run uses, in
-order, the `--account-id` or `--zone-id` flag (32 hexadecimal characters; it
-replaces the stored value), then the stored value, then a prompt whose
-answer is stored. It logs which it used, and ignores a stored value that
-isn't 32 hexadecimal characters, with a warning. A second project on the
-same account is asked only for its zone id.
-
-**By hand:** In the Cloudflare dashboard → My Profile → API Tokens (or Manage
-Account → Account API Tokens for account-owned tokens) → Create Token →
-Custom token. Create four tokens, each with a one-year expiry, scoped to
-this account and, for zone permissions, to `<zone_name>` only. The exact
-permissions are in the "Cloudflare API tokens" table in `infra/README.md`.
-Then set each secret:
-- `gh secret set CLOUDFLARE_PREVIEW_TOKEN --repo $R`
-- `gh secret set CLOUDFLARE_INFRA_PLAN_TOKEN --repo $R`
-- `gh secret set CLOUDFLARE_DEPLOY_TOKEN --repo $R --env production`, and
-  `--env beta` too, with a beta
-- `gh secret set CLOUDFLARE_INFRA_APPLY_TOKEN --repo $R --env infra`
-
-Never add a per-Worker granular policy by editing an existing token.
-
-If github:cloudflare-tofu-base:1 or github:cloudflare-opentofu:1 recorded
-an environment as skipped (its
-fallback), drop `--env <name>` for that environment's secrets and set them
-at repository level.
-
-**Verify (Claude runs):** `gh secret list --repo $R` and
-`gh secret list --repo $R --env production` (and `infra`, `beta`).
-**Expected:** every secret is listed in the
-right place.
-
-### cloudflare-opentofu:2 Apply the infrastructure
+### cloudflare-opentofu:1 Apply the infrastructure
 
 **Why:** the Worker routes need the DNS records to exist before the first
 deploy.
@@ -147,7 +95,7 @@ yet.)
 permission: the user adds exactly that one to the infra token and Claude
 re-runs it.
 
-### cloudflare-opentofu:3 Confirm DNSSEC
+### cloudflare-opentofu:2 Confirm DNSSEC
 
 **Why:** DNSSEC isn't fully active until the DS record is published.
 Cloudflare Registrar adds it itself, from the zone's CDS and CDNSKEY
@@ -160,7 +108,7 @@ records, within one to two days of DNSSEC being enabled.
 rather than blocking, along with the fact that infra plans show
 `status: "pending" -> "active"` on the DNSSEC resource until it is.
 
-### cloudflare-opentofu:4 Check Worker preview URLs (after the first PR)
+### cloudflare-opentofu:3 Check Worker preview URLs (after the first PR)
 
 **Why:** Cloudflare made preview URLs opt-in, and PR previews need them.
 
