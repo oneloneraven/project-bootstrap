@@ -386,3 +386,55 @@ test("a screening row missing a required field fails the render and names the fi
   writeFileSync(join(dir, "core", "manifest.json"), JSON.stringify({ name: "core", files: [], screening: [{ ...row, screenedOn: "13/11/2026" }] }));
   assert.throws(() => render({ modules: resolveModules([], dir), answers, modulesDir: dir, destDir: tmp() }), /needs screenedOn as YYYY-MM-DD/);
 });
+
+function fragmentModules(layout) {
+  const dir = tmp();
+  for (const [name, { manifest, files = {} }] of Object.entries(layout)) {
+    mkdirSync(join(dir, name, "templates"), { recursive: true });
+    writeFileSync(join(dir, name, "manifest.json"), JSON.stringify({ name, ...manifest }));
+    for (const [file, text] of Object.entries(files)) writeFileSync(join(dir, name, "templates", file), text);
+  }
+  return dir;
+}
+
+const renderFragments = (dir, selected) => {
+  const { answers } = validateAnswers({ name: "Demo" });
+  const dest = tmp();
+  render({ modules: resolveModules(selected, dir), answers, modulesDir: dir, destDir: dest });
+  return dest;
+};
+
+test("a fragment from a dependency is substituted with the host's values inside a dependent's template", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    base: { manifest: { fragments: { greeting: "templates/greeting.md" }, files: [] }, files: { "greeting.md": "Hello {{slug}} from ${{ github.actor }}.\n" } },
+    stack: { manifest: { dependsOn: ["base"], files: [{ from: "templates/doc.md", to: "doc.md" }] }, files: { "doc.md": "Top\n{{fragment_greeting}}Bottom {{slug}}\n" } },
+  });
+  const dest = renderFragments(dir, ["stack"]);
+  assert.equal(readFileSync(join(dest, "doc.md"), "utf8"), "Top\nHello demo from ${{ github.actor }}.\nBottom demo\n");
+});
+
+test("an unknown fragment fails the render and names the fragment and the file", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    stack: { manifest: { files: [{ from: "templates/doc.md", to: "doc.md" }] }, files: { "doc.md": "{{fragment_missing}}\n" } },
+  });
+  assert.throws(() => renderFragments(dir, ["stack"]), /Unknown fragment "missing" in doc\.md/);
+});
+
+test("two modules declaring the same fragment fail the render and name both", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    a: { manifest: { fragments: { shared: "templates/x.md" }, files: [] }, files: { "x.md": "A\n" } },
+    b: { manifest: { dependsOn: ["a"], fragments: { shared: "templates/x.md" }, files: [] }, files: { "x.md": "B\n" } },
+  });
+  assert.throws(() => renderFragments(dir, ["b"]), /Fragment "shared" is declared by both a and b/);
+});
+
+test("a fragment that uses an unresolved placeholder fails the render naming the fragment", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    base: { manifest: { fragments: { bad: "templates/bad.md" }, files: [] }, files: { "bad.md": "{{nope}}\n" } },
+  });
+  assert.throws(() => renderFragments(dir, ["base"]), /Unresolved placeholder \{\{nope\}\} in fragment bad/);
+});

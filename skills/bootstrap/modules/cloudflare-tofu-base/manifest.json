@@ -1,0 +1,32 @@
+{
+  "name": "cloudflare-tofu-base",
+  "maxSlugLength": 40,
+  "fragments": {
+    "tofu_terraform_block": "templates/fragments/terraform-block.tf",
+    "deleting_resources": "templates/fragments/readme-deleting-resources.md",
+    "r2_state_credentials": "templates/fragments/readme-r2-state-credentials.md",
+    "opentofu_version": "templates/fragments/readme-opentofu-version.md"
+  },
+  "overrides": [],
+  "files": [
+    {
+      "from": "templates/scripts/bootstrap-state.mjs",
+      "to": "scripts/bootstrap-state.mjs"
+    },
+    {
+      "from": "templates/github/workflows/bootstrap-state.yml",
+      "to": ".github/workflows/bootstrap-state.yml"
+    }
+  ],
+  "requiredChecks": [],
+  "screening": [
+    {
+      "dependency": "OpenTofu",
+      "usedFor": "Managing the zone's DNS and settings as code",
+      "maintainer": "OpenTofu project (Linux Foundation)",
+      "listed": "N",
+      "decision": "Allowed. Chosen over Terraform, whose owner IBM is a No Tech for Apartheid target.",
+      "screenedOn": "2026-10-28"
+    }
+  ]
+}

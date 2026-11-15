@@ -1,7 +1,8 @@
 {
   "name": "cloudflare-opentofu",
   "dependsOn": [
-    "web-app"
+    "web-app",
+    "cloudflare-tofu-base"
   ],
   "maxSlugLength": 40,
   "questions": [
@@ -89,16 +90,8 @@
       "to": "infra/README.md"
     },
     {
-      "from": "templates/scripts/bootstrap-state.mjs",
-      "to": "scripts/bootstrap-state.mjs"
-    },
-    {
       "from": "templates/github/workflows/infra.yml",
       "to": ".github/workflows/infra.yml"
-    },
-    {
-      "from": "templates/github/workflows/bootstrap-state.yml",
-      "to": ".github/workflows/bootstrap-state.yml"
     },
     {
       "from": "templates/github/workflows/preview.yml",
@@ -158,14 +151,6 @@
       "maintainer": "Cloudflare, Inc.",
       "listed": "N",
       "decision": "Allowed",
-      "screenedOn": "2026-10-28"
-    },
-    {
-      "dependency": "OpenTofu",
-      "usedFor": "Managing the zone's DNS and settings as code",
-      "maintainer": "OpenTofu project (Linux Foundation)",
-      "listed": "N",
-      "decision": "Allowed. Chosen over Terraform, whose owner IBM is a No Tech for Apartheid target.",
       "screenedOn": "2026-10-28"
     }
   ],

@@ -230,13 +230,30 @@ function included(file, answers) {
 
 function substitute(text, values, to) {
   return text.replace(PLACEHOLDER, (match, key) => {
-    if (values[key] === undefined) throw new Error(`Unresolved placeholder {{${key}}} in ${to}`);
+    if (values[key] === undefined) {
+      if (key.startsWith("fragment_")) throw new Error(`Unknown fragment "${key.slice("fragment_".length)}" in ${to}`);
+      throw new Error(`Unresolved placeholder {{${key}}} in ${to}`);
+    }
     return String(values[key]);
   });
 }
 
+function fragmentValues(modules, modulesDir, values) {
+  const declared = new Map();
+  for (const module of modules) {
+    for (const [name, path] of Object.entries(module.fragments ?? {})) {
+      if (declared.has(name)) throw new Error(`Fragment "${name}" is declared by both ${declared.get(name).module} and ${module.name}`);
+      declared.set(name, { module: module.name, path: join(modulesDir, module.name, path) });
+    }
+  }
+  return Object.fromEntries(
+    [...declared].map(([name, { path }]) => [`fragment_${name}`, substitute(readFileSync(path, "utf8"), values, `fragment ${name}`)]),
+  );
+}
+
 export function render({ modules, answers, modulesDir, destDir, dryRun = false, stage, bootstrapOnly = false }) {
-  const values = { ...answers, ...deriveKeys(modules, answers, modulesDir) };
+  const base = { ...answers, ...deriveKeys(modules, answers, modulesDir) };
+  const values = { ...base, ...fragmentValues(modules, modulesDir, base) };
   const root = resolve(destDir);
   const outputs = new Map();
   const owners = new Map();

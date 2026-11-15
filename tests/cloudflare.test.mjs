@@ -137,6 +137,7 @@ test("OpenTofu is pinned through a scaffold token and no other version is carrie
 });
 
 const moduleDoc = readFileSync(new URL("../skills/bootstrap/modules/cloudflare-opentofu/MODULE.md", import.meta.url), "utf8");
+const baseDoc = readFileSync(new URL("../skills/bootstrap/modules/cloudflare-tofu-base/MODULE.md", import.meta.url), "utf8");
 const skillDoc = readFileSync(new URL("../skills/bootstrap/SKILL.md", import.meta.url), "utf8");
 const section = (text, heading) => {
   const start = text.indexOf(heading);
@@ -146,31 +147,34 @@ const section = (text, heading) => {
 };
 
 test("environments are created on every plan and each is verified after creation", () => {
-  const config = section(moduleDoc, "## 4. GitHub configuration");
+  const config = section(baseDoc, "## 4. GitHub configuration");
   assert.match(config, /on every plan/);
   assert.match(config, /gh api repos\/\$R\/environments\/<env> --jq '\.deployment_branch_policy'/);
   assert.match(config, /"custom_branch_policies":true/);
   assert.match(config, /repos\/\$R\/environments\/<env>\/deployment-branch-policies --jq/);
-  for (const expected of ['["branch:main"]', '["branch:main","tag:v*"]', '["tag:v*"]']) assert.ok(config.includes(expected), expected);
+  assert.ok(config.includes('["branch:main"]'));
+  const deploy = section(moduleDoc, "## 4. GitHub configuration");
+  for (const expected of ['["branch:main","tag:v*"]', '["tag:v*"]']) assert.ok(deploy.includes(expected), expected);
 });
 
 test("the repository-level fallback is conditional on the check failing", () => {
-  const config = section(moduleDoc, "## 4. GitHub configuration");
+  const config = section(baseDoc, "## 4. GitHub configuration");
   assert.match(config, /Fallback, only if a create or a verification above fails/);
-  assert.match(config, /state\.mjs skip <dir> github:cloudflare-opentofu:1/);
+  assert.match(config, /state\.mjs skip <dir> github:cloudflare-tofu-base:1/);
+  assert.match(section(moduleDoc, "## 4. GitHub configuration"), /fallback in\s+`github:cloudflare-tofu-base:1`/);
   assert.match(config, /docs\/threat-model\.md/);
   assert.match(config, /offer the plan upgrade/);
-  assert.doesNotMatch(section(moduleDoc, "## 3. Files"), /threat-model/);
-  assert.doesNotMatch(moduleDoc, /Free private repository only/);
-  assert.doesNotMatch(moduleDoc, /environments aren't available, so/);
+  assert.doesNotMatch(section(baseDoc, "## 3. Files"), /threat-model/);
+  assert.doesNotMatch(baseDoc, /Free private repository only/);
+  assert.doesNotMatch(baseDoc, /environments aren't available, so/);
 });
 
 test("secret commands use --env normally and repository level only on the fallback", () => {
   const manual = section(moduleDoc, "## 5. Manual steps");
   assert.match(manual, /CLOUDFLARE_DEPLOY_TOKEN --repo \$R --env production/);
   assert.match(manual, /CLOUDFLARE_INFRA_APPLY_TOKEN --repo \$R --env infra/);
-  assert.match(manual, /TF_STATE_ACCESS_KEY_ID --repo \$R --env infra/);
-  assert.match(manual, /recorded an environment as skipped/);
+  assert.match(section(baseDoc, "## 5. Manual steps"), /TF_STATE_ACCESS_KEY_ID --repo \$R --env infra/);
+  assert.match(manual, /recorded\s+an environment as skipped/);
   assert.doesNotMatch(manual, /On a free private repo/);
 });
 
@@ -203,7 +207,7 @@ test("plan-dependent steps use the recorded github_plan", () => {
   assert.match(plan, /recorded `github_plan`/);
   assert.match(plan, /resumed run uses the saved value/);
   assert.match(coreDoc, /recorded `github_plan` is `free`/);
-  assert.match(moduleDoc, /recorded `github_plan` is `free`/);
+  assert.match(baseDoc, /recorded `github_plan` is `free`/);
 });
 
 const tokensIn = dir => JSON.parse(read(dir, ".bootstrap/cloudflare/tokens.json"));
@@ -303,8 +307,8 @@ test("teardown disables DNSSEC through infra before it destroys", () => {
 });
 
 test("the DNSSEC manual step only verifies, because Cloudflare Registrar adds the DS record", () => {
-  const step = moduleDoc.slice(moduleDoc.indexOf("### cloudflare-opentofu:5 "), moduleDoc.indexOf("### cloudflare-opentofu:6 "));
-  assert.match(step, /^### cloudflare-opentofu:5 Confirm DNSSEC$/m);
+  const step = moduleDoc.slice(moduleDoc.indexOf("### cloudflare-opentofu:3 "), moduleDoc.indexOf("### cloudflare-opentofu:4 "));
+  assert.match(step, /^### cloudflare-opentofu:3 Confirm DNSSEC$/m);
   assert.match(step, /\*\*Do:\*\* nothing by hand/);
   assert.match(step, /dig \+short DS <zone_name>/);
   assert.match(step, /pending/);

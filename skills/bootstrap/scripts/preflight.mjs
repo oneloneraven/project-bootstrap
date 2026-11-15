@@ -93,8 +93,10 @@ const TOOLS = {
       fix: "Install the Android SDK command-line tools (https://developer.android.com/tools), set ANDROID_HOME to the SDK, then run `sdkmanager --licenses`; Gradle installs the platform and build tools it needs",
     },
   ],
-  "cloudflare-opentofu": [
+  "cloudflare-tofu-base": [
     { tool: "tofu", check: () => ok(run("tofu", ["version"])), fix: "Install OpenTofu (https://opentofu.org/docs/intro/install/)" },
+  ],
+  "cloudflare-opentofu": [
     {
       tool: "wrangler",
       check: () => ok(run("pnpm", ["dlx", "wrangler", "--version"], { timeout: 120000 })),

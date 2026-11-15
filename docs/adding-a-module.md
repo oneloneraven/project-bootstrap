@@ -29,3 +29,39 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
    module's smoke check for real.
 8. Run `pnpm test` and the identifier guard, then open the PR with
    `release: minor`.
+
+## Sharing text between modules
+
+A module's manifest can declare `fragments`: a name for each file of text
+that other modules' templates place with `{{fragment_<name>}}`. A fragment is
+rendered with the same values as the file it lands in, so `{{slug}}` and the
+other keys work inside it. Names are unique across the selected modules, and
+an unknown name fails the render. Use it when two modules need the same prose
+or code in files they each own, such as a README section.
+
+## Building a Cloudflare stack module on the base
+
+`cloudflare-tofu-base` holds the OpenTofu plumbing every Cloudflare stack
+needs: the state bucket script and workflow, the R2 backend, the OpenTofu
+version pin, the `infra` environment and the shared README sections. A stack
+module, such as `cloudflare-opentofu`, builds on it like this:
+
+1. Put `cloudflare-tofu-base` in `dependsOn`.
+2. In `infra/main.tf`, place `{{fragment_tofu_terraform_block}}`, then the
+   provider and the stack's own data sources.
+3. In `infra/README.md`, place `{{fragment_deleting_resources}}`,
+   `{{fragment_r2_state_credentials}}` and `{{fragment_opentofu_version}}`
+   where they belong in the stack's own sections. Repeat the disaster
+   recovery and teardown steps listed in the base's
+   `templates/readme-shared-steps.md` in the stack's own lists; a test checks
+   they are there.
+4. Ship the stack's own `infra.yml`. It must match the base's
+   `templates/infra.skeleton.yml` apart from its `TF_VAR_*` lines, which a
+   test checks. Keep the `@@TOFU_VERSION@@` token in it: the base's scaffold
+   step fills it in.
+5. Write the stack's tokens, questions, resources and manual steps. Number
+   them from 1 in the stack's own `MODULE.md`; the base's steps are
+   `cloudflare-tofu-base:<n>`, run after the stack's token step.
+
+Two stack modules that write the same files, such as the token definitions,
+declare `conflictsWith` on each other.
