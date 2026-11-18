@@ -149,11 +149,13 @@ soon as the new ones are set, so there is no going back to them.
   its email matches `OWNER_EMAIL`, and the admin routes behind it;
 - the Turnstile check in `src/lib/turnstile.js`, which fails closed, wherever
   the project verifies a form;
-- `sync-worker-secrets.yml`, with `TURNSTILE_SECRET_KEY` as a secret of the
-  `production` environment, read from the widget's Turnstile page in the
-  Cloudflare dashboard and set with `gh secret set TURNSTILE_SECRET_KEY --env production`.
-  Run "Sync Worker secrets" once to prove it: it sets the same value the
-  Worker already has.
+- `sync-worker-secrets.yml`, with each Worker secret stored as a secret of the
+  `production` environment: `OWNER_EMAIL`, set with
+  `gh secret set OWNER_EMAIL --env production`, and `TURNSTILE_SECRET_KEY`,
+  read from the widget's Turnstile page in the Cloudflare dashboard and set
+  with `gh secret set TURNSTILE_SECRET_KEY --env production`. The
+  `production` environment must allow `main`. Run "Sync Worker secrets" once
+  to prove it: it sets the same values the Worker already has.
 
 **Verify:** the project's tests pass, and the next deploy keeps both the
 admin section and the forms working.
