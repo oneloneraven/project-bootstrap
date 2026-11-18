@@ -25,6 +25,11 @@ Terraform fork) and state in R2.
   hostname's first label, such as `admin` for `admin.<zone>`. One lower-case DNS
   label. There is no admin hostname on a beta: each admin hostname needs its
   own Access application, so the admin section is production only.
+- **`turnstile`** (yes or no): whether the app has a public form guarded by a
+  Turnstile widget that lives in the central identity stack. If yes, the module
+  adds the sitekey var, a fail-closed verifier in the Worker's `src/lib`, and
+  the "Sync Worker secrets" workflow, and the widget is added to the identity
+  stack by hand (a manual step).
 
 The slug is limited to 40 characters here: Worker names, the state bucket
 and preview hostnames are built from it.
@@ -70,12 +75,23 @@ and preview hostnames are built from it.
   `src/lib/access.js` (the owner check) and its tests, and a stub in
   `src/worker.js` that answers 404 to anyone the check refuses. No project
   token gains an Access or Turnstile permission.
+- With `turnstile`: `TURNSTILE_SITEKEY` in the `production` (and `beta`)
+  vars, empty so verification fails closed until the identity stack's
+  `widget_sitekey` is set; Cloudflare's published always-pass test sitekey and
+  secret as vars in `preview` (and its `previews` block) and `e2e`, and in
+  `.dev.vars.example`; `src/lib/turnstile.js` (`verifyTurnstile`, which
+  refuses on a missing token, secret or sitekey, a non-OK response, a timeout
+  or anything but `success: true`) and its tests; and the manual workflow
+  `sync-worker-secrets.yml` (main only, in `production`, secret passed through
+  env and piped on stdin, never printed), which sets `TURNSTILE_SECRET_KEY` on
+  the production Worker and, with a beta, the beta Worker. The secret is never
+  a var and no wrangler file holds it.
 - `infra/`: provider and R2 backend, DNS placeholder records (and `beta.`),
   CAA, TLS 1.2 minimum, HSTS, always HTTPS, DNSSEC, security headers, cache
   rules, and a README with setup, deleting resources, disaster recovery and
   teardown.
 - The workflows `infra.yml`, `preview.yml`, `deploy.yml`, and `promote.yml`
-  (beta only). `infra.yml` refuses plans that delete or replace; a manual run
+  (beta only), and with `turnstile` `sync-worker-secrets.yml`. `infra.yml` refuses plans that delete or replace; a manual run
   with `allow_deletes` applies one on purpose. `scripts/bootstrap-state.mjs`
   and `bootstrap-state.yml` come from `cloudflare-tofu-base`, which also
   carries the OpenTofu version pin for `infra.yml`.
@@ -83,7 +99,8 @@ and preview hostnames are built from it.
   runs `wrangler dev`, so e2e tests the real Worker. Allows `workerd`'s
   install script in `pnpm-workspace.yaml`.
 - Application (first PR): `src/worker.js`, `test/worker.test.js`, and with
-  `admin` also `src/lib/access.js` and `test/lib/access.test.js`.
+  `admin` also `src/lib/access.js` and `test/lib/access.test.js`, and with
+  `turnstile` also `src/lib/turnstile.js` and `test/lib/turnstile.test.js`.
 
 Every `runs-on` in this module's workflows is `ubuntu-26.04`, so a runner
 image migration is a deliberate change: when GitHub moves `ubuntu-latest` to
@@ -95,13 +112,14 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
 
 1. The deploy environments, each limited to the refs that may deploy from
    it, created and verified as in `github:cloudflare-tofu-base:1`:
-   - `production`: `main` (promote runs from it) and tags `v*`, or tags
-     `v*` only without a beta;
+   - `production`: `main` and tags `v*` (with a beta, promote runs from
+     `main`; with `turnstile`, so does "Sync Worker secrets"), or tags `v*`
+     only without a beta and without `turnstile`;
    - `beta` (beta only): tags `v*`.
 
    Verify each one's expected refs: `["branch:main","tag:v*"]` for
-   `production` with a beta, `["tag:v*"]` for `production` without one and
-   for `beta`. If one fails, follow the fallback in
+   `production` with a beta or `turnstile`, `["tag:v*"]` for `production`
+   with neither and for `beta`. If one fails, follow the fallback in
    `github:cloudflare-tofu-base:1`, recording it as skipped under
    `github:cloudflare-opentofu:1`.
 
@@ -178,6 +196,44 @@ Settings → Domains & Routes: Preview URLs enabled.
 
 **Verify:** the PR's preview comment URL answers
 `curl -s <url>/api/health` with `"ok":true`.
+
+### cloudflare-opentofu:6 Add the Turnstile widget to the identity stack
+
+Only with `turnstile`.
+
+**Why:** the Worker refuses every token until the widget exists and
+`TURNSTILE_SITEKEY` holds its sitekey.
+
+**Do:**
+1. In the central identity stack, add the project to `widgets` in
+   `infra/terraform.tfvars.json`, keyed by the project slug, by PR:
+   `"<slug>": { "name": "<slug>", "domains": ["<zone_name>"], "mode": "managed" }`.
+   With a beta, `domains` also lists `beta.<zone_name>`. After its apply, read
+   the `widget_sitekey` output for the project.
+2. In this project's `wrangler.jsonc`, set `TURNSTILE_SITEKEY` in the
+   `production` vars (and the `beta` vars, with a beta) to it, by PR.
+
+**Verify (Claude runs):** `grep TURNSTILE_SITEKEY wrangler.jsonc`.
+**Expected:** the `production` entry (and the `beta` one) is not empty.
+
+### cloudflare-opentofu:7 Set the widget secret
+
+Only with `turnstile`.
+
+**Why:** the secret is never an output of the identity stack, and the Worker
+refuses every token without it.
+
+**Do:**
+1. The user reads the secret on the widget's Turnstile page in the Cloudflare
+   dashboard and runs
+   `gh secret set TURNSTILE_SECRET_KEY --env production --repo $R`. It
+   prompts with hidden input. They never paste it into chat.
+2. Claude runs `gh workflow run sync-worker-secrets.yml --repo $R --ref main`
+   and watches it with `gh run watch --repo $R --exit-status`.
+
+**Verify (Claude runs):** `pnpm exec wrangler secret list --env production`
+(and `--env beta`, with a beta).
+**Expected:** `TURNSTILE_SECRET_KEY` is listed.
 
 ## 6. Standards
 

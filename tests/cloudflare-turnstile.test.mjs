@@ -1,0 +1,240 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { files, renderReal } from "./helpers.mjs";
+
+const extra = { zone_name: "example.test" };
+const variants = {
+  "turnstile with a beta": renderReal(["cloudflare-opentofu"], { ...extra, beta: true, admin: false, turnstile: true }),
+  "turnstile without a beta": renderReal(["cloudflare-opentofu"], { ...extra, beta: false, admin: false, turnstile: true }),
+  "turnstile and admin with a beta": renderReal(["cloudflare-opentofu"], { ...extra, beta: true, admin: true, admin_subdomain: "admin", turnstile: true }),
+};
+const plain = {
+  "no turnstile with a beta": renderReal(["cloudflare-opentofu"], { ...extra, beta: true, admin: false, turnstile: false }),
+  "no turnstile without a beta": renderReal(["cloudflare-opentofu"], { ...extra, beta: false, admin: false, turnstile: false }),
+  "no turnstile with admin": renderReal(["cloudflare-opentofu"], { ...extra, beta: false, admin: true, admin_subdomain: "admin", turnstile: false }),
+};
+const read = (dir, path) => readFileSync(join(dir, path), "utf8");
+const jsonc = text => JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
+const moduleFile = path => readFileSync(new URL(`../skills/bootstrap/modules/cloudflare-opentofu/${path}`, import.meta.url), "utf8");
+const TURNSTILE_FILES = ["src/lib/turnstile.js", "test/lib/turnstile.test.js", ".github/workflows/sync-worker-secrets.yml"];
+const WORKFLOW = ".github/workflows/sync-worker-secrets.yml";
+const TEST_SITEKEY = "1x00000000000000000000AA";
+const TEST_SECRET = "1x0000000000000000000000000000000AA";
+
+for (const [name, dir] of Object.entries(variants)) {
+  test(`${name}: the library, its tests and the sync workflow are rendered`, () => {
+    const rendered = [...files(dir)];
+    for (const file of TURNSTILE_FILES) assert.ok(rendered.includes(file), file);
+    assert.match(read(dir, "infra/README.md"), /## Turnstile/);
+  });
+
+  test(`${name}: production's sitekey starts empty so verification fails closed, and its secret is never a var`, () => {
+    const config = jsonc(read(dir, "wrangler.jsonc"));
+    assert.equal(config.env.production.vars.TURNSTILE_SITEKEY, "");
+    assert.ok(!("TURNSTILE_SECRET_KEY" in config.env.production.vars));
+    assert.ok(!("TURNSTILE_SITEKEY" in config.vars));
+    assert.ok(!("TURNSTILE_SECRET_KEY" in config.vars));
+  });
+
+  test(`${name}: preview, its Preview and e2e use Cloudflare's always-pass test keys`, () => {
+    const { env } = jsonc(read(dir, "wrangler.jsonc"));
+    for (const vars of [env.preview.vars, env.preview.previews.vars, env.e2e.vars]) {
+      assert.equal(vars.TURNSTILE_SITEKEY, TEST_SITEKEY);
+      assert.equal(vars.TURNSTILE_SECRET_KEY, TEST_SECRET);
+    }
+    assert.deepEqual(env.preview.previews.vars, env.preview.vars);
+    const example = read(dir, ".dev.vars.example");
+    assert.match(example, new RegExp(`^TURNSTILE_SITEKEY=${TEST_SITEKEY}$`, "m"));
+    assert.match(example, new RegExp(`^TURNSTILE_SECRET_KEY=${TEST_SECRET}$`, "m"));
+  });
+
+  test(`${name}: the workflow is manual only, main only, in production, read-only and serialised`, () => {
+    const text = read(dir, WORKFLOW);
+    assert.match(text, /^name: Sync Worker secrets$/m);
+    assert.match(text, /^on:\n {2}workflow_dispatch:\n\npermissions:\n {2}contents: read\n/m);
+    assert.doesNotMatch(text, /^ {2}(push|pull_request|pull_request_target|schedule|workflow_run):/m);
+    assert.match(text, /^concurrency:\n {2}group: sync-worker-secrets\n {2}cancel-in-progress: false$/m);
+    assert.match(text, /^ {4}if: github\.ref == 'refs\/heads\/main'$/m);
+    assert.match(text, /^ {4}runs-on: ubuntu-26\.04$/m);
+    assert.match(text, /^ {4}environment: production$/m);
+    assert.match(text, /actions\/checkout@[0-9a-f]{40} # v[\d.]+\n {8}with:\n {10}persist-credentials: false/);
+    assert.match(text, /uses: \$\/\.github\/actions\/setup-node-pnpm/);
+  });
+
+  test(`${name}: the workflow passes the secret through env and only pipes it on stdin`, () => {
+    const text = read(dir, WORKFLOW);
+    assert.match(text, /CLOUDFLARE_API_TOKEN: \$\{\{ secrets\.CLOUDFLARE_DEPLOY_TOKEN \}\}/);
+    assert.match(text, /CLOUDFLARE_ACCOUNT_ID: \$\{\{ vars\.CLOUDFLARE_ACCOUNT_ID \}\}/);
+    assert.match(text, /TURNSTILE_SECRET_KEY: \$\{\{ secrets\.TURNSTILE_SECRET_KEY \}\}/);
+    const expressions = text.split("\n").filter(line => /secrets\.TURNSTILE_SECRET_KEY/.test(line));
+    assert.equal(expressions.length, 1);
+    const run = text.slice(text.indexOf("        run: |\n"));
+    assert.doesNotMatch(run, /\$\{\{/);
+    assert.match(run, /set -euo pipefail/);
+    assert.doesNotMatch(text, /set -[a-z]*x|xtrace|GITHUB_STEP_SUMMARY|GITHUB_OUTPUT|GITHUB_ENV|tee |>>|--debug|ACTIONS_STEP_DEBUG/);
+    assert.match(run, /::error::/);
+    const mentions = run.split("\n").filter(line => line.includes("$TURNSTILE_SECRET_KEY"));
+    assert.equal(mentions.length, name.includes("with a beta") ? 3 : 2);
+    for (const line of mentions) assert.match(line, /^ {10}(if \[ -z "\$TURNSTILE_SECRET_KEY" \]; then|printf '%s' "\$TURNSTILE_SECRET_KEY" \| pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env (production|beta))$/);
+    for (const line of run.split("\n").filter(item => /\becho\b/.test(item))) assert.doesNotMatch(line, /\$/);
+  });
+}
+
+test("with a beta the workflow sets the secret on production and beta", () => {
+  for (const name of ["turnstile with a beta", "turnstile and admin with a beta"]) {
+    const text = read(variants[name], WORKFLOW);
+    const puts = [...text.matchAll(/^ {10}printf '%s' "\$TURNSTILE_SECRET_KEY" \| pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env (\w+)$/gm)].map(match => match[1]);
+    assert.deepEqual(puts, ["production", "beta"], name);
+  }
+});
+
+test("without a beta the workflow sets the secret on production only", () => {
+  const text = read(variants["turnstile without a beta"], WORKFLOW);
+  const puts = [...text.matchAll(/wrangler secret put TURNSTILE_SECRET_KEY --env (\w+)/g)].map(match => match[1]);
+  assert.deepEqual(puts, ["production"]);
+  assert.doesNotMatch(text, /--env beta/);
+});
+
+test("a beta's vars carry the empty sitekey and nothing else new", () => {
+  const { env } = jsonc(read(variants["turnstile with a beta"], "wrangler.jsonc"));
+  assert.deepEqual(env.beta.vars, { APP_ENV: "beta", TURNSTILE_SITEKEY: "" });
+  assert.deepEqual(jsonc(read(variants["turnstile without a beta"], "wrangler.jsonc")).env.beta, undefined);
+});
+
+test("turnstile and admin together keep both sets of vars", () => {
+  const dir = variants["turnstile and admin with a beta"];
+  const { env } = jsonc(read(dir, "wrangler.jsonc"));
+  assert.equal(env.production.vars.ADMIN_HOST, "admin.example.test");
+  assert.equal(env.production.vars.TURNSTILE_SITEKEY, "");
+  assert.equal(env.e2e.vars.ADMIN_ACCESS_CHECK, "off");
+  assert.equal(env.e2e.vars.TURNSTILE_SITEKEY, TEST_SITEKEY);
+  const example = read(dir, ".dev.vars.example");
+  assert.match(example, /^OWNER_EMAIL=$/m);
+  assert.match(example, /^TURNSTILE_SECRET_KEY=/m);
+  assert.match(read(dir, "infra/README.md"), /## Admin section[\s\S]*## Turnstile[\s\S]*## Disaster recovery/);
+});
+
+test("the README covers the widget, the secret and the rotation end to end", () => {
+  const readme = read(variants["turnstile with a beta"], "infra/README.md");
+  const section = readme.slice(readme.indexOf("## Turnstile"), readme.indexOf("## Disaster recovery"));
+  assert.match(section, /widget_sitekey/);
+  assert.match(section, /gh secret set TURNSTILE_SECRET_KEY --env production/);
+  assert.match(section, /Rotate a Turnstile widget secret/);
+  assert.match(section, /Sync Worker secrets/);
+  assert.match(section, /grace period/);
+  assert.match(section, /invalidate_immediately/);
+});
+
+for (const [name, dir] of Object.entries(plain)) {
+  test(`${name}: none of the library, tests, workflow, vars or text are rendered`, () => {
+    const rendered = [...files(dir)];
+    for (const file of TURNSTILE_FILES) assert.ok(!rendered.includes(file), file);
+    for (const text of [read(dir, "wrangler.jsonc"), read(dir, ".dev.vars.example"), read(dir, "infra/README.md")]) assert.doesNotMatch(text, /TURNSTILE|## Turnstile/);
+    assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.production.vars.TURNSTILE_SITEKEY);
+    assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.preview.previews.vars.TURNSTILE_SITEKEY);
+  });
+}
+
+test("the module asks about turnstile as a plain boolean", () => {
+  const manifest = JSON.parse(moduleFile("manifest.json"));
+  const question = manifest.questions.find(item => item.key === "turnstile");
+  assert.equal(question.type, "boolean");
+  assert.equal(question.when, undefined);
+  assert.match(question.prompt, /Turnstile/);
+  const workflow = manifest.files.find(file => file.to === WORKFLOW);
+  assert.equal(workflow.when, "turnstile");
+  for (const file of manifest.files.filter(item => TURNSTILE_FILES.includes(item.to))) assert.equal(file.when, "turnstile", file.to);
+  for (const file of manifest.files.filter(item => item.to.startsWith("src/lib/turnstile") || item.to.startsWith("test/lib/turnstile"))) assert.equal(file.stage, "app", file.to);
+});
+
+test("the module doc describes the manual steps, only with turnstile", () => {
+  const doc = moduleFile("MODULE.md");
+  const sixth = doc.slice(doc.indexOf("### cloudflare-opentofu:6 "), doc.indexOf("### cloudflare-opentofu:7 "));
+  const seventh = doc.slice(doc.indexOf("### cloudflare-opentofu:7 "), doc.indexOf("## 6. Standards"));
+  assert.match(sixth, /^### cloudflare-opentofu:6 Add the Turnstile widget to the identity stack\n\nOnly with `turnstile`\./);
+  assert.match(sixth, /`widgets`/);
+  assert.match(sixth, /widget_sitekey/);
+  assert.match(sixth, /TURNSTILE_SITEKEY/);
+  assert.match(seventh, /^### cloudflare-opentofu:7 Set the widget secret\n\nOnly with `turnstile`\./);
+  assert.match(seventh, /gh secret set TURNSTILE_SECRET_KEY --env production --repo \$R/);
+  assert.match(seventh, /gh workflow run sync-worker-secrets\.yml --repo \$R --ref main/);
+  assert.match(seventh, /wrangler secret list --env production/);
+  assert.ok(doc.indexOf("### cloudflare-opentofu:5 ") < doc.indexOf("### cloudflare-opentofu:6 "));
+});
+
+const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+async function turnstile() {
+  const module = await import(`${join(variants["turnstile without a beta"], "src/lib/turnstile.js")}?${Math.random()}`);
+  return module.verifyTurnstile;
+}
+
+const env = { TURNSTILE_SECRET_KEY: "secret", TURNSTILE_SITEKEY: "sitekey" };
+
+async function withFetch(stub, run) {
+  const original = globalThis.fetch;
+  globalThis.fetch = stub;
+  try {
+    return await run();
+  } finally {
+    globalThis.fetch = original;
+  }
+}
+
+test("the rendered library accepts only an explicit success and posts the documented JSON", async () => {
+  const verifyTurnstile = await turnstile();
+  const calls = [];
+  const stub = async (url, init) => {
+    calls.push({ url, init });
+    return Response.json({ success: true });
+  };
+  assert.equal(await withFetch(stub, () => verifyTurnstile("token", "203.0.113.9", env)), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, SITEVERIFY);
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers["Content-Type"], "application/json");
+  assert.deepEqual(JSON.parse(calls[0].init.body), { secret: "secret", response: "token", remoteip: "203.0.113.9" });
+  assert.ok(calls[0].init.signal instanceof AbortSignal);
+});
+
+test("the rendered library refuses a missing token, secret or sitekey without calling out", async () => {
+  const verifyTurnstile = await turnstile();
+  let called = 0;
+  const stub = async () => {
+    called += 1;
+    return Response.json({ success: true });
+  };
+  for (const [token, overrides] of [["", {}], [undefined, {}], ["token", { TURNSTILE_SECRET_KEY: "" }], ["token", { TURNSTILE_SECRET_KEY: undefined }], ["token", { TURNSTILE_SITEKEY: "" }], ["token", { TURNSTILE_SITEKEY: undefined }]]) {
+    assert.equal(await withFetch(stub, () => verifyTurnstile(token, "203.0.113.9", { ...env, ...overrides })), false, JSON.stringify([token, overrides]));
+  }
+  assert.equal(called, 0);
+});
+
+test("the rendered library refuses a non-OK response, a failed fetch, a timeout and any answer but success true", async () => {
+  const verifyTurnstile = await turnstile();
+  const ask = stub => withFetch(stub, () => verifyTurnstile("token", "203.0.113.9", env));
+  assert.equal(await ask(async () => new Response("down", { status: 500 })), false);
+  assert.equal(await ask(async () => Response.json({ success: true }, { status: 403 })), false);
+  assert.equal(await ask(async () => { throw new TypeError("network"); }), false);
+  assert.equal(await ask(async () => { throw new DOMException("timed out", "TimeoutError"); }), false);
+  assert.equal(await ask(async () => new Response("not json")), false);
+  for (const body of [{ success: false }, {}, { success: "true" }, { success: 1 }, { success: null }, null, []]) assert.equal(await ask(async () => Response.json(body)), false, JSON.stringify(body));
+});
+
+test("the rendered library gives the request a five second timeout", async () => {
+  const verifyTurnstile = await turnstile();
+  const timeouts = [];
+  const original = AbortSignal.timeout;
+  AbortSignal.timeout = ms => {
+    timeouts.push(ms);
+    return original.call(AbortSignal, ms);
+  };
+  try {
+    await withFetch(async () => Response.json({ success: true }), () => verifyTurnstile("token", "203.0.113.9", env));
+  } finally {
+    AbortSignal.timeout = original;
+  }
+  assert.deepEqual(timeouts, [5000]);
+});

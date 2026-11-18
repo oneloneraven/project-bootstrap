@@ -97,7 +97,7 @@ for (const [name, dir] of Object.entries(plain)) {
 
 test("the module asks for the admin hostname only when admin is yes", () => {
   const manifest = JSON.parse(readFileSync(new URL("../skills/bootstrap/modules/cloudflare-opentofu/manifest.json", import.meta.url), "utf8"));
-  const [admin, subdomain] = manifest.questions.slice(-2);
+  const [admin, subdomain] = manifest.questions.slice(-3, -1);
   assert.deepEqual([admin.key, admin.type, subdomain.key, subdomain.type, subdomain.when], ["admin", "boolean", "admin_subdomain", "dns_label", "admin"]);
 });
 
