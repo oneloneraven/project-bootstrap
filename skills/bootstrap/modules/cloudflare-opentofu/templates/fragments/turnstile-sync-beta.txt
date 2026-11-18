@@ -1,0 +1,2 @@
+
+          printf '%s' "$TURNSTILE_SECRET_KEY" | pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env beta

@@ -26,6 +26,11 @@
       "type": "dns_label",
       "when": "admin",
       "prompt": "Which subdomain serves the admin section (default admin)?"
+    },
+    {
+      "key": "turnstile",
+      "type": "boolean",
+      "prompt": "Does the app have a public form guarded by Turnstile, with its widget in the central identity stack?"
     }
   ],
   "fragments": {
@@ -48,6 +53,30 @@
     "admin_readme": {
       "path": "templates/fragments/admin-readme.md",
       "when": "admin"
+    },
+    "turnstile_production_vars": {
+      "path": "templates/fragments/turnstile-production-vars.json",
+      "when": "turnstile"
+    },
+    "turnstile_test_vars": {
+      "path": "templates/fragments/turnstile-test-vars.json",
+      "when": "turnstile"
+    },
+    "turnstile_previews_vars": {
+      "path": "templates/fragments/turnstile-previews-vars.json",
+      "when": "turnstile"
+    },
+    "turnstile_dev_vars_example": {
+      "path": "templates/fragments/turnstile-dev-vars-example.txt",
+      "when": "turnstile"
+    },
+    "turnstile_readme": {
+      "path": "templates/fragments/turnstile-readme.md",
+      "when": "turnstile"
+    },
+    "turnstile_sync_beta": {
+      "path": "templates/fragments/turnstile-sync-beta.txt",
+      "when": "beta"
     }
   },
   "overrides": [],
@@ -151,6 +180,11 @@
       "when": "beta"
     },
     {
+      "from": "templates/github/workflows/sync-worker-secrets.yml",
+      "to": ".github/workflows/sync-worker-secrets.yml",
+      "when": "turnstile"
+    },
+    {
       "from": "templates/src/worker.js",
       "to": "src/worker.js",
       "stage": "app",
@@ -184,6 +218,18 @@
       "from": "templates/test/lib/access.test.js",
       "to": "test/lib/access.test.js",
       "when": "admin",
+      "stage": "app"
+    },
+    {
+      "from": "templates/src/lib/turnstile.js",
+      "to": "src/lib/turnstile.js",
+      "when": "turnstile",
+      "stage": "app"
+    },
+    {
+      "from": "templates/test/lib/turnstile.test.js",
+      "to": "test/lib/turnstile.test.js",
+      "when": "turnstile",
       "stage": "app"
     }
   ],

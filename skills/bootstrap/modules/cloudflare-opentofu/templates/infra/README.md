@@ -110,7 +110,7 @@ Set each runtime secret once per environment with
 never sets another. Local development reads them from `.dev.vars`, which is
 gitignored.
 
-{{fragment_admin_readme}}## Disaster recovery
+{{fragment_admin_readme}}{{fragment_turnstile_readme}}## Disaster recovery
 
 1. Run "Bootstrap OpenTofu state bucket".
 2. Run "Infra" to recreate everything managed here.

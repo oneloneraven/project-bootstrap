@@ -18,7 +18,7 @@
   "env": {
     "production": {
       "vars": {
-        "APP_ENV": "production"{{fragment_admin_production_vars}}
+        "APP_ENV": "production"{{fragment_admin_production_vars}}{{fragment_turnstile_production_vars}}
       },
       "assets": {
         "directory": "./dist",
@@ -33,7 +33,7 @@
     },
     "beta": {
       "vars": {
-        "APP_ENV": "beta"
+        "APP_ENV": "beta"{{fragment_turnstile_production_vars}}
       },
       "assets": {
         "directory": "./dist",
@@ -48,7 +48,7 @@
     },
     "preview": {
       "vars": {
-        "APP_ENV": "preview"
+        "APP_ENV": "preview"{{fragment_turnstile_test_vars}}
       },
       "assets": {
         "directory": "./dist",
@@ -58,13 +58,13 @@
       "preview_urls": true,
       "previews": {
         "vars": {
-          "APP_ENV": "preview"
+          "APP_ENV": "preview"{{fragment_turnstile_previews_vars}}
         }
       }
     },
     "e2e": {
       "vars": {
-        "APP_ENV": "e2e"{{fragment_admin_e2e_vars}}
+        "APP_ENV": "e2e"{{fragment_admin_e2e_vars}}{{fragment_turnstile_test_vars}}
       },
       "assets": {
         "directory": "./dist",

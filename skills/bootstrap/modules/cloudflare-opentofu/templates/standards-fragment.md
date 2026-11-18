@@ -32,6 +32,12 @@ whether the design is idiomatic for the platform rather than fighting it.
   anything is missing. `ADMIN_ACCESS_CHECK` is `"off"` only in e2e and
   development, never in production or beta. This applies where the project
   has an admin section.
+- **A Turnstile check fails closed.** The Worker verifies every token
+  server-side with the widget's secret, which is a Worker secret and never a
+  var, and refuses on a missing token, secret or sitekey, an outage, a timeout
+  or anything but `success: true`. The secret reaches the Worker only through
+  the manual "Sync Worker secrets" workflow, never printed or written to a
+  summary. This applies where the project has a Turnstile-guarded form.
 - **API responses for changing data send `Cache-Control: no-store`.**
 - **Verify platform behaviour empirically** (a real request, `wrangler dev`,
   `--dry-run`) rather than trusting documentation alone.

@@ -154,7 +154,7 @@ test("environments are created on every plan and each is verified after creation
   assert.match(config, /repos\/\$R\/environments\/<env>\/deployment-branch-policies --jq/);
   assert.ok(config.includes('["branch:main"]'));
   const deploy = section(moduleDoc, "## 4. GitHub configuration");
-  for (const expected of ['["branch:main","tag:v*"]', '["tag:v*"]']) assert.ok(deploy.includes(expected), expected);
+  for (const expected of ['["branch:main","tag:v*"]', '["tag:v*"]', "with a beta or `turnstile`"]) assert.ok(deploy.includes(expected), expected);
 });
 
 test("the repository-level fallback is conditional on the check failing", () => {
@@ -176,7 +176,7 @@ test("secret commands use --env normally and repository level only on the fallba
   assert.match(baseManual, /TF_STATE_ACCESS_KEY_ID --repo \$R --env infra/);
   assert.match(baseManual, /recorded\s+an\s+environment as skipped/);
   assert.doesNotMatch(baseManual, /On a free private repo/);
-  assert.doesNotMatch(manual, /secret set/);
+  assert.doesNotMatch(manual, /secret set(?! TURNSTILE_SECRET_KEY --env production --repo \$R)/);
 });
 
 test("the bootstrap skill checks environments on a free private repo rather than assuming", () => {
