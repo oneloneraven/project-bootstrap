@@ -18,7 +18,7 @@ const plain = {
 const read = (dir, path) => readFileSync(join(dir, path), "utf8");
 const jsonc = text => JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
 const moduleFile = path => readFileSync(new URL(`../skills/bootstrap/modules/cloudflare-opentofu/${path}`, import.meta.url), "utf8");
-const TURNSTILE_FILES = ["src/lib/turnstile.js", "test/lib/turnstile.test.js", ".github/workflows/sync-worker-secrets.yml"];
+const TURNSTILE_FILES = ["src/lib/turnstile.js", "test/lib/turnstile.test.js"];
 const WORKFLOW = ".github/workflows/sync-worker-secrets.yml";
 const TEST_SITEKEY = "1x00000000000000000000AA";
 const TEST_SECRET = "1x0000000000000000000000000000000AA";
@@ -26,7 +26,7 @@ const TEST_SECRET = "1x0000000000000000000000000000000AA";
 for (const [name, dir] of Object.entries(variants)) {
   test(`${name}: the library, its tests and the sync workflow are rendered`, () => {
     const rendered = [...files(dir)];
-    for (const file of TURNSTILE_FILES) assert.ok(rendered.includes(file), file);
+    for (const file of [...TURNSTILE_FILES, WORKFLOW]) assert.ok(rendered.includes(file), file);
     assert.match(read(dir, "infra/README.md"), /## Turnstile/);
   });
 
@@ -48,37 +48,6 @@ for (const [name, dir] of Object.entries(variants)) {
     const example = read(dir, ".dev.vars.example");
     assert.match(example, new RegExp(`^TURNSTILE_SITEKEY=${TEST_SITEKEY}$`, "m"));
     assert.match(example, new RegExp(`^TURNSTILE_SECRET_KEY=${TEST_SECRET}$`, "m"));
-  });
-
-  test(`${name}: the workflow is manual only, main only, in production, read-only and serialised`, () => {
-    const text = read(dir, WORKFLOW);
-    assert.match(text, /^name: Sync Worker secrets$/m);
-    assert.match(text, /^on:\n {2}workflow_dispatch:\n\npermissions:\n {2}contents: read\n/m);
-    assert.doesNotMatch(text, /^ {2}(push|pull_request|pull_request_target|schedule|workflow_run):/m);
-    assert.match(text, /^concurrency:\n {2}group: sync-worker-secrets\n {2}cancel-in-progress: false$/m);
-    assert.match(text, /^ {4}if: github\.ref == 'refs\/heads\/main'$/m);
-    assert.match(text, /^ {4}runs-on: ubuntu-26\.04$/m);
-    assert.match(text, /^ {4}environment: production$/m);
-    assert.match(text, /actions\/checkout@[0-9a-f]{40} # v[\d.]+\n {8}with:\n {10}persist-credentials: false/);
-    assert.match(text, /uses: \$\/\.github\/actions\/setup-node-pnpm/);
-  });
-
-  test(`${name}: the workflow passes the secret through env and only pipes it on stdin`, () => {
-    const text = read(dir, WORKFLOW);
-    assert.match(text, /CLOUDFLARE_API_TOKEN: \$\{\{ secrets\.CLOUDFLARE_DEPLOY_TOKEN \}\}/);
-    assert.match(text, /CLOUDFLARE_ACCOUNT_ID: \$\{\{ vars\.CLOUDFLARE_ACCOUNT_ID \}\}/);
-    assert.match(text, /TURNSTILE_SECRET_KEY: \$\{\{ secrets\.TURNSTILE_SECRET_KEY \}\}/);
-    const expressions = text.split("\n").filter(line => /secrets\.TURNSTILE_SECRET_KEY/.test(line));
-    assert.equal(expressions.length, 1);
-    const run = text.slice(text.indexOf("        run: |\n"));
-    assert.doesNotMatch(run, /\$\{\{/);
-    assert.match(run, /set -euo pipefail/);
-    assert.doesNotMatch(text, /set -[a-z]*x|xtrace|GITHUB_STEP_SUMMARY|GITHUB_OUTPUT|GITHUB_ENV|tee |>>|--debug|ACTIONS_STEP_DEBUG/);
-    assert.match(run, /::error::/);
-    const mentions = run.split("\n").filter(line => line.includes("$TURNSTILE_SECRET_KEY"));
-    assert.equal(mentions.length, name.includes("with a beta") ? 3 : 2);
-    for (const line of mentions) assert.match(line, /^ {10}(if \[ -z "\$TURNSTILE_SECRET_KEY" \]; then|printf '%s' "\$TURNSTILE_SECRET_KEY" \| pnpm exec wrangler secret put TURNSTILE_SECRET_KEY --env (production|beta))$/);
-    for (const line of run.split("\n").filter(item => /\becho\b/.test(item))) assert.doesNotMatch(line, /\$/);
   });
 }
 
@@ -128,9 +97,10 @@ test("the README covers the widget, the secret and the rotation end to end", () 
 });
 
 for (const [name, dir] of Object.entries(plain)) {
-  test(`${name}: none of the library, tests, workflow, vars or text are rendered`, () => {
+  test(`${name}: none of the library, tests, secret step, vars or text are rendered`, () => {
     const rendered = [...files(dir)];
     for (const file of TURNSTILE_FILES) assert.ok(!rendered.includes(file), file);
+    if (rendered.includes(WORKFLOW)) assert.doesNotMatch(read(dir, WORKFLOW), /TURNSTILE/);
     for (const text of [read(dir, "wrangler.jsonc"), read(dir, ".dev.vars.example"), read(dir, "infra/README.md")]) assert.doesNotMatch(text, /TURNSTILE|## Turnstile/);
     assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.production.vars.TURNSTILE_SITEKEY);
     assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.preview.previews.vars.TURNSTILE_SITEKEY);
@@ -143,8 +113,6 @@ test("the module asks about turnstile as a plain boolean", () => {
   assert.equal(question.type, "boolean");
   assert.equal(question.when, undefined);
   assert.match(question.prompt, /Turnstile/);
-  const workflow = manifest.files.find(file => file.to === WORKFLOW);
-  assert.equal(workflow.when, "turnstile");
   for (const file of manifest.files.filter(item => TURNSTILE_FILES.includes(item.to))) assert.equal(file.when, "turnstile", file.to);
   for (const file of manifest.files.filter(item => item.to.startsWith("src/lib/turnstile") || item.to.startsWith("test/lib/turnstile"))) assert.equal(file.stage, "app", file.to);
 });

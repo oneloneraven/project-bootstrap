@@ -21,8 +21,12 @@ To switch it on:
 2. In `wrangler.jsonc`, set `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` in the
    `production` vars to those two values, by PR. Both are empty until then, so
    the admin hostname refuses everyone.
-3. Set the owner's email as a Worker secret:
-   `pnpm exec wrangler secret put OWNER_EMAIL --env production`.
+3. Set the owner's email. Run `gh secret set OWNER_EMAIL --env production`,
+   which prompts for the value with hidden input, then run "Sync Worker
+   secrets" on `main`. It sets `OWNER_EMAIL` on the production Worker. Check
+   that `pnpm exec wrangler secret list --env production` lists it.
+
+To change the owner's email, run the same two steps again.
 
 `ADMIN_ACCESS_CHECK` is `"off"` only in `e2e` and, through `.dev.vars`, in
 local development. Never set it in `production` or `beta`.

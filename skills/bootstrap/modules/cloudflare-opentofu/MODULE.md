@@ -21,6 +21,8 @@ Terraform fork) and state in R2.
   owner. If yes, the module adds the admin hostname, its Worker route, the
   Access vars and an owner check in the Worker, and the project's Access
   application is added to the central identity stack by hand (a manual step).
+  The owner's email, `OWNER_EMAIL`, is a Worker secret set through the "Sync
+  Worker secrets" workflow.
 - **`admin_subdomain`** (asked only when `admin` is yes; default `admin`): the
   hostname's first label, such as `admin` for `admin.<zone>`. One lower-case DNS
   label. There is no admin hostname on a beta: each admin hostname needs its
@@ -82,17 +84,25 @@ and preview hostnames are built from it.
   `.dev.vars.example`; `src/lib/turnstile.js` (`verifyTurnstile`, which
   refuses on a missing token, secret or sitekey, a non-OK response, a timeout
   or anything but `success: true`) and its tests; and the manual workflow
-  `sync-worker-secrets.yml` (main only, in `production`, secret passed through
-  env and piped on stdin, never printed), which sets `TURNSTILE_SECRET_KEY` on
-  the production Worker and, with a beta, the beta Worker. The secret is never
-  a var and no wrangler file holds it.
+  `sync-worker-secrets.yml`, whose `TURNSTILE_SECRET_KEY` step sets the secret
+  on the production Worker and, with a beta, the beta Worker (see below). The
+  secret is never a var and no wrangler file holds it.
+- With `admin` or `turnstile`: the manual workflow `sync-worker-secrets.yml`
+  ("Sync Worker secrets"). It runs on `main` only, in the `production`
+  environment, with the deploy token, and has one step per secret the project
+  has: `OWNER_EMAIL` with `admin` (production only, as admin has no beta host)
+  and `TURNSTILE_SECRET_KEY` with `turnstile` (production and, with a beta,
+  beta). Each secret is in its own step's env only, piped on stdin to
+  `wrangler secret put`, never printed or written to a summary, and the step
+  fails when its secret is empty.
 - `infra/`: provider and R2 backend, DNS placeholder records (and `beta.`),
   CAA, TLS 1.2 minimum, HSTS, always HTTPS, DNSSEC, security headers, cache
   rules, and a README with setup, deleting resources, disaster recovery and
   teardown.
 - The workflows `infra.yml`, `preview.yml`, `deploy.yml`, and `promote.yml`
-  (beta only), and with `turnstile` `sync-worker-secrets.yml`. `infra.yml` refuses plans that delete or replace; a manual run
-  with `allow_deletes` applies one on purpose. `scripts/bootstrap-state.mjs`
+  (beta only), and with `admin` or `turnstile` `sync-worker-secrets.yml`.
+  `infra.yml` refuses plans that delete or replace; a manual run with
+  `allow_deletes` applies one on purpose. `scripts/bootstrap-state.mjs`
   and `bootstrap-state.yml` come from `cloudflare-tofu-base`, which also
   carries the OpenTofu version pin for `infra.yml`.
 - Merges into `package.json`: adds wrangler, and its `e2e:server` script
@@ -112,14 +122,14 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
 
 1. The deploy environments, each limited to the refs that may deploy from
    it, created and verified as in `github:cloudflare-tofu-base:1`:
-   - `production`: `main` and tags `v*` (with a beta, promote runs from
-     `main`; with `turnstile`, so does "Sync Worker secrets"), or tags `v*`
-     only without a beta and without `turnstile`;
+   - `production`: `main` and tags `v*` with a beta, `admin` or `turnstile`
+     (with a beta, promote runs from `main`; with `admin` or `turnstile`, so
+     does "Sync Worker secrets"), or tags `v*` only with none of them;
    - `beta` (beta only): tags `v*`.
 
    Verify each one's expected refs: `["branch:main","tag:v*"]` for
-   `production` with a beta or `turnstile`, `["tag:v*"]` for `production`
-   with neither and for `beta`. If one fails, follow the fallback in
+   `production` with a beta, `admin` or `turnstile`, `["tag:v*"]` for `production`
+   with none of them and for `beta`. If one fails, follow the fallback in
    `github:cloudflare-tofu-base:1`, recording it as skipped under
    `github:cloudflare-opentofu:1`.
 
@@ -181,8 +191,14 @@ Only with `admin`.
 **Why:** the Worker checks the signed-in email against the owner's, and
 refuses everyone while it isn't set.
 
-**Do:** `pnpm exec wrangler secret put OWNER_EMAIL --env production`, and
-paste the owner's email. It is never committed.
+**Do:**
+1. The user runs `gh secret set OWNER_EMAIL --env production --repo $R` and
+   enters the owner's email at the hidden prompt. They never paste it into
+   chat, and it is never committed. With `turnstile` too, they also do step
+   `cloudflare-opentofu:7`'s first action now: the workflow sets every secret
+   the project has and fails on an empty one.
+2. Claude runs `gh workflow run sync-worker-secrets.yml --repo $R --ref main`
+   and watches it with `gh run watch --repo $R --exit-status`.
 
 **Verify (Claude runs):** `pnpm exec wrangler secret list --env production`.
 **Expected:** `OWNER_EMAIL` is listed.
@@ -229,7 +245,9 @@ refuses every token without it.
    `gh secret set TURNSTILE_SECRET_KEY --env production --repo $R`. It
    prompts with hidden input. They never paste it into chat.
 2. Claude runs `gh workflow run sync-worker-secrets.yml --repo $R --ref main`
-   and watches it with `gh run watch --repo $R --exit-status`.
+   and watches it with `gh run watch --repo $R --exit-status`. With `admin`
+   too, one run covers both secrets once both environment secrets are set, and
+   running it again is harmless.
 
 **Verify (Claude runs):** `pnpm exec wrangler secret list --env production`
 (and `--env beta`, with a beta).
