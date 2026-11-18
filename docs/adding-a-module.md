@@ -35,7 +35,8 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
 A module's manifest can declare `fragments`: a name for each file of text
 that other modules' templates place with `{{fragment_<name>}}`. A fragment is
 rendered with the same values as the file it lands in, so `{{slug}}` and the
-other keys work inside it. Names are unique across the selected modules, and
+other keys work inside it. A fragment may place another fragment, and a `when` on a file or fragment
+can be an array of answer keys, true when any of them is. Names are unique across the selected modules, and
 an unknown name fails the render. Use it when two modules need the same prose
 or code in files they each own, such as a README section.
 

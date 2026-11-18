@@ -221,11 +221,15 @@ function deriveKeys(modules, answers, modulesDir) {
   };
 }
 
+function holds(condition, answers) {
+  const negated = condition.startsWith("!");
+  const value = Boolean(answers[negated ? condition.slice(1) : condition]);
+  return negated ? !value : value;
+}
+
 function included(file, answers) {
   if (!file.when) return true;
-  const negated = file.when.startsWith("!");
-  const value = Boolean(answers[negated ? file.when.slice(1) : file.when]);
-  return negated ? !value : value;
+  return Array.isArray(file.when) ? file.when.some(condition => holds(condition, answers)) : holds(file.when, answers);
 }
 
 function substitute(text, values, to) {
@@ -248,11 +252,22 @@ function withFragments(modules, modulesDir, base) {
     }
   }
   const values = { ...base };
+  const resolving = [];
   for (const [name, { path, when }] of declared) {
     let text;
     Object.defineProperty(values, `fragment_${name}`, {
       enumerable: true,
-      get: () => (text ??= included({ when }, base) ? substitute(readFileSync(path, "utf8"), base, `fragment ${name}`) : ""),
+      get: () => {
+        if (text !== undefined) return text;
+        if (resolving.includes(name)) throw new Error(`Fragment cycle: ${[...resolving.slice(resolving.indexOf(name)), name].join(" -> ")}`);
+        resolving.push(name);
+        try {
+          text = included({ when }, base) ? substitute(readFileSync(path, "utf8"), values, `fragment ${name}`) : "";
+        } finally {
+          resolving.pop();
+        }
+        return text;
+      },
     });
   }
   return values;

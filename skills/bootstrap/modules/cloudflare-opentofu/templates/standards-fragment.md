@@ -26,6 +26,12 @@ whether the design is idiomatic for the platform rather than fighting it.
   production's. A binding on `env.preview` is also repeated under
   `env.preview.previews`, because a Workers Preview inherits nothing from its
   environment.
+- **Worker secrets reach the Worker only through the manual "Sync Worker
+  secrets" workflow**, from a secret of the `production` GitHub environment,
+  passed through env and piped on stdin, never printed or written to a
+  summary, so a rebuild or a new maintainer needs no local Cloudflare
+  credentials. This applies where the project has an admin section or a
+  Turnstile-guarded form.
 - **An admin section is checked twice.** Access decides who may sign in; the
   Worker then verifies the Access token (RS256 only, signature, `aud`, `iss`,
   `exp` and `nbf`) and accepts only `OWNER_EMAIL`, failing closed when
@@ -35,9 +41,8 @@ whether the design is idiomatic for the platform rather than fighting it.
 - **A Turnstile check fails closed.** The Worker verifies every token
   server-side with the widget's secret, which is a Worker secret and never a
   var, and refuses on a missing token, secret or sitekey, an outage, a timeout
-  or anything but `success: true`. The secret reaches the Worker only through
-  the manual "Sync Worker secrets" workflow, never printed or written to a
-  summary. This applies where the project has a Turnstile-guarded form.
+  or anything but `success: true`. The secret is set as described above. This
+  applies where the project has a Turnstile-guarded form.
 - **API responses for changing data send `Cache-Control: no-store`.**
 - **Verify platform behaviour empirically** (a real request, `wrangler dev`,
   `--dry-run`) rather than trusting documentation alone.

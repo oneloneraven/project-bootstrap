@@ -105,7 +105,7 @@ test("the module doc and standards describe the owner check and the manual steps
   const doc = readFileSync(new URL("../skills/bootstrap/modules/cloudflare-opentofu/MODULE.md", import.meta.url), "utf8");
   assert.match(doc, /### cloudflare-opentofu:3 Add the admin section to the identity stack/);
   assert.match(doc, /### cloudflare-opentofu:4 Set OWNER_EMAIL/);
-  assert.match(doc, /wrangler secret put OWNER_EMAIL --env production/);
+  assert.match(doc, /gh secret set OWNER_EMAIL --env production --repo \$R/);
   assert.match(read(variants["admin without a beta"], "docs/coding-standards.md"), /An admin section is checked twice/);
 });
 

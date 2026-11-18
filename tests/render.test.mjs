@@ -468,3 +468,97 @@ test("a conditional fragment is empty when its answer is false and the text when
   assert.equal(render(true), "base, extra demo\n");
   assert.equal(render(false), "base\n");
 });
+
+function conditionalFiles(when, answers) {
+  const dir = fragmentModules({
+    core: { manifest: { files: [{ from: "templates/doc.md", to: "doc.md", when }] }, files: { "doc.md": "x\n" } },
+  });
+  const { answers: validated } = validateAnswers({ name: "Demo", ...answers });
+  return render({ modules: resolveModules([], dir), answers: validated, modulesDir: dir, destDir: tmp(), dryRun: true });
+}
+
+test("a file whose when is an array is rendered when any element is true", () => {
+  assert.deepEqual(conditionalFiles(["beta", "admin"], { beta: true }), ["doc.md"]);
+  assert.deepEqual(conditionalFiles(["beta", "admin"], { admin: true }), ["doc.md"]);
+  assert.deepEqual(conditionalFiles(["beta", "admin"], { beta: true, admin: true }), ["doc.md"]);
+  assert.deepEqual(conditionalFiles(["beta", "admin"], {}), []);
+});
+
+test("an element of a when array may be negated", () => {
+  assert.deepEqual(conditionalFiles(["beta", "!admin"], { admin: true }), []);
+  assert.deepEqual(conditionalFiles(["beta", "!admin"], { admin: false }), ["doc.md"]);
+  assert.deepEqual(conditionalFiles(["beta", "!admin"], { beta: true, admin: true }), ["doc.md"]);
+});
+
+test("an empty when array renders nothing and a one-element array behaves like the string", () => {
+  assert.deepEqual(conditionalFiles([], {}), []);
+  assert.deepEqual(conditionalFiles(["beta"], { beta: true }), ["doc.md"]);
+  assert.deepEqual(conditionalFiles(["beta"], {}), []);
+});
+
+test("a conditional fragment with a when array is the text when any element is true and empty otherwise", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    stack: {
+      manifest: { fragments: { extra: { path: "templates/extra.md", when: ["beta", "admin"] } }, files: [{ from: "templates/doc.md", to: "doc.md" }] },
+      files: { "extra.md": ", extra", "doc.md": "base{{fragment_extra}}\n" },
+    },
+  });
+  const render = answers => {
+    const { answers: validated } = validateAnswers({ name: "Demo", ...answers });
+    const dest = tmp();
+    renderModules(dir, ["stack"], validated, dest);
+    return readFileSync(join(dest, "doc.md"), "utf8");
+  };
+  assert.equal(render({ beta: true }), "base, extra\n");
+  assert.equal(render({ admin: true }), "base, extra\n");
+  assert.equal(render({}), "base\n");
+});
+
+test("a required check with a when array is included when any element is true", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [], requiredChecks: [{ context: "either", when: ["beta", "admin"] }] }, files: {} },
+  });
+  const checks = answers => {
+    const modules = resolveModules([], dir).map(m => ({ ...m, files: [{ from: "templates/doc.md", to: "doc.md" }] }));
+    writeFileSync(join(dir, "core", "templates", "doc.md"), "{{required_checks_json}}\n");
+    const { answers: validated } = validateAnswers({ name: "Demo", ...answers });
+    const dest = tmp();
+    render({ modules, answers: validated, modulesDir: dir, destDir: dest });
+    return readFileSync(join(dest, "doc.md"), "utf8").trim();
+  };
+  assert.equal(checks({ admin: true }), '[{"context":"either"}]');
+  assert.equal(checks({}), "[]");
+});
+
+test("a fragment can place another fragment, which is substituted with the same values", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    stack: {
+      manifest: {
+        fragments: { outer: "templates/outer.md", inner: { path: "templates/inner.md", when: "beta" } },
+        files: [{ from: "templates/doc.md", to: "doc.md" }],
+      },
+      files: { "outer.md": "outer {{slug}}[{{fragment_inner}}]", "inner.md": "inner {{slug}}", "doc.md": "{{fragment_outer}}\n" },
+    },
+  });
+  const render = beta => {
+    const { answers } = validateAnswers({ name: "Demo", beta });
+    const dest = tmp();
+    renderModules(dir, ["stack"], answers, dest);
+    return readFileSync(join(dest, "doc.md"), "utf8");
+  };
+  assert.equal(render(true), "outer demo[inner demo]\n");
+  assert.equal(render(false), "outer demo[]\n");
+});
+
+test("fragments that place each other fail the render and name the cycle", () => {
+  const dir = fragmentModules({
+    core: { manifest: { files: [] } },
+    stack: {
+      manifest: { fragments: { one: "templates/one.md", two: "templates/two.md" }, files: [{ from: "templates/doc.md", to: "doc.md" }] },
+      files: { "one.md": "{{fragment_two}}", "two.md": "{{fragment_one}}", "doc.md": "{{fragment_one}}\n" },
+    },
+  });
+  assert.throws(() => renderFragments(dir, ["stack"]), /Fragment cycle: one -> two -> one/);
+});

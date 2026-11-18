@@ -74,6 +74,18 @@
       "path": "templates/fragments/turnstile-readme.md",
       "when": "turnstile"
     },
+    "sync_owner_email": {
+      "path": "templates/fragments/sync-owner-email.yml",
+      "when": "admin"
+    },
+    "sync_turnstile": {
+      "path": "templates/fragments/sync-turnstile.yml",
+      "when": "turnstile"
+    },
+    "sync_secrets_readme": {
+      "path": "templates/fragments/sync-secrets-readme.md",
+      "when": ["admin", "turnstile"]
+    },
     "turnstile_sync_beta": {
       "path": "templates/fragments/turnstile-sync-beta.txt",
       "when": "beta"
@@ -182,7 +194,7 @@
     {
       "from": "templates/github/workflows/sync-worker-secrets.yml",
       "to": ".github/workflows/sync-worker-secrets.yml",
-      "when": "turnstile"
+      "when": ["admin", "turnstile"]
     },
     {
       "from": "templates/src/worker.js",
