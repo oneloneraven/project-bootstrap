@@ -1,7 +1,7 @@
 # Privacy
 
 <!-- shared:intro -->
-We don't sell your data and we don't share it for advertising. This page explains what {{name}} keeps, what this website collects, why, and for how long.
+We don't sell your data and we don't share it for advertising. This page explains what {{name}} keeps, what the platform collects, why, and for how long.
 <!-- /shared:intro -->
 
 <!-- shared:app -->
@@ -14,15 +14,15 @@ Everything {{name}} keeps is listed here, with why we keep it and for how long. 
 **SLOT: what the app keeps.** Replace this with a table of what, why and how long, one row for each kind of personal data, matching the project's record of processing. Say where it's kept, on your device, on our servers or both. Add any permissions the app asks for and what a backup copies.
 <!-- /slot:app -->
 
-<!-- shared:website -->
-## What the website collects
+<!-- shared:platform -->
+## What the platform collects
 
 We don't set cookies that track you, we don't show ads, we don't build profiles of you and we don't follow you across other sites. Like any website, the service that hosts it handles your IP address and the pages you ask for, so it can deliver them and protect the site from attacks. It keeps this only briefly, for those purposes.
-<!-- /shared:website -->
+<!-- /shared:platform -->
 
-<!-- slot:website -->
-**SLOT: what the website collects.** Replace this with what else this website does, in plain words. Say whether it counts visits and how, with any cookies it sets and why. Say what loads from other places, such as fonts, images or a bot check. If it counts nothing and sets nothing, say that.
-<!-- /slot:website -->
+<!-- slot:platform -->
+**SLOT: what the platform collects.** Replace this with what else the platform does, whether it is a website, an app or both, in plain words. Say whether it counts visits and how, with any cookies it sets and why. Say what loads from other places, such as fonts, images or a bot check. If it counts nothing and sets nothing, say that.
+<!-- /slot:platform -->
 
 <!-- shared:feedback -->
 ## Feedback

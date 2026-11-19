@@ -15,9 +15,9 @@ const check = (published, config = { pages }) =>
   checkPublicPages(config, path => (path.startsWith("docs/") ? read(path) : published[path]));
 
 const ethicsSections = ["intro", "building-with-ai", "tools-we-use", "democratisation", "closing"];
-const privacySections = ["intro", "app", "website", "feedback", "rights", "changes"];
+const privacySections = ["intro", "app", "platform", "feedback", "rights", "changes"];
 const ethicsSlots = ["product-sections", "tool-exceptions", "additional-considerations", "why-free"];
-const privacySlots = ["app", "website", "feedback", "rights"];
+const privacySlots = ["app", "platform", "feedback", "rights"];
 
 test("the ethics page renders every shared section and slot with markers", () => {
   const text = read("docs/public/ethics.md");
@@ -33,7 +33,7 @@ test("the privacy page renders every shared section and slot with markers", () =
 
 test("the privacy page has the same headings in order", () => {
   const headings = read("docs/public/privacy.md").match(/^#{1,2} .+$/gm);
-  assert.deepEqual(headings, ["# Privacy", "## What the app keeps", "## What the website collects", "## Feedback", "## Your rights", "## Changes"]);
+  assert.deepEqual(headings, ["# Privacy", "## What the app keeps", "## What the platform collects", "## Feedback", "## Your rights", "## Changes"]);
 });
 
 test("the shared sections have no en or em dashes and name no suppliers", () => {
@@ -97,7 +97,7 @@ test("the check fails when a published page doesn't exist", () => {
 test("the check ignores edits to slots", () => {
   const published = copies();
   published["site/ethics.md"] = published["site/ethics.md"].replace(/<!-- slot:why-free -->[\s\S]*<!-- \/slot:why-free -->/, "Why? Because everyone should be able to use it.");
-  published["site/privacy.md"] = published["site/privacy.md"].replace(/<!-- slot:website -->[\s\S]*<!-- \/slot:website -->/, "We count visits without cookies.");
+  published["site/privacy.md"] = published["site/privacy.md"].replace(/<!-- slot:platform -->[\s\S]*<!-- \/slot:platform -->/, "We count visits without cookies.");
   assert.equal(check(published).ok, true);
 });
 

@@ -7,8 +7,8 @@ principles are shared, and only the parts that differ are written per product.
 ## How the pages are built
 
 The base copies are in `docs/public/`: `ethics.md` and `privacy.md`. They're
-source copies for the product's website, not pages in their own right. Don't
-edit them by hand, or the next render overwrites the change.
+source copies for the product's website or in-app help, not pages in their
+own right. Don't edit them by hand, or the next render overwrites the change.
 
 Each page has two kinds of part:
 
@@ -20,12 +20,12 @@ Each page has two kinds of part:
 - **Slots** sit between `<!-- slot:name -->` and `<!-- /slot:name -->` and
   start with **SLOT**. They're the product's own words: why it's free, any
   further tool exceptions, additional considerations, product-specific
-  sections, what the app keeps, what the website collects, what feedback
+  sections, what the app keeps, what the platform collects, what feedback
   collects, how to use your rights. Replace each one with real content, or
   delete an optional one. The check ignores slots.
 
 The shared wording names no suppliers and no tools, and never says "no
-analytics". The privacy page's website slot is where the product says whether
+analytics". The privacy page's platform slot is where the product says whether
 and how it counts visits. It follows the [privacy rules](../privacy.md), and
 the app and feedback slots must match the
 [record of processing](../data-protection.md).
