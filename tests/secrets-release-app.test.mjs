@@ -5,7 +5,7 @@ import { loadContext } from "../skills/bootstrap/scripts/secrets/context.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import releaseApp, { appJwt, buildManifest, newAppUrl, ownerType, waitForCallback } from "../skills/bootstrap/scripts/secrets/steps/release-app.mjs";
 import { runCli } from "../skills/bootstrap/scripts/secrets.mjs";
-import { folder, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
+import { assertItemReasons, folder, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
@@ -115,6 +115,7 @@ test("release-app stores the PEM before setting the secret, and never passes it 
   assert.equal(conversion.init.method, "POST");
   assert.equal(conversion.init.headers.Authorization, undefined);
   assert.ok(!deps.logs.join("\n").includes("PRIVATE KEY") && !deps.logs.join("\n").includes("inst-token"));
+  assertItemReasons(deps, { naming: ["release App", "sample-project"] });
 });
 
 test("release-app fails when the installation covers other repositories", async () => {
@@ -227,6 +228,7 @@ test("release-app resumes from an earlier Pass item instead of creating a second
   assert.equal(secret.input, privateKey.trim());
   const variable = deps.calls.find(call => call.args[0] === "variable");
   assert.equal(variable.input, "Iv1.old");
+  assertItemReasons(deps, { naming: ["Read the client id of the release App", "Read the private key of the release App"] });
   assert.ok(opened.includes("https://github.com/apps/sample-project-release/installations/new"));
   assert.match(deps.logs.join("\n"), /installed on sample-owner\/sample-project only/);
   for (const call of deps.calls) assert.ok(!call.args.some(arg => arg.includes("PRIVATE KEY")));

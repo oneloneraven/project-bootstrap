@@ -7,7 +7,7 @@ import { orgVariableExists, setOrgSecret, setOrgVariable } from "../skills/boots
 import boardApp from "../skills/bootstrap/scripts/secrets/steps/board-app.mjs";
 import boardAppRepo from "../skills/bootstrap/scripts/secrets/steps/board-app-repo.mjs";
 import { runCli } from "../skills/bootstrap/scripts/secrets.mjs";
-import { folder, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
+import { assertItemReasons, folder, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
 
 const { privateKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
@@ -116,6 +116,7 @@ test("board-app stores the key in the organisation's Pass folder, then sets the 
   for (const call of deps.calls) assert.ok(!call.args.some(arg => arg.includes("PRIVATE KEY")), "no argument carries the PEM");
   assert.ok(!deps.logs.join("\n").includes("PRIVATE KEY"));
   assert.ok(!fetched.some(f => String(f.init.body ?? "").includes("PRIVATE KEY")));
+  assertItemReasons(deps, { naming: ["board-sync App", "one-org"] });
 });
 
 test("board-app refuses a user owner before any browser or Pass work", async () => {
@@ -222,6 +223,7 @@ test("board-app-repo copies the client id and key from the organisation's Pass i
   assert.ok(!deps.calls.some(call => call.args[0] === "item" && call.args[1] === "create"), "no Pass item is created");
   for (const call of deps.calls) assert.ok(!call.args.some(arg => arg.includes("PRIVATE KEY")), "no argument carries the PEM");
   assert.ok(!deps.logs.join("\n").includes("PRIVATE KEY"));
+  assertItemReasons(deps, { naming: ["board-sync App", "one-org"] });
 });
 
 test("board-app-repo refuses a personal owner", async () => {

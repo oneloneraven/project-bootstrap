@@ -13,7 +13,7 @@ import { buildPolicies, bucketResource, cfClient, policiesMatch, resolvePermissi
 import cloudflareR2 from "../skills/bootstrap/scripts/secrets/steps/cloudflare-r2.mjs";
 import cloudflareTokens from "../skills/bootstrap/scripts/secrets/steps/cloudflare-tokens.mjs";
 import { renderReal } from "./helpers.mjs";
-import { stubDeps, vaultResponder } from "./helpers-secrets.mjs";
+import { assertItemReasons, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
 
 const ACCOUNT = "a".repeat(32);
 const ZONE = "b".repeat(32);
@@ -235,6 +235,7 @@ test("cloudflare-tokens creates four tokens, reads each back, stores, then sets"
     { field_name: "expires", field_type: "text", value: "2027-11-08T12:00:00Z" },
   ]);
   assert.equal(cf.log.at(-1).method, "DELETE");
+  assertItemReasons(deps, { naming: create.map(i => i.title) });
 });
 
 test("with a beta environment one deploy token is set in both environments", async () => {
@@ -308,6 +309,7 @@ test("rotation revokes the old token ids recorded in the previous items after th
   const lastSecret = deps.calls.map(label).lastIndexOf("gh secret set");
   const trash = deps.calls.map(label).lastIndexOf("pass-cli item trash");
   assert.ok(trash > lastSecret);
+  assertItemReasons(deps, { naming: ["Read the token id of the Cloudflare Preview token", "Move the replaced Cloudflare Deploy token"] });
 });
 
 const deletedTokens = cf => cf.log.filter(c => c.method === "DELETE").map(c => c.path.split("/").at(-1));
@@ -364,7 +366,7 @@ test("resolvePermissions can be limited to the R2 bucket scope", async () => {
 const r2 = options => harness({ step: cloudflareR2, ...options });
 
 test("cloudflare-r2 makes two tokens scoped to the state bucket and reads them back", async () => {
-  const { cf, run } = r2();
+  const { cf, deps, run } = r2();
   await run();
   const posts = cf.log.filter(c => c.method === "POST");
   assert.deepEqual(posts.map(p => p.body.name), ["sample-project R2 state read-write", "sample-project R2 state read-only"]);
@@ -375,6 +377,7 @@ test("cloudflare-r2 makes two tokens scoped to the state bucket and reads them b
   assert.equal(cf.log.filter(c => c.method === "GET" && /tokens\/tok\d$/.test(c.path)).length, 2);
   assert.ok(cf.log.some(c => c.path.endsWith("/tokens/self") && c.method === "DELETE"));
   assert.ok(cf.log.every(c => !/zones/.test(c.path)));
+  assertItemReasons(deps, { naming: ["R2 state read-write", "R2 state read-only"] });
 });
 
 test("read-write goes to infra and read-only to repository level", async () => {
