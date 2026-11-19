@@ -16,7 +16,7 @@ const check = (published, config = { pages }) =>
 
 const ethicsSections = ["intro", "building-with-ai", "tools-we-use", "democratisation", "closing"];
 const privacySections = ["intro", "app", "platform", "feedback", "rights", "changes"];
-const ethicsSlots = ["product-sections", "tool-exceptions", "additional-considerations", "why-free"];
+const ethicsSlots = ["tool-exceptions", "additional-considerations", "why-free"];
 const privacySlots = ["app", "platform", "feedback", "rights"];
 
 test("the ethics page renders every shared section and slot with markers", () => {

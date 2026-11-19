@@ -4,10 +4,6 @@
 We try to build {{name}} ethically and sustainably, but that's hard to do completely in the tech world. This page aims to provide transparency about the tech used to build this app, and the impact of it, so that you can make a conscious choice about using it. Many of the big tech companies' tools and services are ubiquitous, so even if using them directly can be avoided, they will be used in secondary or tertiary systems. It's also difficult to claim true sustainability in tech, given the demand on power and cooling. There is even a significant social impact of major tech hubs where the cost of buying or renting property soars as tech talent moves to where the jobs are, pricing locals out of the market and directly increasing homelessness and rough sleeping.
 <!-- /shared:intro -->
 
-<!-- slot:product-sections -->
-**SLOT: product-specific sections.** Replace this with any sections that are particular to {{name}}, each with its own `##` heading. Examples: sustainability, accessibility, an open source code statement. Delete the slot if there are none. This slot can move, and you can add more of them, anywhere outside the shared sections.
-<!-- /slot:product-sections -->
-
 <!-- shared:building-with-ai -->
 ## Building with AI
 

@@ -19,10 +19,10 @@ Each page has two kinds of part:
   every product pick it up.
 - **Slots** sit between `<!-- slot:name -->` and `<!-- /slot:name -->` and
   start with **SLOT**. They're the product's own words: why it's free, any
-  further tool exceptions, additional considerations, product-specific
-  sections, what the app keeps, what the platform collects, what feedback
-  collects, how to use your rights. Replace each one with real content, or
-  delete an optional one. The check ignores slots.
+  further tool exceptions, additional considerations, what the app keeps,
+  what the platform collects, what feedback collects, how to use your rights.
+  Replace each one with real content, or delete an optional one. The check
+  ignores slots.
 
 The shared wording names no suppliers and no tools, and never says "no
 analytics". The privacy page's platform slot is where the product says whether
