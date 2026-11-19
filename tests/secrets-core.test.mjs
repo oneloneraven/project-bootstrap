@@ -110,7 +110,11 @@ test("Vault trashes an item by id in its vault", async () => {
 
 test("Vault points a refused command at the automation session runbook", async () => {
   const deps = stubDeps(() => ({ status: 1, stderr: "Error creating note item\n\nCaused by:\n    Could not perform operation. Reason: NotAllowed" }));
-  await assert.rejects(newVault(deps).trash("a"), /NotAllowed\. The session isn't allowed to do this\..*editor access.*run-secrets-on-an-automation-session\.md/s);
+  await assert.rejects(newVault(deps).trash("a"), error => {
+    assert.match(error.message, /NotAllowed\. The session isn't allowed to do this\..*editor access.*run-secrets-on-an-automation-session\.md/s);
+    assert.doesNotMatch(error.message, /folder/i);
+    return true;
+  });
 });
 
 test("Vault leaves other failures as they are", async () => {

@@ -1,5 +1,5 @@
 const NOT_ALLOWED =
-  "The session isn't allowed to do this. An automation session needs editor access to the vault, and its project folder made by hand: see docs/runbooks/run-secrets-on-an-automation-session.md in the plugin";
+  "The session isn't allowed to do this. An automation session needs editor access to the vault: see docs/runbooks/run-secrets-on-an-automation-session.md in the plugin";
 
 async function pass(deps, args, { input, reason } = {}) {
   const result = await deps.exec("pass-cli", args, {
