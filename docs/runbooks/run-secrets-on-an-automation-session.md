@@ -24,9 +24,9 @@ your own terminal.
   every credential before it sets it. Vault access is granted as `viewer`
   unless you say otherwise, and a viewer fails at `item create` with
   `NotAllowed`. Grant `editor`.
-- The session may not be allowed to create folders. If the project's folder
-  doesn't exist in the `Dev` vault yet, create it yourself first, named
-  after the project's slug (or the organisation, for `board-app`).
+- With editor access the script creates the project's folder in the `Dev`
+  vault when it doesn't exist yet, named after the project's slug (or the
+  organisation, for `board-app`), as it does on your own session.
 
 ## Set up
 
