@@ -3,118 +3,15 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
+import { validateAnswers } from "./answers.mjs";
+import { maxSlugLength, mergePolicies, resolveModules } from "./modules.mjs";
+import { loadState, saveRun } from "./state.mjs";
 import { describeDropped, droppedPermissions } from "./token-permissions.mjs";
+
+export { maxSlugLength, resolveModules, validateAnswers };
 
 const BINARY = /\.(png|ico|jpg|jpeg|gif|webp|woff2?|zip|pem|jar)$/i;
 const PLACEHOLDER = /(?<!\$)\{\{\s*([a-z0-9_]+)\s*\}\}/g;
-
-function loadManifest(name, modulesDir) {
-  const path = join(modulesDir, name, "manifest.json");
-  if (!existsSync(path)) throw new Error(`Unknown module: ${name}`);
-  return JSON.parse(readFileSync(path, "utf8"));
-}
-
-export function resolveModules(selected, modulesDir) {
-  const ordered = [];
-  const visiting = [];
-  const requiredByOf = new Map();
-  const visit = (name, requiredBy) => {
-    if (ordered.some(m => m.name === name)) return;
-    if (visiting.includes(name)) throw new Error(`Dependency cycle: ${[...visiting.slice(visiting.indexOf(name)), name].join(" -> ")}`);
-    let manifest;
-    try {
-      manifest = loadManifest(name, modulesDir);
-    } catch (error) {
-      if (requiredBy) throw new Error(`Missing dependency: ${requiredBy} requires ${name}`);
-      throw error;
-    }
-    requiredByOf.set(name, requiredBy);
-    visiting.push(name);
-    for (const dep of manifest.dependsOn ?? []) visit(dep, name);
-    visiting.pop();
-    ordered.push(manifest);
-  };
-  visit("core");
-  for (const name of selected) visit(name);
-  rejectConflicts(ordered, requiredByOf);
-  return ordered;
-}
-
-function rejectConflicts(ordered, requiredByOf) {
-  const present = name => {
-    const via = requiredByOf.get(name);
-    return via ? `${name} (required by ${via})` : name;
-  };
-  for (const module of ordered) {
-    for (const other of module.conflictsWith ?? []) {
-      if (ordered.some(m => m.name === other)) {
-        throw new Error(`Conflicting modules: ${present(module.name)} conflicts with ${present(other)}`);
-      }
-    }
-  }
-}
-
-export function maxSlugLength(modules) {
-  return Math.min(63, ...modules.map(m => m.maxSlugLength ?? 63));
-}
-
-const PYTHON_KEYWORDS = new Set(
-  "False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield".split(" "),
-);
-
-function pythonPackage(slug) {
-  const identifier = slug.replace(/-/g, "_");
-  return PYTHON_KEYWORDS.has(identifier) ? `${identifier}_` : identifier;
-}
-
-const DEFAULT_LICENSOR = "One Lone Raven (https://github.com/oneloneraven)";
-
-function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-}
-
-function kotlinString(text) {
-  return JSON.stringify(text).replace(/\\.|\$/g, m => ({ $: "\\$", "\\f": "\\u000C" })[m] ?? m);
-}
-
-function androidString(text) {
-  const escaped = text.replace(/[\\'"]/g, c => `\\${c}`).replace(/^[@?]/, c => `\\${c}`);
-  return escaped.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-}
-
-export function validateAnswers(input, { maxSlugLength: limit = 63 } = {}) {
-  const name = String(input.name ?? "").trim();
-  if (!name) throw new Error("Project name is required");
-  const full = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  if (!/^[a-z]/.test(full)) throw new Error("Project name must start with a letter");
-  if (full.length > limit && limit < 63) {
-    throw new Error(
-      `Project name gives the slug ${full} (${full.length} characters); the selected modules allow at most ${limit}`,
-    );
-  }
-  const slug = full.slice(0, 63).replace(/-+$/, "");
-  const answers = {
-    licensor: DEFAULT_LICENSOR,
-    ...input,
-    name,
-    slug,
-    private: input.visibility === "private",
-    owner_org: input.owner_type === "Organization",
-    name_js: JSON.stringify(name),
-    name_html: escapeHtml(name),
-    greeting_js: JSON.stringify(`Hello from ${name}`),
-    description_toml: JSON.stringify(String(input.description ?? "")),
-    python_package: pythonPackage(slug),
-    name_kotlin: kotlinString(name),
-    greeting_kotlin: kotlinString(`Hello from ${name}`),
-    name_android: androidString(name),
-    ...(typeof input.application_id === "string" && { application_id_path: input.application_id.replace(/\./g, "/") }),
-  };
-  return { answers, slug };
-}
 
 const SCREENING_FIELDS = ["dependency", "usedFor", "maintainer", "listed", "decision", "screenedOn"];
 
@@ -181,10 +78,6 @@ function deepMerge(base, extra) {
     merged[key] = isObject && mergeable ? deepMerge(merged[key], value) : value;
   }
   return merged;
-}
-
-export function mergePolicies(modules) {
-  return modules.find(m => m.mergePolicies)?.mergePolicies ?? {};
 }
 
 function mergePolicyKeys(modules, policy) {
@@ -353,7 +246,7 @@ function guardTokenPermissions({ modules, answers, modulesDir, destDir, allow })
   }
 }
 
-async function main() {
+function main() {
   const { values } = parseArgs({
     options: {
       modules: { type: "string", default: "" },
@@ -380,7 +273,6 @@ async function main() {
     bootstrapOnly: values["bootstrap-only"],
   });
   if (values["bootstrap-only"] && !values["dry-run"]) {
-    const { loadState, saveRun } = await import("./state.mjs");
     const recorded = loadState(values.dest).modules;
     saveRun(values.dest, { answers, modules: [...new Set([...recorded, ...selected])] });
   }
@@ -388,8 +280,10 @@ async function main() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch(error => {
+  try {
+    main();
+  } catch (error) {
     console.error(error);
     process.exitCode = 1;
-  });
+  }
 }
