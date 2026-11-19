@@ -8,7 +8,7 @@
     ],
     "permissions": [
       "Individual Workers Editor",
-      "Account Settings Read"
+      "Account Settings Read"{{fragment_d1_token_write}}
     ]
   },
   {
@@ -24,7 +24,7 @@
     "permissions": [
       "Individual Workers Editor",
       "Account Settings Read",
-      "Workers Routes Write"
+      "Workers Routes Write"{{fragment_d1_token_write}}
     ]
   },
   {
@@ -39,7 +39,7 @@
       "Zone Settings Read",
       "Zone WAF Read",
       "Cache Settings Read",
-      "Dynamic URL Redirects Read"
+      "Dynamic URL Redirects Read"{{fragment_d1_token_read}}
     ]
   },
   {
@@ -56,7 +56,7 @@
       "Zone Settings Write",
       "Zone WAF Write",
       "Cache Settings Write",
-      "Dynamic URL Redirects Write"
+      "Dynamic URL Redirects Write"{{fragment_d1_token_write}}
     ]
   }
 ]

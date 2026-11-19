@@ -1,7 +1,9 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
+import { describeDropped, droppedPermissions } from "./token-permissions.mjs";
 
 const BINARY = /\.(png|ico|jpg|jpeg|gif|webp|woff2?|zip|pem|jar)$/i;
 const PLACEHOLDER = /(?<!\$)\{\{\s*([a-z0-9_]+)\s*\}\}/g;
@@ -331,6 +333,26 @@ export function render({ modules, answers, modulesDir, destDir, dryRun = false, 
   return [...outputs.keys()];
 }
 
+const TOKENS_FILE = join(".bootstrap", "cloudflare", "tokens.json");
+
+function guardTokenPermissions({ modules, answers, modulesDir, destDir, allow }) {
+  const existingPath = join(destDir, TOKENS_FILE);
+  if (!existsSync(existingPath)) return;
+  const staging = mkdtempSync(join(tmpdir(), "bootstrap-tokens-"));
+  try {
+    render({ modules, answers, modulesDir, destDir: staging, bootstrapOnly: true });
+    const renderedPath = join(staging, TOKENS_FILE);
+    if (!existsSync(renderedPath)) return;
+    const dropped = droppedPermissions(JSON.parse(readFileSync(existingPath, "utf8")), JSON.parse(readFileSync(renderedPath, "utf8")));
+    if (!dropped.length) return;
+    const report = `${TOKENS_FILE} would lose:\n${describeDropped(dropped)}`;
+    if (!allow) throw new Error(`${report}\nRefusing to write it. Add the missing answers, or pass --allow-dropped-permissions to write it anyway.`);
+    console.error(`Warning: ${report}`);
+  } finally {
+    rmSync(staging, { recursive: true, force: true });
+  }
+}
+
 async function main() {
   const { values } = parseArgs({
     options: {
@@ -341,11 +363,13 @@ async function main() {
       "dry-run": { type: "boolean", default: false },
       stage: { type: "string" },
       "bootstrap-only": { type: "boolean", default: false },
+      "allow-dropped-permissions": { type: "boolean", default: false },
     },
   });
   const selected = values.modules.split(",").filter(Boolean);
   const modules = resolveModules(selected, values["modules-dir"]);
   const { answers } = validateAnswers(JSON.parse(readFileSync(values.answers, "utf8")));
+  if (values["bootstrap-only"] && !values["dry-run"]) guardTokenPermissions({ modules, answers, modulesDir: values["modules-dir"], destDir: values.dest, allow: values["allow-dropped-permissions"] });
   const written = render({
     modules,
     answers,

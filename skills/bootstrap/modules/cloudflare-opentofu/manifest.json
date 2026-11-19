@@ -31,6 +31,11 @@
       "key": "turnstile",
       "type": "boolean",
       "prompt": "Does the app have a public form guarded by Turnstile, with its widget in the central identity stack?"
+    },
+    {
+      "key": "d1",
+      "type": "boolean",
+      "prompt": "Does the app keep data in a D1 database?"
     }
   ],
   "fragments": {
@@ -89,6 +94,70 @@
     "turnstile_sync_beta": {
       "path": "templates/fragments/turnstile-sync-beta.txt",
       "when": "beta"
+    },
+    "d1_wrangler_top": {
+      "path": "templates/fragments/d1-wrangler-top.json",
+      "when": "d1"
+    },
+    "d1_wrangler_env": {
+      "path": "templates/fragments/d1-wrangler-env.json",
+      "when": "d1"
+    },
+    "d1_wrangler_preview": {
+      "path": "templates/fragments/d1-wrangler-preview.json",
+      "when": "d1"
+    },
+    "d1_wrangler_previews": {
+      "path": "templates/fragments/d1-wrangler-previews.json",
+      "when": "d1"
+    },
+    "d1_local_migrate_dev": {
+      "path": "templates/fragments/d1-local-migrate-dev.txt",
+      "when": "d1"
+    },
+    "d1_local_migrate": {
+      "path": "templates/fragments/d1-local-migrate.txt",
+      "when": "d1"
+    },
+    "d1_token_write": {
+      "path": "templates/fragments/d1-token-write.json",
+      "when": "d1"
+    },
+    "d1_token_read": {
+      "path": "templates/fragments/d1-token-read.json",
+      "when": "d1"
+    },
+    "d1_readme_write": {
+      "path": "templates/fragments/d1-readme-write.txt",
+      "when": "d1"
+    },
+    "d1_readme_read": {
+      "path": "templates/fragments/d1-readme-read.txt",
+      "when": "d1"
+    },
+    "d1_readme": {
+      "path": "templates/fragments/d1-readme.md",
+      "when": "d1"
+    },
+    "d1_deploy_production": {
+      "path": "templates/fragments/d1-deploy-production.yml",
+      "when": "d1"
+    },
+    "d1_deploy_beta": {
+      "path": "templates/fragments/d1-deploy-beta.yml",
+      "when": "d1"
+    },
+    "d1_preview_database": {
+      "path": "templates/fragments/d1-preview-database.yml",
+      "when": "d1"
+    },
+    "d1_preview_config_flag": {
+      "path": "templates/fragments/d1-preview-config-flag.txt",
+      "when": "d1"
+    },
+    "d1_preview_cleanup": {
+      "path": "templates/fragments/d1-preview-cleanup.yml",
+      "when": "d1"
     }
   },
   "overrides": [],
@@ -137,6 +206,16 @@
       "from": "templates/infra/dns-admin.tf",
       "to": "infra/dns-admin.tf",
       "when": "admin"
+    },
+    {
+      "from": "templates/infra/d1.tf",
+      "to": "infra/d1.tf",
+      "when": "d1"
+    },
+    {
+      "from": "templates/migrations/.gitkeep",
+      "to": "migrations/.gitkeep",
+      "when": "d1"
     },
     {
       "from": "templates/infra/redirects.tf",

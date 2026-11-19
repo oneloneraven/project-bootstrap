@@ -1,0 +1,9 @@
+,
+        "d1_databases": [
+          {
+            "binding": "DB",
+            "database_name": "{{slug}}-preview",
+            "database_id": "",
+            "migrations_dir": "migrations"
+          }
+        ]

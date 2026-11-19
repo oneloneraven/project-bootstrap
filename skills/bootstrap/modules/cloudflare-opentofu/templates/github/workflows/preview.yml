@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
       - uses: $/.github/actions/setup-node-pnpm
       - run: pnpm build
-      - name: Upload the Preview
+{{fragment_d1_preview_database}}      - name: Upload the Preview
         id: upload
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_TOKEN }}
@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           ERR="$RUNNER_TEMP/wrangler-preview.err"
-          if ! OUTPUT=$(pnpm exec wrangler preview --env preview --name "pr-$PR_NUMBER" --json 2>"$ERR"); then
+          if ! OUTPUT=$(pnpm exec wrangler preview{{fragment_d1_preview_config_flag}} --env preview --name "pr-$PR_NUMBER" --json 2>"$ERR"); then
             cat "$ERR" >&2
             echo "$OUTPUT" >&2
             exit 1
@@ -75,3 +75,4 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: pnpm exec wrangler preview delete --env preview --name "pr-$PR_NUMBER" --skip-confirmation
+{{fragment_d1_preview_cleanup}}

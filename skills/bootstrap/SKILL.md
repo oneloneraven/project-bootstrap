@@ -97,6 +97,14 @@ files. `<dir>` is the existing project:
    `.bootstrap/` and nothing outside `.bootstrap/`, then records the modules
    and this plugin's version in `.bootstrap/state.json`.
 
+   If `.bootstrap/cloudflare/tokens.json` already exists and the render would
+   drop a token or a permission from it, the renderer writes nothing, exits
+   non-zero and names each one dropped, because rotating tokens from a file
+   with fewer permissions would issue tokens that can't do their job. Answer
+   the question that brings them back (such as `d1`), or add
+   `--allow-dropped-permissions` to write the file anyway; it then prints
+   what was dropped as a warning.
+
 The same command is what `secrets.mjs` prints when a `.bootstrap/` file it
 needs is missing.
 
