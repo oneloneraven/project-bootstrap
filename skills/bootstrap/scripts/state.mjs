@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pluginVersion } from "./plugin-version.mjs";
-import { maxSlugLength, mergePolicies, resolveModules, validateAnswers } from "./render.mjs";
+import { validateAnswers } from "./answers.mjs";
+import { maxSlugLength, mergePolicies, resolveModules } from "./modules.mjs";
 
 const EMPTY = { steps: {}, answers: null, modules: [], ids: {}, skipped: {} };
 const folder = dir => join(dir, ".bootstrap");

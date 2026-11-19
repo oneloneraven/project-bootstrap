@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
-import { resolveModules } from "./render.mjs";
+import { resolveModules } from "./modules.mjs";
 
 export function checkTarget(dir) {
   if (!existsSync(dir)) return { ok: false, reason: "Directory does not exist" };
