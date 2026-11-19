@@ -17,10 +17,14 @@ export async function verifyTurnstile(token, ip, env) {
       body: JSON.stringify({ secret: env.TURNSTILE_SECRET_KEY, response: token, remoteip: ip ?? undefined }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      console.warn(JSON.stringify({ event: "turnstile_siteverify_unavailable", status: response.status }));
+      return false;
+    }
     const result = /** @type {{ success?: unknown }} */ (await response.json());
     return result.success === true;
-  } catch {
+  } catch (error) {
+    console.warn(JSON.stringify({ event: "turnstile_siteverify_unavailable", error: error instanceof Error ? error.name : typeof error }));
     return false;
   }
 }

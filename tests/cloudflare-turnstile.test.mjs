@@ -96,6 +96,13 @@ test("the README covers the widget, the secret and the rotation end to end", () 
   assert.match(section, /invalidate_immediately/);
 });
 
+test("the README says what is logged and that the secret, token and IP never are", () => {
+  const readme = read(variants["turnstile with a beta"], "infra/README.md");
+  const section = readme.slice(readme.indexOf("## Turnstile"), readme.indexOf("## Disaster recovery"));
+  assert.match(section, /turnstile_siteverify_unavailable/);
+  assert.match(section, /secret, the token and the client IP are\s+never logged/);
+});
+
 for (const [name, dir] of Object.entries(plain)) {
   test(`${name}: none of the library, tests, secret step, vars or text are rendered`, () => {
     const rendered = [...files(dir)];
@@ -143,11 +150,14 @@ const env = { TURNSTILE_SECRET_KEY: "secret", TURNSTILE_SITEKEY: "sitekey" };
 
 async function withFetch(stub, run) {
   const original = globalThis.fetch;
+  const warn = console.warn;
   globalThis.fetch = stub;
+  console.warn = () => {};
   try {
     return await run();
   } finally {
     globalThis.fetch = original;
+    console.warn = warn;
   }
 }
 
