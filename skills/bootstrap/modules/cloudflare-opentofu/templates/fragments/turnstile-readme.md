@@ -20,9 +20,11 @@ secret. The widget covers `{{zone_name}}` and, with a beta, `beta.{{zone_name}}`
 - **Logging.** `src/lib/turnstile.js` fails closed and logs one warning when
   Cloudflare's siteverify can't give an answer: a non-OK status, a network
   error, a timeout or a reply that isn't JSON. The line is JSON, so Workers
-  observability indexes its fields: `{"event":"turnstile_siteverify_unavailable","status":503}`
-  for a status, or `{"event":"turnstile_siteverify_unavailable","error":"TimeoutError"}`
-  for a thrown error. A challenge that succeeds or fails, and a missing token,
+  observability indexes its fields:
+  `{"event":"turnstile.unavailable","environment":"production","release":"v1.2.3","status":503}`
+  for a status, or the same with `"errorName":"TimeoutError"` in place of
+  `status` for a thrown error. `release` is `unreleased` outside a release
+  deploy. A challenge that succeeds or fails, and a missing token,
   secret or sitekey, log nothing. The secret, the token and the client IP are
   never logged.
 

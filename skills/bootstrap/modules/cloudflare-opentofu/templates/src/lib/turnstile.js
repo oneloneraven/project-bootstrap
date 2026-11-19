@@ -2,10 +2,20 @@ const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverif
 const TIMEOUT_MS = 5000;
 
 /**
+ * @param {{ APP_ENV?: string, RELEASE_VERSION?: string }} env
+ * @param {{ status: number } | { errorName: string }} detail
+ */
+function warnUnavailable(env, detail) {
+  console.warn(
+    JSON.stringify({ event: "turnstile.unavailable", environment: env.APP_ENV, release: env.RELEASE_VERSION ?? "unreleased", ...detail }),
+  );
+}
+
+/**
  * Fails closed: a missing token, secret or sitekey, an outage and any answer but success all refuse.
  * @param {string | null | undefined} token
  * @param {string | null | undefined} ip
- * @param {{ TURNSTILE_SECRET_KEY?: string, TURNSTILE_SITEKEY?: string }} env
+ * @param {{ TURNSTILE_SECRET_KEY?: string, TURNSTILE_SITEKEY?: string, APP_ENV?: string, RELEASE_VERSION?: string }} env
  * @returns {Promise<boolean>}
  */
 export async function verifyTurnstile(token, ip, env) {
@@ -18,13 +28,13 @@ export async function verifyTurnstile(token, ip, env) {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!response.ok) {
-      console.warn(JSON.stringify({ event: "turnstile_siteverify_unavailable", status: response.status }));
+      warnUnavailable(env, { status: response.status });
       return false;
     }
     const result = /** @type {{ success?: unknown }} */ (await response.json());
     return result.success === true;
   } catch (error) {
-    console.warn(JSON.stringify({ event: "turnstile_siteverify_unavailable", error: error instanceof Error ? error.name : typeof error }));
+    warnUnavailable(env, { errorName: error instanceof Error ? error.name : typeof error });
     return false;
   }
 }

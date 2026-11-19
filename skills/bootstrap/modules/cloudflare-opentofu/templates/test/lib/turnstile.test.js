@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { verifyTurnstile } from "../../src/lib/turnstile.js";
 
-const ENV = { TURNSTILE_SECRET_KEY: "test-secret-value", TURNSTILE_SITEKEY: "sitekey" };
+const ENV = { TURNSTILE_SECRET_KEY: "test-secret-value", TURNSTILE_SITEKEY: "sitekey", APP_ENV: "production", RELEASE_VERSION: "v1.2.3" };
 const TOKEN = "test-token-value";
 const IP = "203.0.113.9";
-const EVENT = "turnstile_siteverify_unavailable";
+const EVENT = { event: "turnstile.unavailable", environment: "production", release: "v1.2.3" };
 
 function spyOnConsole() {
   return {
@@ -106,7 +106,7 @@ describe("verifyTurnstile", () => {
       const spies = spyOnConsole();
       stubFetch(async () => Response.json({ success: true }, { status: 503 }));
       expect(await verifyTurnstile(TOKEN, IP, ENV)).toBe(false);
-      expect(warnings(spies)).toEqual([[JSON.stringify({ event: EVENT, status: 503 })]]);
+      expect(warnings(spies)).toEqual([[JSON.stringify({ ...EVENT, status: 503 })]]);
     });
 
     it("logs one warning with the error name for a network error", async () => {
@@ -115,7 +115,7 @@ describe("verifyTurnstile", () => {
         throw new TypeError("network");
       });
       expect(await verifyTurnstile(TOKEN, IP, ENV)).toBe(false);
-      expect(warnings(spies)).toEqual([[JSON.stringify({ event: EVENT, error: "TypeError" })]]);
+      expect(warnings(spies)).toEqual([[JSON.stringify({ ...EVENT, errorName: "TypeError" })]]);
     });
 
     it("logs one warning with the error name for a timeout", async () => {
@@ -124,14 +124,14 @@ describe("verifyTurnstile", () => {
         throw new DOMException("timed out", "TimeoutError");
       });
       expect(await verifyTurnstile(TOKEN, IP, ENV)).toBe(false);
-      expect(warnings(spies)).toEqual([[JSON.stringify({ event: EVENT, error: "TimeoutError" })]]);
+      expect(warnings(spies)).toEqual([[JSON.stringify({ ...EVENT, errorName: "TimeoutError" })]]);
     });
 
     it("logs one warning for a 200 whose body is not JSON", async () => {
       const spies = spyOnConsole();
       stubFetch(async () => new Response("not json"));
       expect(await verifyTurnstile(TOKEN, IP, ENV)).toBe(false);
-      expect(warnings(spies)).toEqual([[JSON.stringify({ event: EVENT, error: "SyntaxError" })]]);
+      expect(warnings(spies)).toEqual([[JSON.stringify({ ...EVENT, errorName: "SyntaxError" })]]);
     });
 
     it("logs nothing for a successful challenge", async () => {

@@ -99,7 +99,7 @@ test("the README covers the widget, the secret and the rotation end to end", () 
 test("the README says what is logged and that the secret, token and IP never are", () => {
   const readme = read(variants["turnstile with a beta"], "infra/README.md");
   const section = readme.slice(readme.indexOf("## Turnstile"), readme.indexOf("## Disaster recovery"));
-  assert.match(section, /turnstile_siteverify_unavailable/);
+  assert.match(section, /turnstile\.unavailable/);
   assert.match(section, /secret, the token and the client IP are\s+never logged/);
 });
 
