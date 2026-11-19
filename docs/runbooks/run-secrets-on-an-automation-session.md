@@ -21,16 +21,24 @@ your own terminal.
   defaults to the `Dev` vault, so limit the token to that vault and nothing
   else.
 - The session must be allowed to create items, because the script stores
-  every credential before it sets it. A read-only grant fails at
-  `item create`.
+  every credential before it sets it. Vault access is granted as `viewer`
+  unless you say otherwise, and a viewer fails at `item create` with
+  `NotAllowed`. Grant `editor`.
 - The session may not be allowed to create folders. If the project's folder
   doesn't exist in the `Dev` vault yet, create it yourself first, named
   after the project's slug (or the organisation, for `board-app`).
 
 ## Set up
 
-1. In the password manager's settings, create a personal access token
-   limited to the `Dev` vault with the shortest expiry you can work with.
+1. In your own signed-in session, create an agent with the shortest expiry
+   you can work with, then give it editor access to the `Dev` vault:
+
+   ```sh
+   pass-cli agent create <name> --expiration 1w
+   pass-cli agent access grant <name> --vault-name Dev --role editor
+   ```
+
+   Keep the agent's token out of chat, notes and files.
 2. In your own terminal, choose a session directory and sign in. The token
    is read without echo, handed to `pass-cli login` through its environment
    and then unset:

@@ -199,7 +199,17 @@ test("preflight reports the missing tool", async () => {
 
 test("preflight reports a tool that is not signed in", async () => {
   await assert.rejects(preflight(stubDeps(cmd => (cmd === "gh" ? { status: 1 } : {})), {}), /gh.*gh auth login/);
-  await assert.rejects(preflight(stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {})), {}), /pass-cli.*pass-cli login/);
+  await assert.rejects(preflight(stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {})), {}, {}), /pass-cli.*run pass-cli login/);
+});
+
+test("preflight points an automation session that isn't signed in at its runbook", async () => {
+  const deps = stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {}));
+  await assert.rejects(preflight(deps, {}, { PROTON_PASS_SESSION_DIR: "/state/agent" }), error => {
+    assert.match(error.message, /automation session/);
+    assert.match(error.message, /run-secrets-on-an-automation-session\.md/);
+    assert.doesNotMatch(error.message, /run pass-cli login/);
+    return true;
+  });
 });
 
 test("preflight checks the step's own tools last", async () => {
