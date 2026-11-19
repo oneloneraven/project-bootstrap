@@ -243,7 +243,8 @@
     }
   ],
   "requiredChecks": [
-    "check-label"
+    "check-label",
+    "check-public-pages"
   ],
   "releasePaths": {
     "noneAllowed": [

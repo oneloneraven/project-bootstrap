@@ -47,7 +47,7 @@ test("tsconfig gains the DOM library", () => {
 test("the ruleset requires e2e as well as the js checks", () => {
   const ruleset = JSON.parse(read(".bootstrap/github/ruleset.json"));
   const checks = ruleset.rules.find(r => r.type === "required_status_checks").parameters.required_status_checks;
-  assert.deepEqual(checks.map(c => c.context), ["check-label", "lint", "typecheck", "test", "e2e", "e2e-safari"]);
+  assert.deepEqual(checks.map(c => c.context), ["check-label", "check-public-pages", "lint", "typecheck", "test", "e2e", "e2e-safari"]);
 });
 
 test("unneeded driver install scripts are declined with a reason", () => {
@@ -118,7 +118,7 @@ test("every required check still has a job of that name and no separate e2e work
   const checks = JSON.parse(read(".bootstrap/github/ruleset.json")).rules.find(r => r.type === "required_status_checks")
     .parameters.required_status_checks.map(c => c.context);
   const combined = Object.keys(jobs(read(".github/workflows/test.yml")));
-  for (const check of checks.filter(c => c !== "check-label")) assert.ok(combined.includes(check), check);
+  for (const check of checks.filter(c => !["check-label", "check-public-pages"].includes(c))) assert.ok(combined.includes(check), check);
   const workflows = [...files(dest)].filter(f => f.startsWith(".github/workflows/"));
   assert.ok(!workflows.includes(".github/workflows/e2e.yml"));
   assert.ok(!workflows.includes(".github/workflows/e2e-safari.yml"));

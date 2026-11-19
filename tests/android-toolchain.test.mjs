@@ -128,7 +128,7 @@ test("the release workflow signs in the release environment and attaches the APK
 test("the ruleset requires the check job", () => {
   const ruleset = JSON.parse(read(".bootstrap/github/ruleset.json"));
   const checks = ruleset.rules.find(r => r.type === "required_status_checks").parameters.required_status_checks;
-  assert.deepEqual(checks.map(c => c.context), ["check-label", "check"]);
+  assert.deepEqual(checks.map(c => c.context), ["check-label", "check-public-pages", "check"]);
 });
 
 test("dependabot covers gradle and actions with core's cooldown", () => {

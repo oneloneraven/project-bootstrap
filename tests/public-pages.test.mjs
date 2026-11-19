@@ -14,9 +14,9 @@ const copies = () => ({ "site/ethics.md": read("docs/public/ethics.md"), "site/p
 const check = (published, config = { pages }) =>
   checkPublicPages(config, path => (path.startsWith("docs/") ? read(path) : published[path]));
 
-const ethicsSections = ["intro", "building-with-ai", "who-we-buy-from", "democratisation", "closing"];
+const ethicsSections = ["intro", "building-with-ai", "tools-we-use", "democratisation", "closing"];
 const privacySections = ["intro", "app", "website", "feedback", "rights", "changes"];
-const ethicsSlots = ["product-sections", "tools-used", "why-free"];
+const ethicsSlots = ["product-sections", "tool-exceptions", "additional-considerations", "why-free"];
 const privacySlots = ["app", "website", "feedback", "rights"];
 
 test("the ethics page renders every shared section and slot with markers", () => {

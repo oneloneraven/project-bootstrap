@@ -13,22 +13,26 @@ We try to build {{name}} ethically and sustainably, but that's hard to do comple
 
 We build {{name}} with the help of AI tools. It wouldn't exist otherwise. AI uses real energy and water, both to train the models and to run them.
 
-We made a trade-off. We accepted that impact so we could build something useful for the people who use it. We think the footprint of a small app like this is modest, but it isn't zero, and we'd rather say so.
+We made a trade-off. We accepted that impact so we could build something useful for this community. We think the footprint of a small app like this is modest, but it isn't zero, and we'd rather say so.
 <!-- /shared:building-with-ai -->
 
-<!-- slot:tools-used -->
+<!-- shared:tools-we-use -->
 ## The tools we use
-
-**SLOT: tools used.** Replace this with one bullet for each tool or service {{name}} is built and run with, and what it does for you. The shared sections name no suppliers. You may name them here, but check that against the privacy rules in the project's docs before you publish.
-<!-- /slot:tools-used -->
-
-<!-- shared:who-we-buy-from -->
-## Who we buy from
 
 We support the [Boycott, Divestment and Sanctions (BDS) movement](https://bdsmovement.net). We've checked every package, tool, framework and provider we use against BDS's consumer boycott targets and its No Tech for Oppression, Apartheid or Genocide campaign, and we check anything new before we adopt it.
 
 - **Our source control platform is owned by a company on both lists.** It's the industry standard, so we use it to store our code. We'll stay on its free tier for as long as we can, so we aren't contributing financially to an organisation on the BDS list.
-<!-- /shared:who-we-buy-from -->
+<!-- /shared:tools-we-use -->
+
+<!-- slot:tool-exceptions -->
+**SLOT: further exceptions.** Add a bullet here for each other tool or service {{name}} uses that is on a BDS list, in the same style as the one above: a generalised name, never the supplier's, why we use it, and how we limit what we give them. Delete the slot if there are none.
+<!-- /slot:tool-exceptions -->
+
+<!-- slot:additional-considerations -->
+## Additional considerations
+
+**SLOT: additional considerations (optional).** Replace this with any further explanation particular to {{name}}, one bullet or paragraph each, for example where the app isn't available and why. Delete the slot, heading included, if there are none.
+<!-- /slot:additional-considerations -->
 
 <!-- shared:democratisation -->
 ## We believe in the democratisation of tech
