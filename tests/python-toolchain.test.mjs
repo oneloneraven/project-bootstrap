@@ -80,7 +80,7 @@ test("mise runs the lint, shell and test checks and git hooks are not configured
 test("the ruleset requires the python check", () => {
   const ruleset = JSON.parse(read(".bootstrap/github/ruleset.json"));
   const checks = ruleset.rules.find(r => r.type === "required_status_checks").parameters.required_status_checks;
-  assert.deepEqual(checks.map(c => c.context), ["check-label", "check"]);
+  assert.deepEqual(checks.map(c => c.context), ["check-label", "check-public-pages", "check"]);
 });
 
 test("dependabot covers uv and actions with a four-day cooldown", () => {

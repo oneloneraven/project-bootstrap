@@ -25,7 +25,7 @@ test("pnpm holds new releases for three days and lists build decisions with reas
 test("the ruleset requires the js checks", () => {
   const ruleset = JSON.parse(read(".bootstrap/github/ruleset.json"));
   const checks = ruleset.rules.find(r => r.type === "required_status_checks").parameters.required_status_checks;
-  assert.deepEqual(checks.map(c => c.context), ["check-label", "lint", "typecheck", "test"]);
+  assert.deepEqual(checks.map(c => c.context), ["check-label", "check-public-pages", "lint", "typecheck", "test"]);
 });
 
 test("dependabot covers npm and actions", () => {

@@ -21,7 +21,7 @@ test("every workflow declares top-level permissions", () => {
 test("the ruleset requires the core check, signatures and squash-only PRs", () => {
   const ruleset = JSON.parse(read(".bootstrap/github/ruleset.json"));
   const rule = type => ruleset.rules.find(r => r.type === type);
-  assert.deepEqual(rule("required_status_checks").parameters.required_status_checks, [{ context: "check-label" }]);
+  assert.deepEqual(rule("required_status_checks").parameters.required_status_checks, [{ context: "check-label" }, { context: "check-public-pages" }]);
   assert.ok(rule("required_signatures"));
   assert.ok(rule("non_fast_forward"));
   assert.ok(rule("deletion"));

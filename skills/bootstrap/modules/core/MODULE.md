@@ -19,7 +19,8 @@ description, GitHub owner and visibility.
   "Stack".
 - `docs/`: workflow, versioning, coding standards (stack modules add their
   sections), definition of done, privacy, record of processing, threat
-  model, working with Claude, ADRs 0001 and 0002, incident runbooks.
+  model, working with Claude, ADRs 0001 and 0002, incident runbooks, the
+  shared ethics and privacy page base (`docs/public/`) and its runbook.
 - `SECURITY.md`, `README.md`, `LICENSE.md`, `LICENSE-SCHEDULE.md`,
   `.gitignore`.
 - `.claude/settings.json` (blocks edits while on `main`) and the
