@@ -18,8 +18,8 @@ To change the schema:
 
 1. Run `pnpm exec wrangler d1 migrations create DB <name>` and write the SQL
    in the new file under `migrations/`.
-2. `pnpm e2e:server` and `pnpm preview` apply every migration to a local
-   database before they start the Worker.
+2. `pnpm dev`, `pnpm preview` and `pnpm e2e:server` apply every migration to
+   a local database before they start the Worker.
 3. Merge it. The release tag's deploy applies new migrations before the
    code is deployed, so the live code must work with the schema both before
    and after them: expand and contract, as in
@@ -42,5 +42,8 @@ deletes the database.
 D1 Edit and D1 Read are account-wide permissions: Cloudflare can't scope them
 to one database. The Preview, Deploy and Infra apply tokens can read, change
 and delete every D1 database in the account, and the Infra plan token can
-read them.
+read them. The tokens are separate per purpose, held as environment or
+repository secrets and expire after a year. `prevent_destroy` guards only
+OpenTofu plans, not a deletion through the API, and the Time Travel bookmark
+covers a bad migration, not a deleted database, which can't be restored.
 

@@ -115,7 +115,7 @@ and preview hostnames are built from it.
   `migrations/` directory (`.gitkeep`, no migration); `D1 Write` on the
   Preview, Deploy and Infra apply tokens and `D1 Read` on Infra plan; a D1
   section in `infra/README.md`; and `wrangler d1 migrations apply` before
-  `wrangler dev` in `e2e:server` and `preview`.
+  `wrangler dev` in `dev`, `e2e:server` and `preview` (without `--env` in `dev`).
   The tag deploy records a Time Travel bookmark in its job summary, then runs
   `wrangler d1 migrations apply` before `wrangler deploy`. "Promote to
   production" doesn't migrate. `preview.yml` creates and migrates
@@ -164,9 +164,11 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
    can't be scoped to one database, so a leaked Preview, Deploy or Infra apply
    token can read, change or delete every D1 database in the account",
    category Elevation of privilege, mitigation "Tokens are separate per
-   purpose, held as environment or repository secrets, expire after a year and
-   can edit only this project's own Workers; the database has `prevent_destroy`
-   and the tag deploy records a Time Travel restore point before migrating",
+   purpose, held as environment or repository secrets and expire after a
+   year, and the Workers edit permission is limited to this project's own
+   Workers. `prevent_destroy` guards only OpenTofu plans, not a deletion
+   through the API, and the Time Travel bookmark taken before each deploy
+   covers a bad migration, not a deleted database, which can't be restored",
    status Accepted.
 
 ## 5. Manual steps

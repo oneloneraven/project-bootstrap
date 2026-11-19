@@ -111,6 +111,10 @@
       "path": "templates/fragments/d1-wrangler-previews.json",
       "when": "d1"
     },
+    "d1_local_migrate_dev": {
+      "path": "templates/fragments/d1-local-migrate-dev.txt",
+      "when": "d1"
+    },
     "d1_local_migrate": {
       "path": "templates/fragments/d1-local-migrate.txt",
       "when": "d1"

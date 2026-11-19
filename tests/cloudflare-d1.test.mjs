@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { files, renderReal } from "./helpers.mjs";
 
@@ -79,6 +79,8 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
   test(`${name}: the README documents setup, migrations, restore, previews and the account-wide permissions`, () => {
     const readme = read(dir, "infra/README.md");
     const section = readme.slice(readme.indexOf("## D1 database"), readme.indexOf("## Disaster recovery"));
+    assert.match(section, /`pnpm dev`, `pnpm preview` and `pnpm e2e:server`/);
+    assert.match(section, /`prevent_destroy` guards only\s+OpenTofu plans/);
     for (const expected of ["d1_database_id", "wrangler d1 migrations create DB", "time-travel restore sample-project --bookmark=", "expand and contract", "sample-project-pr-<number>", "account-wide", "doesn't migrate"]) {
       assert.ok(section.includes(expected), expected);
     }
@@ -88,7 +90,7 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
     const { scripts } = JSON.parse(read(dir, "package.json"));
     assert.equal(scripts["e2e:server"], "pnpm build && wrangler d1 migrations apply DB --local --env e2e && wrangler dev --env e2e --port 4173");
     assert.equal(scripts.preview, "pnpm build && wrangler d1 migrations apply DB --local --env e2e && wrangler dev --env e2e");
-    assert.equal(scripts.dev, "pnpm build && wrangler dev --port 5173");
+    assert.equal(scripts.dev, "pnpm build && wrangler d1 migrations apply DB --local && wrangler dev --port 5173");
   });
 
   test(`${name}: the tag deploy records a restore point then migrates, before it deploys`, () => {
@@ -100,6 +102,9 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
     assert.ok(record > -1 && record < migrate && migrate < names.indexOf(`Deploy to ${env}`), names.join(" | "));
     const recordStep = stepNamed(job, "Record a D1 restore point");
     assert.match(recordStep.run, new RegExp(`wrangler d1 time-travel info sample-project --env ${env} --json`));
+    assert.match(recordStep.run, /jq -er '\.bookmark'/);
+    assert.equal(recordStep.env.TARGET_ENV, env);
+    assert.ok(recordStep.run.indexOf("database_id") < recordStep.run.indexOf("time-travel info"));
     assert.match(recordStep.run, /GITHUB_STEP_SUMMARY/);
     assert.match(recordStep.run, /time-travel restore sample-project --bookmark=\$BOOKMARK/);
     assert.equal(stepNamed(job, "Apply D1 migrations").run, `pnpm exec wrangler d1 migrations apply sample-project --env ${env} --remote`);
@@ -116,11 +121,14 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
     assert.ok(names.indexOf("Create and migrate the Preview database") < names.indexOf("Upload the Preview"));
     const create = stepNamed(wf.jobs.preview, "Create and migrate the Preview database").run;
     assert.match(create, /wrangler d1 create "\$DB_NAME" --location weur/);
+    assert.match(create, /experimental_readRawConfig/);
+    assert.doesNotMatch(create, /sed '\/\^\[\[:space:\]\]\*\\\/\\\/|jq .*\.env\.preview/);
     assert.match(create, /wrangler d1 migrations apply "\$DB_NAME" -c \.wrangler-preview\.jsonc --env preview --remote/);
     assert.match(stepNamed(wf.jobs.preview, "Upload the Preview").run, /wrangler preview -c \.wrangler-preview\.jsonc --env preview --name/);
     assert.equal(stepNamed(wf.jobs.preview, "Create and migrate the Preview database").env.CLOUDFLARE_API_TOKEN, "${{ secrets.CLOUDFLARE_PREVIEW_TOKEN }}");
     const cleanup = stepNames(wf.jobs.cleanup);
     assert.ok(cleanup.indexOf("Delete the Preview") > -1 && cleanup.indexOf("Delete the Preview database") > cleanup.indexOf("Delete the Preview"));
+    assert.equal(stepNamed(wf.jobs.cleanup, "Delete the Preview database").if, "always()");
     assert.match(stepNamed(wf.jobs.cleanup, "Delete the Preview database").run, /wrangler d1 delete "\$DB_NAME" --skip-confirmation/);
   });
 
@@ -145,7 +153,21 @@ for (const [name, dir] of Object.entries(without)) {
   });
 }
 
-function fakeWrangler(scratch) {
+const REAL_WRANGLER = [process.env.WRANGLER_NODE_MODULES, join(homedir(), "git/oneloneraven/engage/node_modules")].find(dir => dir && existsSync(join(dir, "wrangler/package.json")));
+
+function installWrangler(scratch, { real }) {
+  if (real) return symlinkSync(REAL_WRANGLER, join(scratch, "node_modules"));
+  const pkg = join(scratch, "node_modules", "wrangler");
+  mkdirSync(pkg, { recursive: true });
+  writeFileSync(join(pkg, "package.json"), '{"name":"wrangler","type":"module","exports":"./index.mjs"}');
+  writeFileSync(join(pkg, "index.mjs"), [
+    'import { readFileSync } from "node:fs";',
+    "export const experimental_readRawConfig = ({ config }) => ({ rawConfig: JSON.parse(readFileSync(config, \"utf8\").replace(/^\\s*\\/\\/.*$/gm, \"\")) });",
+    "",
+  ].join("\n"));
+}
+
+function fakePnpm(scratch) {
   mkdirSync(join(scratch, "bin"), { recursive: true });
   const script = [
     'echo "$*" >> "$CALLS"',
@@ -158,10 +180,11 @@ function fakeWrangler(scratch) {
   writeFileSync(join(scratch, "bin", "pnpm"), script, { mode: 0o755 });
 }
 
-function runStep(dir, wfName, job, stepName, { list, pr = "7" }) {
+function runStep(dir, wfName, job, stepName, { list = [], pr = "7", wranglerJsonc, real = false, env = {} }) {
   const scratch = mkdtempSync(join(tmpdir(), "d1-step-"));
-  fakeWrangler(scratch);
-  copyFileSync(join(dir, "wrangler.jsonc"), join(scratch, "wrangler.jsonc"));
+  fakePnpm(scratch);
+  installWrangler(scratch, { real });
+  writeFileSync(join(scratch, "wrangler.jsonc"), wranglerJsonc ?? read(dir, "wrangler.jsonc"));
   const listFile = join(scratch, "list.json");
   writeFileSync(listFile, JSON.stringify(list));
   const calls = join(scratch, "calls");
@@ -169,7 +192,7 @@ function runStep(dir, wfName, job, stepName, { list, pr = "7" }) {
   const script = stepNamed(workflow(dir, wfName).jobs[job], stepName).run;
   const result = spawnSync("bash", ["-c", script], {
     cwd: scratch,
-    env: { ...process.env, PATH: `${join(scratch, "bin")}:${process.env.PATH}`, PR_NUMBER: pr, LIST: listFile, CALLS: calls },
+    env: { ...process.env, PATH: `${join(scratch, "bin")}:${process.env.PATH}`, PR_NUMBER: pr, LIST: listFile, CALLS: calls, GITHUB_STEP_SUMMARY: join(scratch, "summary.md"), ...env },
     encoding: "utf8",
   });
   return { result, scratch, calls: readFileSync(calls, "utf8").trim().split("\n").filter(Boolean) };
@@ -207,16 +230,123 @@ test("the cleanup step deletes the PR's database, and does nothing when it is al
   assert.ok(!gone.calls.some(call => call.includes("delete")));
 });
 
-test("the restore point step writes the bookmark and the restore command to the job summary", () => {
+const RESTORE = "Record a D1 restore point";
+const OK_ID = '{"d1_databases": [{"binding": "DB", "database_id": "abc"}]}';
+
+function withDatabaseId(dir, id) {
+  return read(dir, "wrangler.jsonc").replace(/("database_name": "sample-project",\n\s+"database_id": )""/g, `$1"${id}"`);
+}
+
+function restore(dir, { real = false, wranglerJsonc, bookmark }) {
   const scratch = mkdtempSync(join(tmpdir(), "d1-step-"));
-  mkdirSync(join(scratch, "bin"));
-  writeFileSync(join(scratch, "bin", "pnpm"), 'echo "$*" >> "$CALLS"\necho "a banner"\necho \'{"bookmark":"00000085-0000024c"}\'\n', { mode: 0o755 });
-  const summary = join(scratch, "summary.md");
+  fakePnpm(scratch);
+  installWrangler(scratch, { real });
+  writeFileSync(join(scratch, "wrangler.jsonc"), wranglerJsonc);
+  writeFileSync(join(scratch, "bin", "pnpm"), `echo "$*" >> "$CALLS"\necho "a banner"\necho '${bookmark}'\n`, { mode: 0o755 });
   const calls = join(scratch, "calls");
-  const script = stepNamed(workflow(withD1["d1 with a beta"].dir, "deploy.yml").jobs.deploy, "Record a D1 restore point").run;
-  const result = spawnSync("bash", ["-c", script], { env: { ...process.env, PATH: `${join(scratch, "bin")}:${process.env.PATH}`, GITHUB_STEP_SUMMARY: summary, CALLS: calls }, encoding: "utf8" });
-  assert.equal(result.status, 0, result.stderr);
-  const text = readFileSync(summary, "utf8");
-  assert.match(text, /`00000085-0000024c`/);
-  assert.match(text, /wrangler d1 time-travel restore sample-project --bookmark=00000085-0000024c/);
+  writeFileSync(calls, "");
+  const summary = join(scratch, "summary.md");
+  const env = dir === withD1["d1 with a beta"].dir ? "beta" : "production";
+  const script = stepNamed(workflow(dir, "deploy.yml").jobs.deploy, RESTORE).run;
+  const result = spawnSync("bash", ["-c", script], { cwd: scratch, env: { ...process.env, PATH: `${join(scratch, "bin")}:${process.env.PATH}`, GITHUB_STEP_SUMMARY: summary, CALLS: calls, TARGET_ENV: env }, encoding: "utf8" });
+  return { result, summary: existsSync(summary) ? readFileSync(summary, "utf8") : "", calls: readFileSync(calls, "utf8") };
+}
+
+for (const real of REAL_WRANGLER ? [false, true] : [false]) {
+  const label = real ? "real wrangler" : "stub wrangler";
+
+  test(`the restore point step writes the bookmark and the restore command to the job summary (${label})`, () => {
+    for (const { dir } of [withD1["d1 with a beta"], withD1["d1 without a beta"]]) {
+      const { result, summary } = restore(dir, { real, wranglerJsonc: withDatabaseId(dir, "abc"), bookmark: '{"bookmark":"00000085-0000024c"}' });
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(summary, /`00000085-0000024c`/);
+      assert.match(summary, /wrangler d1 time-travel restore sample-project --bookmark=00000085-0000024c/);
+    }
+  });
+
+  test(`the restore point step fails closed on a null or empty bookmark, before any migration (${label})`, () => {
+    const dir = withD1["d1 without a beta"].dir;
+    for (const bookmark of ['{"bookmark":null}', "{}", '{"bookmark":""}']) {
+      const { result, summary } = restore(dir, { real, wranglerJsonc: withDatabaseId(dir, "abc"), bookmark });
+      assert.equal(result.status, 1, bookmark);
+      assert.match(result.stdout + result.stderr, /::error::wrangler didn't report a Time Travel bookmark/);
+      assert.equal(summary, "");
+    }
+  });
+
+  test(`the restore point step fails closed while the target environment's database_id is empty (${label})`, () => {
+    for (const { dir, beta } of [withD1["d1 with a beta"], withD1["d1 without a beta"]]) {
+      const { result, calls } = restore(dir, { real, wranglerJsonc: read(dir, "wrangler.jsonc"), bookmark: '{"bookmark":"b"}' });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout + result.stderr, new RegExp(`::error::The DB binding of env\\.${beta ? "beta" : "production"} in wrangler\\.jsonc has no database_id`));
+      assert.match(result.stdout + result.stderr, /d1_database_id output/);
+      assert.doesNotMatch(calls, /time-travel/);
+    }
+  });
+
+  test(`the restore point step only checks its own environment's database_id (${label})`, () => {
+    const dir = withD1["d1 with a beta"].dir;
+    const config = jsonc(read(dir, "wrangler.jsonc"));
+    config.env.beta.d1_databases[0].database_id = "abc";
+    config.env.production.d1_databases[0].database_id = "";
+    const { result } = restore(dir, { real, wranglerJsonc: JSON.stringify(config), bookmark: '{"bookmark":"b"}' });
+    assert.equal(result.status, 0, result.stderr);
+  });
+}
+
+if (REAL_WRANGLER) {
+  test("the preview step reads JSONC with comments and trailing commas and picks the DB binding by name, not position (real wrangler)", () => {
+    const jsonc = `// header
+{
+  "name": "demo", // inline comment
+  /* block
+     comment */
+  "env": {
+    "preview": {
+      "d1_databases": [
+        { "binding": "OTHER", "database_name": "other", "database_id": "keep", },
+        { "binding": "DB", "database_name": "sample-project-preview", "database_id": "", "migrations_dir": "migrations" }, // trailing
+      ],
+      "previews": {
+        "d1_databases": [
+          { "binding": "OTHER", "database_name": "other", "database_id": "keep" },
+          { "binding": "DB", "database_name": "sample-project-preview", "database_id": "", "migrations_dir": "migrations" },
+        ],
+      },
+    },
+  },
+}
+`;
+    const { result, scratch } = runStep(dir, "preview.yml", "preview", STEP, { list: [{ name: "sample-project-pr-7", uuid: "u-7" }], wranglerJsonc: jsonc, real: true });
+    assert.equal(result.status, 0, result.stderr);
+    const { env } = JSON.parse(readFileSync(join(scratch, ".wrangler-preview.jsonc"), "utf8"));
+    for (const databases of [env.preview.d1_databases, env.preview.previews.d1_databases]) {
+      assert.deepEqual(databases[0], { binding: "OTHER", database_name: "other", database_id: "keep" });
+      assert.deepEqual(databases[1], { binding: "DB", database_name: "sample-project-pr-7", database_id: "u-7", migrations_dir: "migrations" });
+    }
+  });
+}
+
+test("the preview step fails clearly when either environment lacks a DB binding", () => {
+  const config = jsonc(read(dir, "wrangler.jsonc"));
+  const withoutPreviews = structuredClone(config);
+  delete withoutPreviews.env.preview.previews.d1_databases;
+  const withoutPreview = structuredClone(config);
+  withoutPreview.env.preview.d1_databases[0].binding = "OTHER";
+  for (const [broken, where] of [[withoutPreviews, "env.preview.previews"], [withoutPreview, "env.preview"]]) {
+    const { result, scratch, calls } = runStep(dir, "preview.yml", "preview", STEP, { list: [{ name: "sample-project-pr-7", uuid: "u" }], wranglerJsonc: JSON.stringify(broken) });
+    assert.equal(result.status, 1);
+    assert.match(result.stdout + result.stderr, new RegExp(`::error::${where.replace(/\./g, "\\.")}\\.d1_databases in wrangler\\.jsonc has no DB binding`));
+    assert.ok(!existsSync(join(scratch, ".wrangler-preview.jsonc")));
+    assert.ok(!calls.some(call => call.includes("migrations apply")));
+  }
+});
+
+test("the database delete does not depend on the preview delete succeeding", () => {
+  const wf = workflow(dir, "preview.yml");
+  const steps = wf.jobs.cleanup.steps;
+  assert.equal(steps.find(step => step.name === "Delete the Preview").if, undefined);
+  assert.equal(steps.find(step => step.name === "Delete the Preview database").if, "always()");
+  const { result } = runStep(dir, "preview.yml", "cleanup", "Delete the Preview database", { list: [{ name: "sample-project-pr-7", uuid: "u" }] });
+  assert.equal(result.status, 0);
 });

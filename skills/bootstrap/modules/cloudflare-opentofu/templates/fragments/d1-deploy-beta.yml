@@ -2,10 +2,24 @@
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          TARGET_ENV: beta
         run: |
           set -euo pipefail
+          node --input-type=module - <<'JS'
+          import { experimental_readRawConfig as readRawConfig } from "wrangler";
+          const { rawConfig } = readRawConfig({ config: "wrangler.jsonc" });
+          const binding = rawConfig.env?.[process.env.TARGET_ENV]?.d1_databases?.find(db => db.binding === "DB");
+          if (!binding?.database_id) {
+            console.error(`::error::The DB binding of env.${process.env.TARGET_ENV} in wrangler.jsonc has no database_id. Set it from the d1_database_id output of infra/ before releasing.`);
+            process.exit(1);
+          }
+          JS
           OUTPUT=$(pnpm exec wrangler d1 time-travel info {{slug}} --env beta --json)
-          BOOKMARK=$(echo "$OUTPUT" | sed -n '/^{/,$p' | jq -r '.bookmark')
+          BOOKMARK=$(echo "$OUTPUT" | sed -n '/^{/,$p' | jq -er '.bookmark') || BOOKMARK=""
+          if [ -z "$BOOKMARK" ]; then
+            echo "::error::wrangler didn't report a Time Travel bookmark, so migrations won't run without a restore point."
+            exit 1
+          fi
           {
             echo "### D1 restore point"
             echo
