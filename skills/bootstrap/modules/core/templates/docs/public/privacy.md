@@ -27,7 +27,7 @@ We don't set cookies that track you, we don't show ads, we don't build profiles 
 <!-- shared:feedback -->
 ## Feedback
 
-If you send us feedback or report a problem, we use what you send to understand and fix it, and to improve {{name}}. Please don't put health details or other personal details in your message.
+If you send us feedback or report a problem, we use what you send to understand and fix it, and to improve {{name}}. Please don't put sensitive or personal details in your message.
 <!-- /shared:feedback -->
 
 <!-- slot:feedback -->
