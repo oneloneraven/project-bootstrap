@@ -32,6 +32,10 @@ Terraform fork) and state in R2.
   adds the sitekey var, a fail-closed verifier in the Worker's `src/lib`, and
   the "Sync Worker secrets" workflow, and the widget is added to the identity
   stack by hand (a manual step).
+- **`d1`** (yes or no): whether the app keeps data in a D1 database. If yes, the
+  module adds the database to OpenTofu, binds it as `DB` in every environment,
+  applies migrations on each release tag's deploy, gives every PR's Preview its
+  own database, and adds the D1 permissions to the project's tokens.
 
 The slug is limited to 40 characters here: Worker names, the state bucket
 and preview hostnames are built from it.
@@ -61,6 +65,13 @@ and preview hostnames are built from it.
   before going on. Say that its access control is added to the central
   identity stack by a manual step, so until then the Worker refuses
   everyone on it.
+
+- **With `d1`, the app's data is in one account-wide-permissioned database.**
+  The Preview, Deploy and Infra apply tokens gain D1 Write and the Infra plan
+  token D1 Read, and Cloudflare can't scope either to one database. Say so.
+  Production and beta share the database, so a migration in a beta deploy
+  changes production's data too, and the live code must tolerate it (expand and
+  contract).
 
 ## 3. Files
 
@@ -95,6 +106,22 @@ and preview hostnames are built from it.
   beta). Each secret is in its own step's env only, piped on stdin to
   `wrangler secret put`, never printed or written to a summary, and the step
   fails when its secret is empty.
+- With `d1`: `infra/d1.tf` (a `cloudflare_d1_database` named after the slug,
+  in `weur`, with `prevent_destroy`, and its `d1_database_id` output); a `DB`
+  binding with `migrations_dir` `migrations` in the top level and every
+  environment of `wrangler.jsonc`, with an empty `database_id` until it's set
+  by PR from the output (`preview` and its `previews` block use
+  `<slug>-preview`, which the Preview workflow replaces); an empty
+  `migrations/` directory (`.gitkeep`, no migration); `D1 Write` on the
+  Preview, Deploy and Infra apply tokens and `D1 Read` on Infra plan; a D1
+  section in `infra/README.md`; and `wrangler d1 migrations apply` before
+  `wrangler dev` in `e2e:server` and `preview`.
+  The tag deploy records a Time Travel bookmark in its job summary, then runs
+  `wrangler d1 migrations apply` before `wrangler deploy`. "Promote to
+  production" doesn't migrate. `preview.yml` creates and migrates
+  `<slug>-pr-<number>` for each PR, writes a temporary `.wrangler-preview.jsonc`
+  that points the Preview's `DB` binding at it, and deletes the database
+  when the PR closes.
 - `infra/`: provider and R2 backend, DNS placeholder records (and `beta.`),
   CAA, TLS 1.2 minimum, HSTS, always HTTPS, DNSSEC, security headers, cache
   rules, and a README with setup, deleting resources, disaster recovery and
@@ -132,6 +159,15 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
    with none of them and for `beta`. If one fails, follow the fallback in
    `github:cloudflare-tofu-base:1`, recording it as skipped under
    `github:cloudflare-opentofu:1`.
+2. With `d1`, add a row to `docs/threat-model.md`'s STRIDE table, after the
+   existing rows, on the first PR's branch: threat "Cloudflare D1 permissions
+   can't be scoped to one database, so a leaked Preview, Deploy or Infra apply
+   token can read, change or delete every D1 database in the account",
+   category Elevation of privilege, mitigation "Tokens are separate per
+   purpose, held as environment or repository secrets, expire after a year and
+   can edit only this project's own Workers; the database has `prevent_destroy`
+   and the tag deploy records a Time Travel restore point before migrating",
+   status Accepted.
 
 ## 5. Manual steps
 
@@ -252,6 +288,21 @@ refuses every token without it.
 **Verify (Claude runs):** `pnpm exec wrangler secret list --env production`
 (and `--env beta`, with a beta).
 **Expected:** `TURNSTILE_SECRET_KEY` is listed.
+
+### cloudflare-opentofu:8 Set the D1 database ID
+
+Only with `d1`.
+
+**Why:** the Worker's `DB` binding has no database until `database_id` holds
+the ID of the one OpenTofu creates.
+
+**Do:** after the infra apply, read the `d1_database_id` output (`tofu output
+d1_database_id` in `infra/`, with the state credentials) and set `database_id`
+of the `DB` binding in `wrangler.jsonc`, in the top level and in `production`,
+`beta` (with a beta) and `e2e`, by PR. `preview` and `previews` stay empty.
+
+**Verify (Claude runs):** `grep database_id wrangler.jsonc`.
+**Expected:** every entry but the two Preview ones is not empty.
 
 ## 6. Standards
 

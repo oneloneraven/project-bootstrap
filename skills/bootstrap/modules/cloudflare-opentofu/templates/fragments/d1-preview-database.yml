@@ -1,0 +1,24 @@
+      - name: Create and migrate the Preview database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          DB_NAME="{{slug}}-pr-$PR_NUMBER"
+          database_id() {
+            pnpm exec wrangler d1 list --json | sed -n '/^\[/,$p' | jq -r --arg name "$DB_NAME" '.[] | select(.name == $name) | .uuid'
+          }
+          DB_ID=$(database_id)
+          if [ -z "$DB_ID" ]; then
+            pnpm exec wrangler d1 create "$DB_NAME" --location weur
+            DB_ID=$(database_id)
+          fi
+          if [ -z "$DB_ID" ]; then
+            echo "::error::Couldn't find the D1 database $DB_NAME."
+            exit 1
+          fi
+          sed '/^[[:space:]]*\/\//d' wrangler.jsonc | jq --arg name "$DB_NAME" --arg id "$DB_ID" '
+            .env.preview.d1_databases[0] |= (.database_name = $name | .database_id = $id)
+            | .env.preview.previews.d1_databases[0] |= (.database_name = $name | .database_id = $id)
+          ' > .wrangler-preview.jsonc
+          pnpm exec wrangler d1 migrations apply "$DB_NAME" -c .wrangler-preview.jsonc --env preview --remote

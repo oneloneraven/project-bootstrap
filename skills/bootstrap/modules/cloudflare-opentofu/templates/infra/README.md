@@ -60,10 +60,10 @@ account and, for zone permissions, to `{{zone_name}}` only.
 
 | Token | GitHub secret | Permissions |
 |---|---|---|
-| Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Individual Workers Editor (this project's `preview` Worker only), Account Settings Read |
-| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read. Zone: Workers Routes Edit |
-| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
-| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
+| Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Individual Workers Editor (this project's `preview` Worker only), Account Settings Read{{fragment_d1_readme_write}} |
+| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read{{fragment_d1_readme_write}}. Zone: Workers Routes Edit |
+| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read{{fragment_d1_readme_read}}. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
+| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit{{fragment_d1_readme_write}}. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
 
 Transform Rules is account-scoped, so the infra tokens' Transform Rules permission covers every zone in the account, not just `{{zone_name}}`.
 
@@ -110,7 +110,7 @@ Set each runtime secret once per environment with
 never sets another. Local development reads them from `.dev.vars`, which is
 gitignored.
 
-{{fragment_sync_secrets_readme}}{{fragment_admin_readme}}{{fragment_turnstile_readme}}## Disaster recovery
+{{fragment_sync_secrets_readme}}{{fragment_admin_readme}}{{fragment_turnstile_readme}}{{fragment_d1_readme}}## Disaster recovery
 
 1. Run "Bootstrap OpenTofu state bucket".
 2. Run "Infra" to recreate everything managed here.

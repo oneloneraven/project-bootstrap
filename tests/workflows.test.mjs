@@ -18,6 +18,8 @@ const renders = {
   android: renderReal(["android-toolchain"], { application_id: "org.example.sample" }),
   cfBeta: renderReal(["cloudflare-opentofu"], { ...cf, beta: true }),
   cfNoBeta: renderReal(["cloudflare-opentofu"], { ...cf, beta: false }),
+  cfD1Beta: renderReal(["cloudflare-opentofu"], { ...cf, beta: true, d1: true }),
+  cfD1NoBeta: renderReal(["cloudflare-opentofu"], { ...cf, beta: false, d1: true }),
 };
 const read = (dir, path) => readFileSync(join(dir, path), "utf8");
 const workflows = dir => [...files(dir)].filter(f => f.startsWith(".github/workflows/"));

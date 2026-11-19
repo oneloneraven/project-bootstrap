@@ -1,0 +1,20 @@
+      - name: Record a D1 restore point
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          OUTPUT=$(pnpm exec wrangler d1 time-travel info {{slug}} --env production --json)
+          BOOKMARK=$(echo "$OUTPUT" | sed -n '/^{/,$p' | jq -r '.bookmark')
+          {
+            echo "### D1 restore point"
+            echo
+            echo "Bookmark before this release's migrations: \`$BOOKMARK\`"
+            echo
+            echo "To restore: \`pnpm exec wrangler d1 time-travel restore {{slug}} --bookmark=$BOOKMARK\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Apply D1 migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler d1 migrations apply {{slug}} --env production --remote

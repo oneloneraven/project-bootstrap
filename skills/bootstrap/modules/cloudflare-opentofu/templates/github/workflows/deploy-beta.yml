@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - uses: $/.github/actions/setup-node-pnpm
       - run: pnpm build
-      - name: Deploy to beta
+{{fragment_d1_deploy_beta}}      - name: Deploy to beta
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

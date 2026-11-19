@@ -1,0 +1,14 @@
+      - name: Delete the Preview database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          DB_NAME="{{slug}}-pr-$PR_NUMBER"
+          DATABASES=$(pnpm exec wrangler d1 list --json | sed -n '/^\[/,$p')
+          if echo "$DATABASES" | jq -e --arg name "$DB_NAME" 'any(.[]; .name == $name)' > /dev/null; then
+            pnpm exec wrangler d1 delete "$DB_NAME" --skip-confirmation
+          else
+            echo "$DB_NAME doesn't exist, nothing to delete."
+          fi
