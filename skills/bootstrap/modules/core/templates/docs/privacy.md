@@ -19,3 +19,6 @@ processed, and by whom, is in [data protection](data-protection.md).
   consent banner because they collect nothing personal.
 - **A new processor** (any third party that receives personal data) is
   added to the record of processing and the threat model in the same PR.
+- **The public privacy page** is built from the shared base in
+  `docs/public/privacy.md` and must match the record of processing. How to
+  publish and update it is in the [runbook](runbooks/public-pages.md).

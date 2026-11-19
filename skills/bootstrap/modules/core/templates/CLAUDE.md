@@ -23,6 +23,7 @@ Read a doc when the work touches it, not up front.
 - Code is reviewed against [coding standards](docs/coding-standards.md); hold it to the [engineering standards](.claude/skills/engineering-standards/SKILL.md).
 - No comments by default; one line for a "why" the code can't express: [comments](docs/coding-standards.md#comments-and-docs).
 - Privacy and data rules: [privacy](docs/privacy.md), [record of processing](docs/data-protection.md).
+- Publish the ethics and privacy pages from the shared base in `docs/public/`, and keep their shared sections identical to it: [public pages](docs/runbooks/public-pages.md).
 - Keep the [threat model](docs/threat-model.md) current whenever a trust boundary moves.
 - Screen new dependencies and vendors and record each in [the register](docs/dependency-register.md): [ADR-0002](docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md).
 - Significant decisions get an [ADR](docs/adr/README.md).

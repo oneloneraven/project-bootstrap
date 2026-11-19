@@ -102,6 +102,18 @@
       "to": "docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md"
     },
     {
+      "from": "templates/docs/public/ethics.md",
+      "to": "docs/public/ethics.md"
+    },
+    {
+      "from": "templates/docs/public/privacy.md",
+      "to": "docs/public/privacy.md"
+    },
+    {
+      "from": "templates/docs/runbooks/public-pages.md",
+      "to": "docs/runbooks/public-pages.md"
+    },
+    {
       "from": "templates/docs/runbooks/incident-response.md",
       "to": "docs/runbooks/incident-response.md"
     },
@@ -170,6 +182,18 @@
     {
       "from": "templates/github/scripts/check-release-paths.mjs",
       "to": ".github/scripts/check-release-paths.mjs"
+    },
+    {
+      "from": "templates/github/scripts/check-public-pages.mjs",
+      "to": ".github/scripts/check-public-pages.mjs"
+    },
+    {
+      "from": "templates/github/public-pages.json",
+      "to": ".github/public-pages.json"
+    },
+    {
+      "from": "templates/github/workflows/check-public-pages.yml",
+      "to": ".github/workflows/check-public-pages.yml"
     },
     {
       "from": "templates/github/release-paths.json",
