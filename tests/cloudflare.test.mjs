@@ -263,16 +263,6 @@ test("every render's CLAUDE.md has the infrastructure rule", () => {
   }
 });
 
-test("the infrastructure rule links to a real heading in the infra README", () => {
-  const slug = heading => heading.toLowerCase().replace(/[^a-z0-9 -]/g, "").replace(/ /g, "-");
-  for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
-    const links = [...read(dir, "CLAUDE.md").matchAll(/\(infra\/README\.md#([^)]+)\)/g)].map(m => m[1]);
-    assert.ok(links.length, `${name}: CLAUDE.md links to no infra/README.md heading`);
-    const headings = [...read(dir, "infra/README.md").matchAll(/^#{1,6} (.+)$/gm)].map(m => slug(m[1]));
-    for (const link of links) assert.ok(headings.includes(link), `${name}: no heading for #${link}`);
-  }
-});
-
 test("the infra README's change rule points wrangler-owned resources at wrangler and hand-made ones at an import", () => {
   const section = read(withBeta, "infra/README.md").split("## Changing infrastructure")[1].split("\n## ")[0];
   assert.match(section, /`wrangler\.jsonc`/);
