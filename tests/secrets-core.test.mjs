@@ -108,6 +108,16 @@ test("Vault trashes an item by id in its vault", async () => {
   assert.deepEqual(deps.calls[0].args, ["item", "trash", "--vault-name", "Dev", "--item-id=a"]);
 });
 
+test("Vault points a refused command at the automation session runbook", async () => {
+  const deps = stubDeps(() => ({ status: 1, stderr: "Error creating note item\n\nCaused by:\n    Could not perform operation. Reason: NotAllowed" }));
+  await assert.rejects(newVault(deps).trash("a"), /NotAllowed\. The session isn't allowed to do this\..*editor access.*run-secrets-on-an-automation-session\.md/s);
+});
+
+test("Vault leaves other failures as they are", async () => {
+  const deps = stubDeps(() => ({ status: 1, stderr: "network unreachable" }));
+  await assert.rejects(newVault(deps).trash("a"), error => !/editor access/.test(error.message));
+});
+
 test("Vault gives every item command a reason naming the item and folder, in the environment only", async () => {
   const deps = stubDeps(vaultResponder({ items: [item("old", "release App")] }));
   const vault = newVault(deps);
@@ -119,7 +129,7 @@ test("Vault gives every item command a reason naming the item and folder, in the
   const reasonOf = verb => deps.calls.find(c => isCall(c, "item", verb)).env.PROTON_PASS_AGENT_REASON;
   assert.equal(reasonOf("create"), "Store the release App for sample-project");
   assert.equal(reasonOf("view"), "Read the key of the release App for sample-project");
-  assert.equal(reasonOf("trash"), "Move the replaced release App for sample-project to the bin");
+  assert.equal(reasonOf("trash"), "Move the old release App for sample-project to the bin");
   assert.ok(deps.calls.every(c => !isCall(c, "item", "update") && !isCall(c, "item", "untrash")));
 });
 

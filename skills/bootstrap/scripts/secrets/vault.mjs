@@ -1,10 +1,14 @@
+const NOT_ALLOWED =
+  "The session isn't allowed to do this. An automation session needs editor access to the vault, and its project folder made by hand: see docs/runbooks/run-secrets-on-an-automation-session.md in the plugin";
+
 async function pass(deps, args, { input, reason } = {}) {
   const result = await deps.exec("pass-cli", args, {
     ...(input !== undefined && { input }),
     ...(reason && { env: { PROTON_PASS_AGENT_REASON: reason } }),
   });
   if (result.status !== 0) {
-    throw new Error(`pass-cli ${args.slice(0, 2).join(" ")} failed (exit ${result.status}): ${result.stderr.trim()}`);
+    const denied = /NotAllowed|due to permissions/.test(result.stderr) ? `. ${NOT_ALLOWED}` : "";
+    throw new Error(`pass-cli ${args.slice(0, 2).join(" ")} failed (exit ${result.status}): ${result.stderr.trim()}${denied}`);
   }
   return result.stdout;
 }
@@ -108,7 +112,7 @@ export class Vault {
   }
 
   async trash(itemId) {
-    await pass(this.deps, ["item", "trash", "--vault-name", this.vault, `--item-id=${itemId}`], { reason: `Move the replaced ${this.#titleOf(itemId)} for ${this.folder} to the bin` });
+    await pass(this.deps, ["item", "trash", "--vault-name", this.vault, `--item-id=${itemId}`], { reason: `Move the old ${this.#titleOf(itemId)} for ${this.folder} to the bin` });
     this.#items = null;
   }
 }

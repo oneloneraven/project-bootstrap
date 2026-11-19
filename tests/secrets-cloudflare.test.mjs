@@ -309,7 +309,7 @@ test("rotation revokes the old token ids recorded in the previous items after th
   const lastSecret = deps.calls.map(label).lastIndexOf("gh secret set");
   const trash = deps.calls.map(label).lastIndexOf("pass-cli item trash");
   assert.ok(trash > lastSecret);
-  assertItemReasons(deps, { naming: ["Read the token id of the Cloudflare Preview token", "Move the replaced Cloudflare Deploy token"] });
+  assertItemReasons(deps, { naming: ["Read the token id of the Cloudflare Preview token", "Move the old Cloudflare Deploy token"] });
 });
 
 const deletedTokens = cf => cf.log.filter(c => c.method === "DELETE").map(c => c.path.split("/").at(-1));

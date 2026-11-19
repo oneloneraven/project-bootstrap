@@ -198,6 +198,7 @@ test("the release-app phase bins the old Pass item and deletes the two names wit
   assert.deepEqual(atPrompt, { secrets: [], variables: ["UNRELATED"], trashed: ["-oldpassid"] });
   const trash = fake.calls.find(call => call.cmd === "pass-cli" && call.args[1] === "trash");
   assert.ok(trash.args.includes("--item-id=-oldpassid"));
+  assert.match(trash.env?.PROTON_PASS_AGENT_REASON ?? "", /^Move the old .+ to the bin$/);
   assert.equal(fake.calls.some(call => call.cmd === "pass-cli" && (call.args.includes("view") || call.args.includes("--field"))), false);
   assert.equal(fake.calls.some(call => call.cmd === "gh" && (call.args.includes("set") && call.args[0] === "secret")), false);
   assert.ok(fake.mutations.includes("secret delete RELEASE_APP_PRIVATE_KEY"));
