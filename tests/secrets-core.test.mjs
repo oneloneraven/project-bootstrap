@@ -6,11 +6,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadContext, resolveEnv } from "../skills/bootstrap/scripts/secrets/context.mjs";
-import { consumeHidden } from "../skills/bootstrap/scripts/secrets/deps.mjs";
+import { consumeHidden, realDeps } from "../skills/bootstrap/scripts/secrets/deps.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import { secretExists, setSecret } from "../skills/bootstrap/scripts/secrets/github.mjs";
 import { preflight, runCli, storeThenSet } from "../skills/bootstrap/scripts/secrets.mjs";
-import { folder, projectDir, stubDeps, vaultResponder as passFake } from "./helpers-secrets.mjs";
+import { assertItemReasons, folder, projectDir, stubDeps, vaultResponder as passFake } from "./helpers-secrets.mjs";
 
 const item = (id, title, folder_id = "f1") => ({ id, title, folder_id, state: "active" });
 const isCall = (c, ...words) => c.cmd === "pass-cli" && words.every((w, i) => c.args[i] === w);
@@ -108,6 +108,55 @@ test("Vault trashes an item by id in its vault", async () => {
   assert.deepEqual(deps.calls[0].args, ["item", "trash", "--vault-name", "Dev", "--item-id=a"]);
 });
 
+test("Vault points a refused command at the automation session runbook", async () => {
+  const deps = stubDeps(() => ({ status: 1, stderr: "Error creating note item\n\nCaused by:\n    Could not perform operation. Reason: NotAllowed" }));
+  await assert.rejects(newVault(deps).trash("a"), /NotAllowed\. The session isn't allowed to do this\..*editor access.*run-secrets-on-an-automation-session\.md/s);
+});
+
+test("Vault leaves other failures as they are", async () => {
+  const deps = stubDeps(() => ({ status: 1, stderr: "network unreachable" }));
+  await assert.rejects(newVault(deps).trash("a"), error => !/editor access/.test(error.message));
+});
+
+test("Vault gives every item command a reason naming the item and folder, in the environment only", async () => {
+  const deps = stubDeps(vaultResponder({ items: [item("old", "release App")] }));
+  const vault = newVault(deps);
+  const old = await vault.find("release App");
+  await vault.create("release App", [{ name: "key", value: "s3cret", hidden: true }]);
+  await vault.field(old, "key");
+  await vault.trash(old);
+  assertItemReasons(deps, { naming: ["release App", "sample-project"] });
+  const reasonOf = verb => deps.calls.find(c => isCall(c, "item", verb)).env.PROTON_PASS_AGENT_REASON;
+  assert.equal(reasonOf("create"), "Store the release App for sample-project");
+  assert.equal(reasonOf("view"), "Read the key of the release App for sample-project");
+  assert.equal(reasonOf("trash"), "Move the old release App for sample-project to the bin");
+  assert.ok(deps.calls.every(c => !isCall(c, "item", "update") && !isCall(c, "item", "untrash")));
+});
+
+test("Vault falls back to the item id when it has not seen the item", async () => {
+  const deps = stubDeps();
+  await newVault(deps).field("abc", "token id");
+  assert.equal(deps.calls[0].env.PROTON_PASS_AGENT_REASON, "Read the token id of the item abc for sample-project");
+});
+
+test("folder commands carry no reason", async () => {
+  const deps = stubDeps(vaultResponder({ folders: [] }));
+  await newVault(deps).find("release App");
+  assert.ok(deps.calls.filter(c => c.args[0] === "folder").every(c => c.env === undefined));
+});
+
+test("the real exec passes PROTON_PASS_SESSION_DIR and a per-call env through to the child", async () => {
+  process.env.PROTON_PASS_SESSION_DIR = "/session/here";
+  try {
+    const out = await realDeps.exec(process.execPath, ["-p", "process.env.PROTON_PASS_SESSION_DIR + ':' + process.env.PROTON_PASS_AGENT_REASON"], { env: { PROTON_PASS_AGENT_REASON: "why" } });
+    assert.equal(out.stdout.trim(), "/session/here:why");
+    const plain = await realDeps.exec(process.execPath, ["-p", "process.env.PROTON_PASS_SESSION_DIR"]);
+    assert.equal(plain.stdout.trim(), "/session/here");
+  } finally {
+    delete process.env.PROTON_PASS_SESSION_DIR;
+  }
+});
+
 test("setSecret passes the value on stdin, never in args", async () => {
   const deps = stubDeps();
   await setSecret(deps, "o/r", "TOKEN", "s3cret", "infra");
@@ -160,7 +209,17 @@ test("preflight reports the missing tool", async () => {
 
 test("preflight reports a tool that is not signed in", async () => {
   await assert.rejects(preflight(stubDeps(cmd => (cmd === "gh" ? { status: 1 } : {})), {}), /gh.*gh auth login/);
-  await assert.rejects(preflight(stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {})), {}), /pass-cli.*pass-cli login/);
+  await assert.rejects(preflight(stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {})), {}, {}), /pass-cli.*run pass-cli login/);
+});
+
+test("preflight points an automation session that isn't signed in at its runbook", async () => {
+  const deps = stubDeps(cmd => (cmd === "pass-cli" ? { status: 1 } : {}));
+  await assert.rejects(preflight(deps, {}, { PROTON_PASS_SESSION_DIR: "/state/agent" }), error => {
+    assert.match(error.message, /automation session/);
+    assert.match(error.message, /run-secrets-on-an-automation-session\.md/);
+    assert.doesNotMatch(error.message, /run pass-cli login/);
+    return true;
+  });
 });
 
 test("preflight checks the step's own tools last", async () => {

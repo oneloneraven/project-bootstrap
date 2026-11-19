@@ -1,7 +1,14 @@
-async function pass(deps, args, input) {
-  const result = await deps.exec("pass-cli", args, input === undefined ? {} : { input });
+const NOT_ALLOWED =
+  "The session isn't allowed to do this. An automation session needs editor access to the vault, and its project folder made by hand: see docs/runbooks/run-secrets-on-an-automation-session.md in the plugin";
+
+async function pass(deps, args, { input, reason } = {}) {
+  const result = await deps.exec("pass-cli", args, {
+    ...(input !== undefined && { input }),
+    ...(reason && { env: { PROTON_PASS_AGENT_REASON: reason } }),
+  });
   if (result.status !== 0) {
-    throw new Error(`pass-cli ${args.slice(0, 2).join(" ")} failed (exit ${result.status}): ${result.stderr.trim()}`);
+    const denied = /NotAllowed|due to permissions/.test(result.stderr) ? `. ${NOT_ALLOWED}` : "";
+    throw new Error(`pass-cli ${args.slice(0, 2).join(" ")} failed (exit ${result.status}): ${result.stderr.trim()}${denied}`);
   }
   return result.stdout;
 }
@@ -17,6 +24,7 @@ function parseItems(stdout) {
 export class Vault {
   #folderId;
   #items = null;
+  #titles = new Map();
 
   constructor(deps, { vault, folder }) {
     this.deps = deps;
@@ -43,17 +51,26 @@ export class Vault {
     return this.#folderId;
   }
 
+  #about(title) {
+    return `the ${title} for ${this.folder}`;
+  }
+
   async #folderItems({ refresh = false } = {}) {
     const folderId = await this.folderId();
     if (!this.#items || refresh) {
       const out = await pass(this.deps, ["item", "list", "--vault-name", this.vault, "--filter-state", "active", "--output", "json"]);
       this.#items = parseItems(out).filter(entry => entry.folderId === folderId);
+      for (const { id, title } of this.#items) this.#titles.set(id, title);
     }
     return this.#items;
   }
 
   async #activeIds(title, options) {
     return (await this.#folderItems(options)).filter(entry => entry.title === title).map(entry => entry.id);
+  }
+
+  #titleOf(itemId) {
+    return this.#titles.get(itemId) ?? `item ${itemId}`;
   }
 
   async find(title, { create = true } = {}) {
@@ -82,19 +99,20 @@ export class Vault {
       ],
       extra_fields: [],
     };
-    await pass(this.deps, ["item", "create", "custom", "--from-template", "-", "--vault-name", this.vault, `--folder-id=${folderId}`], JSON.stringify(template));
+    await pass(this.deps, ["item", "create", "custom", "--from-template", "-", "--vault-name", this.vault, `--folder-id=${folderId}`], { input: JSON.stringify(template), reason: `Store ${this.#about(title)}` });
     const created = (await this.#activeIds(title, { refresh: true })).filter(id => !before.has(id));
     if (created.length !== 1) throw new Error(`Created ${title} in Pass but could not identify the new item: check folder ${this.folder} in vault ${this.vault}`);
+    this.#titles.set(created[0], title);
     return created[0];
   }
 
   async field(itemId, name) {
-    const out = await pass(this.deps, ["item", "view", "--vault-name", this.vault, `--item-id=${itemId}`, "--field", name]);
+    const out = await pass(this.deps, ["item", "view", "--vault-name", this.vault, `--item-id=${itemId}`, "--field", name], { reason: `Read the ${name} of ${this.#about(this.#titleOf(itemId))}` });
     return out.trim();
   }
 
   async trash(itemId) {
-    await pass(this.deps, ["item", "trash", "--vault-name", this.vault, `--item-id=${itemId}`]);
+    await pass(this.deps, ["item", "trash", "--vault-name", this.vault, `--item-id=${itemId}`], { reason: `Move the old ${this.#titleOf(itemId)} for ${this.folder} to the bin` });
     this.#items = null;
   }
 }

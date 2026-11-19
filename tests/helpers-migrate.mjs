@@ -272,7 +272,7 @@ export function createFake({ login = "alice", pageSize = 3, org = "acme" } = {})
   }
 
   function exec(cmd, args, options = {}) {
-    world.calls.push({ cmd, args, input: options.input });
+    world.calls.push({ cmd, args, input: options.input, env: options.env });
     if (cmd === "pass-cli") return passCli(args);
     if (cmd !== "gh") throw new Error(`fake: unexpected command ${cmd}`);
     if (args[0] === "auth") return text("");

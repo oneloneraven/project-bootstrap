@@ -21,9 +21,13 @@ async function checkTool(deps, tool, args, notInstalled, notSignedIn) {
   if (status !== 0) throw new Error(`${tool} is not signed in: ${notSignedIn}`);
 }
 
-export async function preflight(deps, step) {
+const PASS_SIGN_IN = "run pass-cli login";
+const AGENT_SIGN_IN =
+  "PROTON_PASS_SESSION_DIR points at an automation session that isn't signed in. Sign it in again with its token, as docs/runbooks/run-secrets-on-an-automation-session.md in the plugin describes";
+
+export async function preflight(deps, step, env = process.env) {
   await checkTool(deps, "gh", ["auth", "status"], "install it from https://cli.github.com", "run gh auth login");
-  await checkTool(deps, "pass-cli", ["info"], "install the Proton Pass CLI", "run pass-cli login");
+  await checkTool(deps, "pass-cli", ["info"], "install the Proton Pass CLI", env.PROTON_PASS_SESSION_DIR ? AGENT_SIGN_IN : PASS_SIGN_IN);
   for (const tool of step.tools ?? []) {
     const { status } = await deps.exec(tool, ["-help"]);
     if (status === 127) throw new Error(`${tool} is not installed: install it, then re-run`);

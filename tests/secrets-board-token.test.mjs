@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { loadContext } from "../skills/bootstrap/scripts/secrets/context.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import boardToken, { checkToken, tokenUrl } from "../skills/bootstrap/scripts/secrets/steps/board-token.mjs";
-import { projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
+import { assertItemReasons, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
 
 const TOKEN = "ghp_supersecrettoken123";
 const ctx = () => loadContext(projectDir());
@@ -86,6 +86,7 @@ test("board-token never passes the token as an argument, error or log line", asy
   assert.match(body.note, /PROJECT_STATUS_PAT/);
   const order = deps.calls.map(call => `${call.cmd} ${call.args.slice(0, 2).join(" ")}`);
   assert.ok(order.indexOf("pass-cli item create") < order.indexOf("gh secret set"));
+  assertItemReasons(deps, { naming: ["board sync token", "sample-project"] });
 });
 
 test("board-token refuses an empty paste before storing anything", async () => {

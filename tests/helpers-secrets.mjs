@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -44,4 +45,15 @@ export function projectDir({ owner = "sample-owner", name = "Sample Project", sl
   saveRun(dir, { answers: { owner, name, slug, ...(zone_name && { zone_name }), ...(visibility && { visibility }), ...(owner_type && { owner_type }) }, modules: ["core"] });
   if (skippedEnvs) recordId(dir, "skipped_envs", skippedEnvs);
   return dir;
+}
+
+export function assertItemReasons(deps, { naming = [] } = {}) {
+  const items = deps.calls.filter(c => c.cmd === "pass-cli" && c.args[0] === "item" && c.args[1] !== "list");
+  assert.ok(items.length, "the step ran item commands");
+  const reasons = items.map(c => c.env?.PROTON_PASS_AGENT_REASON);
+  for (const [index, call] of items.entries()) {
+    assert.ok(reasons[index] && reasons[index].trim(), `item ${call.args[1]} has a reason`);
+    assert.ok(!call.args.some(arg => arg.includes(reasons[index])), `item ${call.args[1]} keeps its reason out of the arguments`);
+  }
+  for (const name of naming) assert.ok(reasons.some(reason => reason.includes(name)), `a reason names ${name}`);
 }

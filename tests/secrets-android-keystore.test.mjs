@@ -5,7 +5,7 @@ import { dirname } from "node:path";
 import { loadContext } from "../skills/bootstrap/scripts/secrets/context.mjs";
 import { Vault } from "../skills/bootstrap/scripts/secrets/vault.mjs";
 import androidKeystore, { dnValue } from "../skills/bootstrap/scripts/secrets/steps/android-keystore.mjs";
-import { projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
+import { assertItemReasons, projectDir, stubDeps, vaultResponder } from "./helpers-secrets.mjs";
 
 const KEYSTORE = Buffer.from("fake-keystore-bytes-\u0000\u0001\u0002");
 const NAMES = ["ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"];
@@ -103,6 +103,7 @@ test("the item and four release secrets are stored in Pass first", async () => {
   assert.equal(values.ANDROID_KEY_PASSWORD, seen.env.KS_PASS);
   const order = deps.calls.map(call => `${call.cmd} ${call.args.slice(0, 2).join(" ")}`);
   assert.ok(order.indexOf("pass-cli item create") < order.indexOf("gh secret set"));
+  assertItemReasons(deps, { naming: ["upload keystore", "sample-project"] });
 });
 
 test("four release secrets, or repository level when release is skipped", async () => {

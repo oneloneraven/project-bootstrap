@@ -20,7 +20,8 @@ When `scripts/secrets.mjs` automates a step, **Do** gives the command the
 user runs in their own terminal, plus any clicks it still needs. The
 original instructions follow under **By hand:**, for when the script can't
 be used. Claude never runs `secrets.mjs` itself, because it handles the
-secrets.
+secrets. To run it on a password manager session limited to one vault, see
+[the automation session runbook](../../../docs/runbooks/run-secrets-on-an-automation-session.md).
 
 Present one step at a time. Wait for the user to say it's done, run the
 verification and show the result. If verification fails, say what's
