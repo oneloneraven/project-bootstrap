@@ -336,7 +336,7 @@ test("the preview step fails clearly when either environment lacks a DB binding"
   for (const [broken, where] of [[withoutPreviews, "env.preview.previews"], [withoutPreview, "env.preview"]]) {
     const { result, scratch, calls } = runStep(dir, "preview.yml", "preview", STEP, { list: [{ name: "sample-project-pr-7", uuid: "u" }], wranglerJsonc: JSON.stringify(broken) });
     assert.equal(result.status, 1);
-    assert.match(result.stdout + result.stderr, new RegExp(`::error::${where.replace(/\./g, "\\.")}\\.d1_databases in wrangler\\.jsonc has no DB binding`));
+    assert.ok((result.stdout + result.stderr).includes(`::error::${where}.d1_databases in wrangler.jsonc has no DB binding`), where);
     assert.ok(!existsSync(join(scratch, ".wrangler-preview.jsonc")));
     assert.ok(!calls.some(call => call.includes("migrations apply")));
   }
