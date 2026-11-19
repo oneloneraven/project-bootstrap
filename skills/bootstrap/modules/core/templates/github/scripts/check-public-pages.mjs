@@ -33,11 +33,13 @@ export function checkPublicPages({ pages }, read) {
       problems.push({ file: published, section: name, reason: "the shared section appears more than once" });
     }
     for (const name of actual.keys()) {
-      if (!expected.has(name)) problems.push({ file: published, section: name, reason: `the shared section isn't in ${base} any more` });
+      if (!expected.has(name))
+        problems.push({ file: published, section: name, reason: `the shared section isn't in ${base} any more` });
     }
     for (const [name, body] of expected) {
       if (!actual.has(name)) problems.push({ file: published, section: name, reason: "the shared section is missing" });
-      else if (actual.get(name) !== body) problems.push({ file: published, section: name, reason: `the shared section differs from ${base}` });
+      else if (actual.get(name) !== body)
+        problems.push({ file: published, section: name, reason: `the shared section differs from ${base}` });
     }
   }
   return { ok: problems.length === 0, problems };
@@ -53,7 +55,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   if (!ok) {
     for (const { file, section, reason } of problems) {
-      console.log(`::error file=${file}::${section ? `Shared section "${section}": ` : ""}${reason}. Update it from the base (docs/runbooks/public-pages.md).`);
+      console.log(
+        `::error file=${file}::${section ? `Shared section "${section}": ` : ""}${reason}. Update it from the base (docs/runbooks/public-pages.md).`,
+      );
     }
     process.exit(1);
   }
