@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
-import { homedir, tmpdir } from "node:os";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { files, renderReal } from "./helpers.mjs";
 
@@ -153,7 +153,7 @@ for (const [name, dir] of Object.entries(without)) {
   });
 }
 
-const REAL_WRANGLER = [process.env.WRANGLER_NODE_MODULES, join(homedir(), "git/oneloneraven/engage/node_modules")].find(dir => dir && existsSync(join(dir, "wrangler/package.json")));
+const REAL_WRANGLER = [process.env.WRANGLER_NODE_MODULES].find(dir => dir && existsSync(join(dir, "wrangler/package.json")));
 
 function installWrangler(scratch, { real }) {
   if (real) return symlinkSync(REAL_WRANGLER, join(scratch, "node_modules"));
