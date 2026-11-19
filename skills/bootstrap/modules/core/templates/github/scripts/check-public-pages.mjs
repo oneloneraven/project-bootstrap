@@ -5,6 +5,9 @@ const SECTION = /<!--\s*shared:([a-z0-9-]+)\s*-->([\s\S]*?)<!--\s*\/shared:\1\s*
 
 const squash = text => text.replace(/\s+/g, " ").trim();
 
+export const BASE_PAGES = { "docs/public/ethics.md": null, "docs/public/privacy.md": null };
+const CONFIG = ".github/public-pages.json";
+
 export function sharedSections(text) {
   return new Map([...text.matchAll(SECTION)].map(([, name, body]) => [name, squash(body)]));
 }
@@ -25,6 +28,13 @@ export function checkPublicPages({ pages }, read) {
       continue;
     }
     const actual = sharedSections(publishedText);
+    const names = [...publishedText.matchAll(SECTION)].map(([, name]) => name);
+    for (const name of new Set(names.filter((name, index) => names.indexOf(name) !== index))) {
+      problems.push({ file: published, section: name, reason: "the shared section appears more than once" });
+    }
+    for (const name of actual.keys()) {
+      if (!expected.has(name)) problems.push({ file: published, section: name, reason: `the shared section isn't in ${base} any more` });
+    }
     for (const [name, body] of expected) {
       if (!actual.has(name)) problems.push({ file: published, section: name, reason: "the shared section is missing" });
       else if (actual.get(name) !== body) problems.push({ file: published, section: name, reason: `the shared section differs from ${base}` });
@@ -34,11 +44,12 @@ export function checkPublicPages({ pages }, read) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const config = JSON.parse(readFileSync(".github/public-pages.json", "utf8"));
+  const pages = existsSync(CONFIG) ? JSON.parse(readFileSync(CONFIG, "utf8")).pages : {};
+  const config = { pages: { ...BASE_PAGES, ...pages } };
   const read = path => (existsSync(path) ? readFileSync(path, "utf8") : undefined);
   const { ok, problems } = checkPublicPages(config, read);
   for (const [base, published] of Object.entries(config.pages)) {
-    if (!published) console.log(`${base} isn't published yet: set its path in .github/public-pages.json once it is.`);
+    if (!published) console.log(`${base} isn't published yet: set its path in ${CONFIG} once it is.`);
   }
   if (!ok) {
     for (const { file, section, reason } of problems) {

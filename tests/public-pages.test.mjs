@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -105,8 +105,16 @@ test("a page with no published path is skipped", () => {
   assert.equal(check({}, { pages: { "docs/public/ethics.md": null, "docs/public/privacy.md": null } }).ok, true);
 });
 
-test("core ships the script, its config, the workflow and the runbook", () => {
-  assert.deepEqual(JSON.parse(read(".github/public-pages.json")), { pages: { "docs/public/ethics.md": null, "docs/public/privacy.md": null } });
+test("a published page with a shared section twice, or one the base no longer has, fails", () => {
+  const published = copies();
+  const intro = published["site/ethics.md"].match(/<!-- shared:intro -->[\s\S]*?<!-- \/shared:intro -->/)[0];
+  published["site/ethics.md"] = published["site/ethics.md"].replace(intro, `${intro.replace("ethically", "kindly")}\n\n${intro}`) + "\n<!-- shared:retired -->Old words.<!-- /shared:retired -->\n";
+  const reasons = check(published).problems.filter(p => p.file === "site/ethics.md").map(p => `${p.section}: ${p.reason}`);
+  assert.deepEqual(reasons.sort(), ["intro: the shared section appears more than once", "retired: the shared section isn't in docs/public/ethics.md any more"]);
+});
+
+test("core ships the script, the workflow and the runbook, but leaves the published paths to the project", () => {
+  assert.ok(!existsSync(join(dest, ".github/public-pages.json")));
   assert.match(read(".github/workflows/check-public-pages.yml"), /run: node \.github\/scripts\/check-public-pages\.mjs/);
   assert.match(read("CLAUDE.md"), /^- Publish the ethics and privacy pages .*\[public pages\]\(docs\/runbooks\/public-pages\.md\)\.$/m);
   assert.match(read("docs/runbooks/public-pages.md"), /## Adopting the shared pages in an existing project/);
@@ -118,6 +126,9 @@ test("the script exits non-zero and annotates the file and section", () => {
   for (const page of ["ethics", "privacy"]) writeFileSync(join(work, `site/${page}.md`), readFileSync(join(work, `docs/public/${page}.md`), "utf8"));
   writeFileSync(join(work, ".github/public-pages.json"), JSON.stringify({ pages: { "docs/public/ethics.md": "site/ethics.md", "docs/public/privacy.md": "site/privacy.md" } }));
   const script = fileURLToPath(new URL("../skills/bootstrap/modules/core/templates/github/scripts/check-public-pages.mjs", import.meta.url));
+  rmSync(join(work, ".github/public-pages.json"));
+  assert.match(execFileSync("node", [script], { cwd: work, encoding: "utf8" }), /docs\/public\/ethics\.md isn't published yet/);
+  writeFileSync(join(work, ".github/public-pages.json"), JSON.stringify({ pages: { "docs/public/ethics.md": "site/ethics.md", "docs/public/privacy.md": "site/privacy.md" } }));
   assert.match(execFileSync("node", [script], { cwd: work, encoding: "utf8" }), /matches its base copy/);
   writeFileSync(join(work, "site/ethics.md"), readFileSync(join(work, "site/ethics.md"), "utf8").replace("Thanks for reading", "Cheers for reading"));
   const result = spawnSync("node", [script], { cwd: work, encoding: "utf8" });

@@ -188,10 +188,6 @@
       "to": ".github/scripts/check-public-pages.mjs"
     },
     {
-      "from": "templates/github/public-pages.json",
-      "to": ".github/public-pages.json"
-    },
-    {
       "from": "templates/github/workflows/check-public-pages.yml",
       "to": ".github/workflows/check-public-pages.yml"
     },

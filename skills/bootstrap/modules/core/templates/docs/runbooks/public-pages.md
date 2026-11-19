@@ -38,9 +38,11 @@ the app and feedback slots must match the
 2. Fill in every slot, then delete the slot markers and their **SLOT**
    instructions. The order of sections can change and extra sections can be
    added outside the shared sections.
-3. Set the published paths in `.github/public-pages.json`: each key is a base
-   copy and its value is the page in the site that carries the shared
-   sections, or `null` while it's unpublished.
+3. Create `.github/public-pages.json` with the published paths: each key is
+   a base copy and its value is the page in the site that carries the shared
+   sections. A base copy left out, or set to `null`, counts as unpublished
+   and is skipped. The bootstrap never writes this file, so re-rendering
+   doesn't reset it.
 
    ```json
    {
@@ -56,13 +58,27 @@ the app and feedback slots must match the
 
 The check compares each shared section in the published page with the same
 section in the base copy, ignoring spacing and line breaks. It fails, naming
-the file and the section, when a section differs or is missing. Keep the
-shared sections as Markdown between the markers, so the text can match.
+the file and the section, when a section differs, is missing, appears twice,
+or is no longer in the base. Keep the shared sections as Markdown between the
+markers, so the text can match.
 
 ## When the shared base changes
 
-A change to the shared wording reaches a product when it re-renders the core
-module, which rewrites `docs/public/`. After that:
+A change to the shared wording reaches a product when it takes the new base
+copies from the plugin. Don't re-render the whole core module over the
+project: that overwrites every core file the project has changed since. Render
+it into a scratch directory instead and copy across only these files:
+
+```sh
+node <plugin>/skills/bootstrap/scripts/render.mjs --modules core --answers .bootstrap/answers.json --dest <scratch dir>
+```
+
+- `docs/public/ethics.md` and `docs/public/privacy.md`
+- `.github/scripts/check-public-pages.mjs`
+- `.github/workflows/check-public-pages.yml`
+- `docs/runbooks/public-pages.md`
+
+Then:
 
 1. Run `node .github/scripts/check-public-pages.mjs`. It names every shared
    section that no longer matches.
@@ -74,8 +90,9 @@ module, which rewrites `docs/public/`. After that:
 
 ## Adopting the shared pages in an existing project
 
-1. Re-render the core module into the project. It adds `docs/public/`, the
-   check script, `.github/public-pages.json` and the workflow.
+1. Render core into a scratch directory and copy across the files listed in
+   "When the shared base changes". Add `check-public-pages` to the required
+   status checks in the branch ruleset, so drift blocks a merge.
 2. Compare the project's current ethics and privacy pages with the base.
    Keep what's true of the product as slot content, and replace the rest with
    the shared sections, wording included. If the product names a supplier or
