@@ -15,7 +15,11 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
    `merge: true` to extend another module's JSON (such as `package.json`),
    `overrides` only to replace a file wholesale, `allowBuilds` for any
    package's install script, `requiredChecks`,
-   `releasePaths`, `claudeIndexLines`.
+   `releasePaths`, `claudeIndexLines`. Engage checks every repository's
+   required checks against `conformance/rules.json`, so after changing
+   `requiredChecks` (or adding a module) run
+   `node skills/bootstrap/scripts/conformance-rules.mjs --write`; `pnpm test`
+   fails until you do.
 4. **Write the templates.** Use `{{key}}` for answers and derived keys.
    GitHub Actions expressions (`${{ … }}`) pass through untouched. Pin every
    action by commit SHA with a version comment, and give every workflow
