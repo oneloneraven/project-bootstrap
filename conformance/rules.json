@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "bootstrap-record",
+      "title": "Bootstrap record",
+      "kind": "record-present",
+      "modules": []
+    },
+    {
+      "id": "ruleset",
+      "title": "Default branch ruleset",
+      "kind": "ruleset-matches-record",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:4"
+    },
+    {
+      "id": "required-checks",
+      "title": "Required checks",
+      "kind": "required-checks",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:4"
+    },
+    {
+      "id": "settings",
+      "title": "Repository settings",
+      "kind": "settings-match-record",
+      "modules": [
+        "core"
+      ]
+    },
+    {
+      "id": "labels",
+      "title": "Labels",
+      "kind": "labels-match-record",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:3"
+    },
+    {
+      "id": "core-docs",
+      "title": "Security policy and core docs",
+      "kind": "files-present",
+      "modules": [
+        "core"
+      ],
+      "paths": [
+        "SECURITY.md",
+        "CLAUDE.md",
+        "docs/privacy.md",
+        "docs/threat-model.md",
+        "docs/workflow.md",
+        "docs/definition-of-done.md"
+      ]
+    },
+    {
+      "id": "dependabot",
+      "title": "Dependabot",
+      "kind": "dependabot",
+      "modules": [
+        "core"
+      ],
+      "paths": [
+        ".github/dependabot.yml"
+      ]
+    },
+    {
+      "id": "board-sync",
+      "title": "Board sync",
+      "kind": "workflow-healthy",
+      "modules": [
+        "core"
+      ],
+      "workflow": "project-status-sync.yml",
+      "step": "github:core:5"
+    },
+    {
+      "id": "release-gate",
+      "title": "Engage release gate",
+      "kind": "engage-protection-rule",
+      "modules": [
+        "core"
+      ]
+    },
+    {
+      "id": "no-cloudflare-secret",
+      "title": "No long-lived Cloudflare secret",
+      "kind": "secrets-absent",
+      "modules": [
+        "cloudflare-opentofu",
+        "cloudflare-identity",
+        "cloudflare-tofu-base"
+      ],
+      "names": [
+        "CLOUDFLARE_API_TOKEN"
+      ]
+    }
+  ],
+  "requiredChecks": {
+    "android-toolchain": [
+      "check"
+    ],
+    "cloudflare-identity": [],
+    "cloudflare-opentofu": [],
+    "cloudflare-tofu-base": [],
+    "core": [
+      "check-label",
+      "check-public-pages"
+    ],
+    "js-toolchain": [
+      "lint",
+      "typecheck",
+      "test"
+    ],
+    "python-toolchain": [
+      "check"
+    ],
+    "web-app": [
+      "e2e",
+      {
+        "context": "e2e-safari",
+        "when": "!private"
+      }
+    ]
+  }
+}
