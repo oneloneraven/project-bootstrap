@@ -97,20 +97,26 @@ repository, `<owner>/<owner>-vault`, in one PR:
    and go on. The staged files stay, so the step can run later.
 2. If the vault's `main` already has a `<slug>/` folder, stop and ask: never
    overwrite another project's docs.
-3. Open an issue in the vault, "Add <name>'s private docs", and record its
-   number as `vault_issue`.
+3. Reuse a recorded `vault_issue` and `vault_pr` on a resume; otherwise open
+   an issue in the vault, "Add <name>'s private docs", and record its number
+   as `vault_issue`.
 4. Never touch the checkout's current branch. Make a worktree from the
    vault's `origin/main`:
    `git -C <vault> fetch origin main`, then
    `git -C <vault> worktree add -b docs/<vault_issue>-<slug>-docs <tmp> origin/main`.
+   If that branch already exists from an earlier attempt, check it out in the
+   worktree instead of creating it.
 5. Copy the staged files in: `cp -R <dir>/.bootstrap/vault/. <tmp>/<slug>/`.
 6. Commit (signed) "Add <name>'s private docs", push, and open a ready PR
    that closes the issue
    (`gh pr create --repo <owner>/<owner>-vault --title "Add <name>'s private docs" --body "Closes #<vault_issue>."`).
-   Record its URL as `vault_pr`, then remove the worktree
+   Skip the PR if `vault_pr` is already recorded. Record its URL as
+   `vault_pr`, then remove the worktree
    (`git -C <vault> worktree remove <tmp>`).
 
-Leave the PR for the user to merge at the handover. A row a module adds
+Leave the PR for the user to merge at the handover. Once a module has added
+its rows, never re-render `.bootstrap/vault/threat-model.md`: it's
+untracked, so nothing would show the rows were lost. A row a module adds
 after this step goes into the vault by hand, in another vault PR.
 
 Verify: `gh api repos/$R/rulesets` lists `default-branch-protection` as

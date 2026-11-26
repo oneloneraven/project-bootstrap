@@ -182,6 +182,10 @@ needs is missing.
    - for an organisation owner with a private repo on `free`, say the
      board-sync key is also set on the repository, because organisation
      secrets aren't readable by private repositories on Free;
+   - that the private docs (threat model, ADRs, runbooks and any infra
+     README) are staged in `.bootstrap/vault/` and proposed to
+     `<owner>/<owner>-vault` in one issue and PR, or kept staged when there's
+     no vault checkout;
    - every manual step ahead, and its cost (usually nothing). Say plainly
      that there's nothing to do for them yet: you'll walk the user through
      each one, one at a time, after the GitHub configuration;
