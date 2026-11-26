@@ -26,9 +26,9 @@ Each page has two kinds of part:
 
 The shared wording names no suppliers and no tools, and never says "no
 analytics". The privacy page's platform slot is where the product says whether
-and how it counts visits. It follows the [privacy rules](../privacy.md), and
+and how it counts visits. It follows the [privacy rules]({{repo_url}}/blob/main/docs/privacy.md), and
 the app and feedback slots must match the
-[record of processing](../data-protection.md).
+[record of processing]({{repo_url}}/blob/main/docs/data-protection.md).
 
 ## Publishing the pages
 
@@ -76,7 +76,7 @@ node <plugin>/skills/bootstrap/scripts/render.mjs --modules core --answers .boot
 - `docs/public/ethics.md` and `docs/public/privacy.md`
 - `.github/scripts/check-public-pages.mjs`
 - `.github/workflows/check-public-pages.yml`
-- `docs/runbooks/public-pages.md`
+- `.bootstrap/vault/runbooks/public-pages.md`, into this runbook in the vault
 
 Then:
 

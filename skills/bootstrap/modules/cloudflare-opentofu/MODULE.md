@@ -114,7 +114,7 @@ and preview hostnames are built from it.
   `<slug>-preview`, which the Preview workflow replaces); an empty
   `migrations/` directory (`.gitkeep`, no migration); `D1 Write` on the
   Preview, Deploy and Infra apply tokens and `D1 Read` on Infra plan; a D1
-  section in `infra/README.md`; and `wrangler d1 migrations apply` before
+  section in the vault's `infra/README.md`; and `wrangler d1 migrations apply` before
   `wrangler dev` in `dev`, `e2e:server` and `preview` (without `--env` in `dev`).
   The tag deploy records a Time Travel bookmark in its job summary, then runs
   `wrangler d1 migrations apply` before `wrangler deploy`. "Promote to
@@ -159,8 +159,8 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
    with none of them and for `beta`. If one fails, follow the fallback in
    `github:cloudflare-tofu-base:1`, recording it as skipped under
    `github:cloudflare-opentofu:1`.
-2. With `d1`, add a row to `docs/threat-model.md`'s STRIDE table, after the
-   existing rows, on the first PR's branch: threat "Cloudflare D1 permissions
+2. With `d1`, add a row to `.bootstrap/vault/threat-model.md`'s STRIDE table, after the
+   existing rows: threat "Cloudflare D1 permissions
    can't be scoped to one database, so a leaked Preview, Deploy or Infra apply
    token can read, change or delete every D1 database in the account",
    category Elevation of privilege, mitigation "Tokens are separate per
@@ -173,8 +173,8 @@ After `cloudflare-tofu-base`'s configuration. Steps `github:cloudflare-opentofu:
 
 ## 5. Manual steps
 
-Do these in order. `infra/README.md` (rendered into the project) has the
-same steps for later rebuilds.
+Do these in order. `.bootstrap/vault/infra/README.md` (in the vault once
+`github:core:vault` has run) has the same steps for later rebuilds.
 
 ### cloudflare-opentofu:1 Apply the infrastructure
 

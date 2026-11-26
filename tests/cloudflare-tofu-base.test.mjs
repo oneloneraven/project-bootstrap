@@ -47,7 +47,7 @@ test("a stack's README repeats the shared recovery and teardown steps", () => {
   const steps = readFileSync(new URL("readme-shared-steps.md", baseTemplates), "utf8").replace(/\{\{slug\}\}/g, "sample-project").split("\n").filter(Boolean);
   assert.ok(steps.length >= 5);
   for (const [variant, dir] of Object.entries(renders)) {
-    const readme = flat(readFileSync(join(dir, "infra/README.md"), "utf8"));
+    const readme = flat(readFileSync(join(dir, ".bootstrap/vault/infra/README.md"), "utf8"));
     for (const step of steps) assert.ok(readme.includes(flat(step)), `${variant}: ${step}`);
   }
 });
@@ -57,7 +57,7 @@ test("the shared README sections and the backend live only in the base", () => {
   for (const heading of ["## Deleting resources", "### R2 state credentials", "### OpenTofu version"]) assert.ok(!stackReadme.includes(heading), heading);
   assert.ok(!readFileSync(new URL("infra/main.tf", stackTemplates), "utf8").includes('backend "s3"'));
   for (const dir of Object.values(renders)) {
-    assert.match(readFileSync(join(dir, "infra/README.md"), "utf8"), /## Deleting resources[\s\S]*### R2 state credentials[\s\S]*### OpenTofu version/);
+    assert.match(readFileSync(join(dir, ".bootstrap/vault/infra/README.md"), "utf8"), /## Deleting resources[\s\S]*### R2 state credentials[\s\S]*### OpenTofu version/);
     assert.match(readFileSync(join(dir, "infra/main.tf"), "utf8"), /backend "s3" \{\n    bucket\s+= "sample-project-tfstate"/);
   }
 });

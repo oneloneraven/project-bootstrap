@@ -56,7 +56,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (!ok) {
     for (const { file, section, reason } of problems) {
       console.log(
-        `::error file=${file}::${section ? `Shared section "${section}": ` : ""}${reason}. Update it from the base (docs/runbooks/public-pages.md).`,
+        `::error file=${file}::${section ? `Shared section "${section}": ` : ""}${reason}. Update it from the base (the public pages runbook, in the vault).`,
       );
     }
     process.exit(1);

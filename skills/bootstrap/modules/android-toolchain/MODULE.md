@@ -104,7 +104,7 @@ After core's configuration. Step `github:android-toolchain:1`.
    `node scripts/state.mjs record <dir> skipped_envs release`,
    remove the `environment: release` line from `release-artefacts.yml` on the
    first PR's branch, set the secrets at repository level (the manual step
-   says how), and add a row to `docs/threat-model.md`'s STRIDE table: threat
+   says how), and add a row to `.bootstrap/vault/threat-model.md`'s STRIDE table: threat
    "Any workflow on any branch can read the release signing key", category
    Elevation of privilege, mitigation "Environment branch policies weren't
    available on this repository when it was bootstrapped; upgrade the plan

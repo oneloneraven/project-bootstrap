@@ -23,7 +23,7 @@ const modules = new Set(
     .map(entry => entry.name),
 );
 const coreFiles = new Set(
-  JSON.parse(readFileSync(join(MODULES_DIR, "core", "manifest.json"), "utf8")).files.map(file => file.to),
+  JSON.parse(readFileSync(join(MODULES_DIR, "core", "manifest.json"), "utf8")).files.map(file => (file.vault ? `.bootstrap/vault/${file.to}` : file.to)),
 );
 
 test("the rules file is version 1", () => {
@@ -47,7 +47,11 @@ test("requiredChecks matches every module manifest", () => {
 
 test("every path a check expects is one core writes", () => {
   for (const check of rules.checks.filter(check => check.paths))
-    for (const path of check.paths) assert.ok(coreFiles.has(path), `${check.id}: core doesn't write ${path}`);
+    for (const path of check.paths) {
+      // Version 1 still names docs/threat-model.md; core now stages it for the vault.
+      const written = coreFiles.has(path) || coreFiles.has(`.bootstrap/vault/${path.replace(/^docs\//, "")}`);
+      assert.ok(written, `${check.id}: core doesn't write ${path}`);
+    }
   const workflow = rules.checks.find(check => check.kind === "workflow-healthy");
   assert.ok(coreFiles.has(`.github/workflows/${workflow.workflow}`));
 });

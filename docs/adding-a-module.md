@@ -13,6 +13,10 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
 3. **Write `manifest.json`**: `dependsOn`, `conflictsWith` (for a stack that excludes another), `questions`, `files` (mark
    application files `"stage": "app"` so they ship in the first PR),
    `merge: true` to extend another module's JSON (such as `package.json`),
+   `"vault": true` on every ADR, spec, plan, runbook, playbook, threat model,
+   architecture doc and `infra/README.md`, with `to` as its path in the
+   project's vault folder (it's staged in `.bootstrap/vault/` and never
+   committed to the project; link from it to public docs by `{{repo_url}}`),
    `overrides` only to replace a file wholesale, `allowBuilds` for any
    package's install script, `requiredChecks`,
    `releasePaths`, `claudeIndexLines`. Engage checks every repository's

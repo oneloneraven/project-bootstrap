@@ -1,7 +1,7 @@
 # Threat model
 
-What {{name}} protects, from whom, and how. Update it in the same PR as any
-change that adds or moves a trust boundary ([coding standards](coding-standards.md#security)).
+What {{name}} protects, from whom, and how. Update it in a vault PR paired with
+any change that adds or moves a trust boundary ([coding standards]({{repo_url}}/blob/main/docs/coding-standards.md#security)).
 
 ## The system
 

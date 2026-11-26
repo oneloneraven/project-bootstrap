@@ -99,7 +99,7 @@ proven on a real account: use the dashboard's label for it.
 a widget.
 
 **Do:** nothing by hand unless the user has a project to add now: follow
-"Adding a project's admin section" and "Adding a widget" in `infra/README.md`.
+"Adding a project's admin section" and "Adding a widget" in the vault's `infra/README.md`.
 A project that already has its own admin application or widgets moves them in
 with `docs/runbooks/move-a-project-into-the-identity-stack.md` in this
 plugin's repository instead, so they keep their audience tag and sitekeys.

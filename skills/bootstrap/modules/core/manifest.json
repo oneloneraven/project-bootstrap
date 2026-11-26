@@ -79,7 +79,8 @@
     },
     {
       "from": "templates/docs/threat-model.md",
-      "to": "docs/threat-model.md"
+      "to": "threat-model.md",
+      "vault": true
     },
     {
       "from": "templates/docs/working-with-claude.md",
@@ -95,11 +96,13 @@
     },
     {
       "from": "templates/docs/adr/0001-record-architecture-decisions.md",
-      "to": "docs/adr/0001-record-architecture-decisions.md"
+      "to": "adr/0001-record-architecture-decisions.md",
+      "vault": true
     },
     {
       "from": "templates/docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md",
-      "to": "docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md"
+      "to": "adr/0002-screen-dependencies-against-bds-boycott-lists.md",
+      "vault": true
     },
     {
       "from": "templates/docs/public/ethics.md",
@@ -111,15 +114,18 @@
     },
     {
       "from": "templates/docs/runbooks/public-pages.md",
-      "to": "docs/runbooks/public-pages.md"
+      "to": "runbooks/public-pages.md",
+      "vault": true
     },
     {
       "from": "templates/docs/runbooks/incident-response.md",
-      "to": "docs/runbooks/incident-response.md"
+      "to": "runbooks/incident-response.md",
+      "vault": true
     },
     {
       "from": "templates/docs/runbooks/post-incident-review.md",
-      "to": "docs/runbooks/post-incident-review.md"
+      "to": "runbooks/post-incident-review.md",
+      "vault": true
     },
     {
       "from": "templates/.claude/settings.json",

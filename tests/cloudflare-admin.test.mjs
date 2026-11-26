@@ -36,7 +36,7 @@ for (const [name, dir] of Object.entries(variants)) {
     assert.match(read(dir, "src/worker.js"), /adminIdentity/);
     assert.match(read(dir, "src/worker.js"), /status: 404/);
     assert.match(read(dir, "test/worker.test.js"), /the admin host answers 404 to anyone the owner check refuses/);
-    assert.match(read(dir, "infra/README.md"), /## Admin section/);
+    assert.match(read(dir, ".bootstrap/vault/infra/README.md"), /## Admin section/);
     assert.match(read(dir, ".dev.vars.example"), /^OWNER_EMAIL=$/m);
   });
 
@@ -63,7 +63,7 @@ for (const [name, dir] of Object.entries(variants)) {
   test(`${name}: no project token gains an Access or Turnstile permission`, () => {
     const tokens = JSON.parse(read(dir, ".bootstrap/cloudflare/tokens.json"));
     for (const token of tokens) for (const permission of token.permissions) assert.doesNotMatch(permission, /Access:|Turnstile|Zero Trust/i, `${token.token}: ${permission}`);
-    assert.doesNotMatch(read(dir, "infra/README.md"), /Access: |Turnstile Sites/);
+    assert.doesNotMatch(read(dir, ".bootstrap/vault/infra/README.md"), /Access: |Turnstile Sites/);
   });
 }
 
@@ -90,7 +90,7 @@ for (const [name, dir] of Object.entries(plain)) {
     for (const text of ["ADMIN_HOST", "ACCESS_AUD", "ACCESS_TEAM_DOMAIN", "ADMIN_ACCESS_CHECK", "admin."]) assert.ok(!config.includes(text), text);
     assert.deepEqual(jsonc(config).env.production.routes.map(route => route.pattern), ["example.test/*"]);
     assert.doesNotMatch(read(dir, "src/worker.js"), /adminIdentity/);
-    assert.doesNotMatch(read(dir, "infra/README.md"), /## Admin section/);
+    assert.doesNotMatch(read(dir, ".bootstrap/vault/infra/README.md"), /## Admin section/);
     assert.doesNotMatch(read(dir, ".dev.vars.example"), /OWNER_EMAIL|ADMIN_HOST/);
   });
 }

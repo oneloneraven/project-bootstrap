@@ -41,7 +41,8 @@
     },
     {
       "from": "templates/infra/README.md",
-      "to": "infra/README.md"
+      "to": "infra/README.md",
+      "vault": true
     },
     {
       "from": "templates/bootstrap/cloudflare-tokens.json",
@@ -64,8 +65,8 @@
     ]
   },
   "claudeIndexLines": [
-    "- Cloudflare identity stack: every project's admin Access application, the login method, the Zero Trust organisation and the Turnstile widgets, in OpenTofu: [infra](infra/README.md). Merging `infra/` is a production change.",
-    "- Never change anything `infra/` manages through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: [infra](infra/README.md#changing-infrastructure)."
+    "- Cloudflare identity stack: every project's admin Access application, the login method, the Zero Trust organisation and the Turnstile widgets, in OpenTofu: infra (in the vault). Merging `infra/` is a production change.",
+    "- Never change anything `infra/` manages through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: \"Changing infrastructure\" in the infra README (in the vault)."
   ],
   "screening": [
     {

@@ -18,7 +18,7 @@ test("a render has the identity stack, its workflows, token definitions and READ
   const rendered = [...files(dest)];
   for (const file of [
     "infra/main.tf", "infra/variables.tf", "infra/identity.tf", "infra/apps.tf", "infra/widgets.tf", "infra/outputs.tf",
-    "infra/terraform.tfvars.json", "infra/README.md", ".bootstrap/cloudflare/tokens.json", ".github/workflows/infra.yml",
+    "infra/terraform.tfvars.json", ".bootstrap/vault/infra/README.md", ".bootstrap/cloudflare/tokens.json", ".github/workflows/infra.yml",
     ".github/workflows/rotate-turnstile-secret.yml", ".github/workflows/bootstrap-state.yml", "scripts/bootstrap-state.mjs",
   ]) assert.ok(rendered.includes(file), file);
   for (const file of ["package.json", "wrangler.jsonc", "src/worker.js", "pnpm-workspace.yaml", "infra/dns.tf"]) assert.ok(!rendered.includes(file), file);
@@ -31,8 +31,8 @@ test("it can't be combined with cloudflare-opentofu", () => {
 
 test("the backend and shared sections come from the base, with the stack's own slug", () => {
   assert.match(read("infra/main.tf"), /backend "s3" \{\n\s+bucket\s+= "sample-project-tfstate"/);
-  assert.match(read("infra/README.md"), /## Deleting resources[\s\S]*### R2 state credentials[\s\S]*### OpenTofu version/);
-  assert.doesNotMatch(read("infra/README.md"), /\{\{/);
+  assert.match(read(".bootstrap/vault/infra/README.md"), /## Deleting resources[\s\S]*### R2 state credentials[\s\S]*### OpenTofu version/);
+  assert.doesNotMatch(read(".bootstrap/vault/infra/README.md"), /\{\{/);
 });
 
 test("every application gets the standard settings and none can be set per project", () => {
@@ -129,14 +129,14 @@ test("the token definitions are the plan and apply tokens, account-scoped, with 
   assert.deepEqual(tokens[0].permissions, ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Access: Service Tokens Read", "Turnstile Sites Read"]);
   assert.deepEqual(tokens[1].permissions, ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Access: Service Tokens Write", "Turnstile Sites Write"]);
   assert.deepEqual(tokens.map(t => [t.secret, t.env]), [["CLOUDFLARE_INFRA_PLAN_TOKEN", null], ["CLOUDFLARE_INFRA_APPLY_TOKEN", ["infra"]]]);
-  const readme = read("infra/README.md");
+  const readme = read(".bootstrap/vault/infra/README.md");
   for (const row of ["| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) |", "| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) |"]) assert.ok(readme.includes(row), row);
   for (const name of ["Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Access: Service Tokens Read", "Turnstile Sites Read", "Access: Organizations, Identity Providers, and Groups Edit", "Access: Apps Edit", "Access: Policies Edit", "Access: Service Tokens Edit", "Turnstile Sites Edit"]) assert.ok(readme.includes(name), name);
   assert.match(readme, /organisations permission is the one name not yet proven/);
 });
 
 test("the README covers adding a project, a widget, rotation, importing and the account guidance", () => {
-  const readme = read("infra/README.md");
+  const readme = read(".bootstrap/vault/infra/README.md");
   for (const heading of ["## Adding a project's admin section", "## Adding a widget", "## Rotating a widget's secret", "## Importing existing applications, policies and widgets", "## Account guidance"]) assert.ok(readme.includes(heading), heading);
   assert.match(readme, /passkey or security-key two-factor only, with no\nauthenticator-app or email fallback/);
   assert.match(readme, /backup codes somewhere other\nthan the passkey's own store/);
@@ -144,7 +144,7 @@ test("the README covers adding a project, a widget, rotation, importing and the 
 });
 
 test("the CLAUDE.md index carries the identity stack's rules and the register has its row", () => {
-  assert.match(read("CLAUDE.md"), /^- Never change anything `infra\/` manages through an API, an MCP tool or the dashboard\. Change it in `infra\/` through a PR: \[infra\]\(infra\/README\.md#changing-infrastructure\)\.$/m);
+  assert.match(read("CLAUDE.md"), /^- Never change anything `infra\/` manages through an API, an MCP tool or the dashboard\. Change it in `infra\/` through a PR: "Changing infrastructure" in the infra README \(in the vault\)\.$/m);
   assert.match(read("docs/dependency-register.md"), /\| Cloudflare Zero Trust Access and Turnstile \|/);
   assert.match(read("docs/dependency-register.md"), /\| OpenTofu \|/);
 });

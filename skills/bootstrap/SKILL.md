@@ -94,7 +94,8 @@ files. `<dir>` is the existing project:
    ```
 
    It writes the selected modules' files whose destination is under
-   `.bootstrap/` and nothing outside `.bootstrap/`, then records the modules
+   `.bootstrap/` and nothing outside `.bootstrap/`, except the staged vault
+   docs in `.bootstrap/vault/`, which it leaves alone. It then records the modules
    and this plugin's version in `.bootstrap/state.json`.
 
    If `.bootstrap/cloudflare/tokens.json` already exists and the render would
@@ -181,6 +182,10 @@ needs is missing.
    - for an organisation owner with a private repo on `free`, say the
      board-sync key is also set on the repository, because organisation
      secrets aren't readable by private repositories on Free;
+   - that the private docs (threat model, ADRs, runbooks and any infra
+     README) are staged in `.bootstrap/vault/` and proposed to
+     `<owner>/<owner>-vault` in one issue and PR, or kept staged when there's
+     no vault checkout;
    - every manual step ahead, and its cost (usually nothing). Say plainly
      that there's nothing to do for them yet: you'll walk the user through
      each one, one at a time, after the GitHub configuration;
@@ -223,7 +228,9 @@ needs is missing.
 7. **`initial-push`**: if `git log` shows no commit yet, commit (signed);
    then `git push -u origin main`.
 8. **GitHub configuration**: each selected module's section 4, in module
-   order, one step id per numbered item (`github:<module>:<n>`).
+   order, one step id per numbered item (`github:<module>:<n>`). Then
+   `github:core:vault` last, which moves the staged private docs
+   (`.bootstrap/vault/`) into the owner's vault in one PR.
 9. **Manual steps** (`manual:<module>:<n>`): each one in turn. Give the
    instruction, wait for "done", run its verification, and only then mark it
    done. A step marked "after the first PR" waits for phase 10: in the step
@@ -255,8 +262,10 @@ needs is missing.
       step done.
 11. **`handover`**: summarise what exists, what was verified and how, what
     was skipped (list the skipped steps and their reasons from
-    `state.mjs show`), and every listed screening row. Leave
-    `.bootstrap/` in place (it's gitignored).
+    `state.mjs show`), and every listed screening row. Give the vault PR
+    (`vault_pr`) for the user to merge, or say the private docs are still
+    staged in `.bootstrap/vault/` when `github:core:vault` was skipped.
+    Leave `.bootstrap/` in place (it's gitignored).
 
 ## When something fails
 

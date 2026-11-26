@@ -67,7 +67,7 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
       const permissions = tokens.find(item => item.token === token).permissions;
       assert.equal(permissions.filter(item => /^D1 /.test(item)).join(), permission, token);
     }
-    const readme = read(dir, "infra/README.md");
+    const readme = read(dir, ".bootstrap/vault/infra/README.md");
     const row = token => readme.split("\n").find(line => line.startsWith(`| ${token} |`));
     assert.match(row("Preview"), /D1 Edit/);
     assert.match(row("Deploy"), /D1 Edit/);
@@ -77,7 +77,7 @@ for (const [name, { dir, beta }] of Object.entries(withD1)) {
   });
 
   test(`${name}: the README documents setup, migrations, restore, previews and the account-wide permissions`, () => {
-    const readme = read(dir, "infra/README.md");
+    const readme = read(dir, ".bootstrap/vault/infra/README.md");
     const section = readme.slice(readme.indexOf("## D1 database"), readme.indexOf("## Disaster recovery"));
     assert.match(section, /`pnpm dev`, `pnpm preview` and `pnpm e2e:server`/);
     assert.match(section, /`prevent_destroy` guards only\s+OpenTofu plans/);
