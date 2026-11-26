@@ -152,14 +152,14 @@ test("no manual step or README fragment tells anyone to run wrangler secret put"
     assert.doesNotMatch(moduleFile(path), /wrangler secret put/, path);
   }
   for (const item of cases.filter(({ admin, turnstile }) => admin || turnstile)) {
-    const readme = read(item.dir, "infra/README.md");
+    const readme = read(item.dir, ".bootstrap/vault/infra/README.md");
     assert.doesNotMatch(readme.replace(/Set each runtime secret once per environment with\n`pnpm exec wrangler secret put <NAME> --env <env>`\./, ""), /wrangler secret put/, item.name);
   }
 });
 
 test("the admin and turnstile README sections describe one path: an environment secret, then Sync Worker secrets", () => {
   const dir = cases.find(item => item.admin && item.turnstile && item.beta).dir;
-  const readme = read(dir, "infra/README.md");
+  const readme = read(dir, ".bootstrap/vault/infra/README.md");
   const admin = readme.slice(readme.indexOf("## Admin section"), readme.indexOf("## Turnstile"));
   assert.match(admin, /gh secret set OWNER_EMAIL --env production/);
   assert.match(admin, /Sync Worker\s+secrets/);
@@ -180,8 +180,8 @@ test("the standards say Worker secrets reach the Worker only through the sync wo
 test("a project with neither option has no workflow and keeps the generic Worker secrets text", () => {
   const dir = cases.find(item => !item.admin && !item.turnstile && !item.beta).dir;
   assert.ok(![...files(dir)].includes(WORKFLOW));
-  assert.doesNotMatch(read(dir, "infra/README.md"), /Sync Worker secrets/);
-  assert.match(read(dir, "infra/README.md"), /wrangler secret put <NAME> --env <env>/);
+  assert.doesNotMatch(read(dir, ".bootstrap/vault/infra/README.md"), /Sync Worker secrets/);
+  assert.match(read(dir, ".bootstrap/vault/infra/README.md"), /wrangler secret put <NAME> --env <env>/);
 });
 
 test("a full project with a beta, admin and turnstile renders a workflow that parses and a wrangler.jsonc that is valid JSONC", () => {

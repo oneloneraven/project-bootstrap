@@ -108,7 +108,7 @@ test("data-bearing records are protected from destroy", () => {
 });
 
 test("the infra README covers setup, disaster recovery and teardown", () => {
-  const readme = read(withBeta, "infra/README.md");
+  const readme = read(withBeta, ".bootstrap/vault/infra/README.md");
   for (const heading of ["## Setup", "## Disaster recovery", "## Teardown"]) assert.ok(readme.includes(heading), heading);
 });
 
@@ -121,7 +121,7 @@ test("infrastructure runs on OpenTofu", () => {
   assert.match(infra, /opentofu\/setup-opentofu@[0-9a-f]{40} # v2/);
   assert.match(infra, /run: tofu plan/);
   assert.doesNotMatch(infra, /terraform (init|plan|apply)/);
-  assert.match(read(withBeta, "infra/README.md"), /OpenTofu/);
+  assert.match(read(withBeta, ".bootstrap/vault/infra/README.md"), /OpenTofu/);
 });
 
 test("OpenTofu is pinned through a scaffold token and no other version is carried", () => {
@@ -162,7 +162,7 @@ test("the repository-level fallback is conditional on the check failing", () => 
   assert.match(config, /Fallback, only if a create or a verification above fails/);
   assert.match(config, /state\.mjs skip <dir> github:cloudflare-tofu-base:1/);
   assert.match(section(moduleDoc, "## 4. GitHub configuration"), /fallback in\s+`github:cloudflare-tofu-base:1`/);
-  assert.match(config, /docs\/threat-model\.md/);
+  assert.match(config, /\.bootstrap\/vault\/threat-model\.md/);
   assert.match(config, /offer the plan upgrade/);
   assert.doesNotMatch(section(baseDoc, "## 3. Files"), /threat-model/);
   assert.doesNotMatch(baseDoc, /Free private repository only/);
@@ -216,7 +216,7 @@ const dashboardLabels = { "Single Redirect": "Dynamic URL Redirects" };
 const normalise = names => names.map(name => name.replace(/\s*\(.*\)$/, "").replace(/\bEdit$/, "Write").replace(/^Single Redirect\b/, dashboardLabels["Single Redirect"])).sort();
 
 function readmeTokens(dir, beta) {
-  const section = read(dir, "infra/README.md").split("### Cloudflare API tokens")[1].split("###")[0];
+  const section = read(dir, ".bootstrap/vault/infra/README.md").split("### Cloudflare API tokens")[1].split("###")[0];
   return section.split("\n").filter(line => /^\| (Preview|Deploy|Infra plan|Infra apply) \|/.test(line)).map(line => {
     const [, token, secret, permissions] = line.split("|").map(cell => cell.trim());
     const [name, scope] = secret.match(/^`([A-Z_]+)` \((.*)\)$/).slice(1);
@@ -241,11 +241,11 @@ test("the deploy token's environments follow the beta answer", () => {
 test("the README lists the infra plan token's permissions explicitly", () => {
   const plan = readmeTokens(withBeta, true).find(t => t.token === "Infra plan");
   assert.deepEqual(plan.permissions, normalise(["Workers R2 Storage Read", "Transform Rules Read", "DNS Read", "Zone Settings Read", "Zone WAF Read", "Cache Settings Read", "Dynamic URL Redirects Read"]));
-  assert.doesNotMatch(read(withBeta, "infra/README.md"), /read-only version of each/);
+  assert.doesNotMatch(read(withBeta, ".bootstrap/vault/infra/README.md"), /read-only version of each/);
 });
 
 test("the README says Transform Rules covers every zone in the account", () => {
-  assert.match(read(withBeta, "infra/README.md"), /Transform Rules.*account-scoped.*every zone in the account/s);
+  assert.match(read(withBeta, ".bootstrap/vault/infra/README.md"), /Transform Rules.*account-scoped.*every zone in the account/s);
 });
 
 test("every DNS record comment fits Cloudflare's 100-character Free plan limit", () => {
@@ -259,12 +259,12 @@ test("every DNS record comment fits Cloudflare's 100-character Free plan limit",
 
 test("every render's CLAUDE.md has the infrastructure rule", () => {
   for (const dir of [withBeta, noBeta]) {
-    assert.match(read(dir, "CLAUDE.md"), /^- Never change anything `infra\/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard\. Change it in `infra\/` through a PR: \[infra\]\(infra\/README\.md#changing-infrastructure\)\.$/m);
+    assert.match(read(dir, "CLAUDE.md"), /^- Never change anything `infra\/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard\. Change it in `infra\/` through a PR: "Changing infrastructure" in the infra README \(in the vault\)\.$/m);
   }
 });
 
 test("the infra README's change rule points wrangler-owned resources at wrangler and hand-made ones at an import", () => {
-  const section = read(withBeta, "infra/README.md").split("## Changing infrastructure")[1].split("\n## ")[0];
+  const section = read(withBeta, ".bootstrap/vault/infra/README.md").split("## Changing infrastructure")[1].split("\n## ")[0];
   assert.match(section, /`wrangler\.jsonc`/);
   assert.match(section, /`import`\s+block/);
   assert.match(section, /explicit OK/);
@@ -273,7 +273,7 @@ test("the infra README's change rule points wrangler-owned resources at wrangler
 
 test("DNSSEC relies on Cloudflare Registrar and nothing tells anyone to handle the DS record by hand", () => {
   for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
-    const readme = read(dir, "infra/README.md");
+    const readme = read(dir, ".bootstrap/vault/infra/README.md");
     const outputs = read(dir, "infra/outputs.tf");
     assert.doesNotMatch(readme, /(add|remove) the DS record/i, name);
     assert.doesNotMatch(readme, /at the (domain )?registrar/i, name);
@@ -287,7 +287,7 @@ test("DNSSEC relies on Cloudflare Registrar and nothing tells anyone to handle t
 
 test("teardown disables DNSSEC through infra before it destroys", () => {
   for (const [name, dir] of [["beta", withBeta], ["no beta", noBeta]]) {
-    const teardown = section(read(dir, "infra/README.md"), "## Teardown");
+    const teardown = section(read(dir, ".bootstrap/vault/infra/README.md"), "## Teardown");
     const disable = teardown.search(/`"disabled"`/);
     const destroy = teardown.indexOf("tofu destroy");
     assert.ok(disable >= 0, `${name}: no DNSSEC disable step`);
@@ -338,7 +338,7 @@ for (const [label, dir] of [["with beta", withBeta], ["without beta", noBeta]]) 
     const tokens = tokensIn(dir);
     assert.ok(tokens.find(t => t.token === "Infra plan").permissions.includes("Dynamic URL Redirects Read"));
     assert.ok(tokens.find(t => t.token === "Infra apply").permissions.includes("Dynamic URL Redirects Write"));
-    const table = read(dir, "infra/README.md");
+    const table = read(dir, ".bootstrap/vault/infra/README.md");
     assert.match(table, /Zone:[^\n|]*Single Redirect Read/);
     assert.match(table, /Zone:[^\n|]*Single Redirect Edit/);
   });
@@ -346,7 +346,7 @@ for (const [label, dir] of [["with beta", withBeta], ["without beta", noBeta]]) 
 
 test("the module warns about an existing www record and the README lists the redirect rule", () => {
   assert.match(section(moduleDoc, "## 2. Interview questions"), /If the apex, `www\.`\s+or `beta\.` already\s+has a record/);
-  assert.match(read(withBeta, "infra/README.md"), /the `www` redirect/);
+  assert.match(read(withBeta, ".bootstrap/vault/infra/README.md"), /the `www` redirect/);
   assert.match(section(moduleDoc, "## 2. Interview questions"), /already has Redirect Rules/);
   assert.match(read(withBeta, "infra/dns.tf"), /comment = "Proxied so the www redirect rule answers; requests never reach an origin\."/);
 });
@@ -359,7 +359,7 @@ test("the bootstrap skill documents adopting a module in an existing repository"
 });
 
 test("the docs say tokens are scoped to the project's own Workers, which the bootstrap creates as stubs, and how to reissue", () => {
-  const readme = read(withBeta, "infra/README.md");
+  const readme = read(withBeta, ".bootstrap/vault/infra/README.md");
   assert.match(readme, /Individual Workers Editor \(this project's `preview` Worker only\)/);
   assert.match(readme, /### Reissuing tokens with per-Worker scope/);
   assert.match(readme, /`sample-project-preview`, `sample-project-production` and, with a\nbeta, `sample-project-beta`/);

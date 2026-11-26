@@ -27,7 +27,7 @@ for (const [name, dir] of Object.entries(variants)) {
   test(`${name}: the library, its tests and the sync workflow are rendered`, () => {
     const rendered = [...files(dir)];
     for (const file of [...TURNSTILE_FILES, WORKFLOW]) assert.ok(rendered.includes(file), file);
-    assert.match(read(dir, "infra/README.md"), /## Turnstile/);
+    assert.match(read(dir, ".bootstrap/vault/infra/README.md"), /## Turnstile/);
   });
 
   test(`${name}: production's sitekey starts empty so verification fails closed, and its secret is never a var`, () => {
@@ -82,11 +82,11 @@ test("turnstile and admin together keep both sets of vars", () => {
   const example = read(dir, ".dev.vars.example");
   assert.match(example, /^OWNER_EMAIL=$/m);
   assert.match(example, /^TURNSTILE_SECRET_KEY=/m);
-  assert.match(read(dir, "infra/README.md"), /## Admin section[\s\S]*## Turnstile[\s\S]*## Disaster recovery/);
+  assert.match(read(dir, ".bootstrap/vault/infra/README.md"), /## Admin section[\s\S]*## Turnstile[\s\S]*## Disaster recovery/);
 });
 
 test("the README covers the widget, the secret and the rotation end to end", () => {
-  const readme = read(variants["turnstile with a beta"], "infra/README.md");
+  const readme = read(variants["turnstile with a beta"], ".bootstrap/vault/infra/README.md");
   const section = readme.slice(readme.indexOf("## Turnstile"), readme.indexOf("## Disaster recovery"));
   assert.match(section, /widget_sitekey/);
   assert.match(section, /gh secret set TURNSTILE_SECRET_KEY --env production/);
@@ -97,7 +97,7 @@ test("the README covers the widget, the secret and the rotation end to end", () 
 });
 
 test("the README says what is logged and that the secret, token and IP never are", () => {
-  const readme = read(variants["turnstile with a beta"], "infra/README.md");
+  const readme = read(variants["turnstile with a beta"], ".bootstrap/vault/infra/README.md");
   const section = readme.slice(readme.indexOf("## Turnstile"), readme.indexOf("## Disaster recovery"));
   assert.match(section, /turnstile\.unavailable/);
   assert.match(section, /secret, the token and the client IP are\s+never logged/);
@@ -108,7 +108,7 @@ for (const [name, dir] of Object.entries(plain)) {
     const rendered = [...files(dir)];
     for (const file of TURNSTILE_FILES) assert.ok(!rendered.includes(file), file);
     if (rendered.includes(WORKFLOW)) assert.doesNotMatch(read(dir, WORKFLOW), /TURNSTILE/);
-    for (const text of [read(dir, "wrangler.jsonc"), read(dir, ".dev.vars.example"), read(dir, "infra/README.md")]) assert.doesNotMatch(text, /TURNSTILE|## Turnstile/);
+    for (const text of [read(dir, "wrangler.jsonc"), read(dir, ".dev.vars.example"), read(dir, ".bootstrap/vault/infra/README.md")]) assert.doesNotMatch(text, /TURNSTILE|## Turnstile/);
     assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.production.vars.TURNSTILE_SITEKEY);
     assert.ok(!jsonc(read(dir, "wrangler.jsonc")).env.preview.previews.vars.TURNSTILE_SITEKEY);
   });

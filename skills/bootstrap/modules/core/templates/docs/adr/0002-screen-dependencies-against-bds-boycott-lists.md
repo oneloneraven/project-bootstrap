@@ -42,5 +42,5 @@ project's copy.
 ## Screening record
 
 Every dependency and vendor, with what it is used for and the decision, is
-in the [dependency register](../dependency-register.md). A PR that adds one
+in the [dependency register]({{repo_url}}/blob/main/docs/dependency-register.md). A PR that adds one
 adds its row.

@@ -18,9 +18,14 @@ description, GitHub owner and visibility.
 - `CLAUDE.md`: the index of one-line rules; stack modules add lines under
   "Stack".
 - `docs/`: workflow, versioning, coding standards (stack modules add their
-  sections), definition of done, privacy, record of processing, threat
-  model, working with Claude, ADRs 0001 and 0002, incident runbooks, the
-  shared ethics and privacy page base (`docs/public/`) and its runbook.
+  sections), definition of done, privacy, record of processing, working
+  with Claude, the ADR index and the shared ethics and privacy page base
+  (`docs/public/`).
+- `.bootstrap/vault/`, for the owner's private docs repository
+  (`<owner>-vault`), never committed to the project: the threat model,
+  ADRs 0001 and 0002, the incident runbooks and the public pages runbook.
+  Stack modules stage theirs here too. `github:core:vault` moves them into
+  the vault.
 - `SECURITY.md`, `README.md`, `LICENSE.md`, `LICENSE-SCHEDULE.md`,
   `.gitignore`.
 - `.claude/settings.json` (blocks edits while on `main`) and the
@@ -80,9 +85,39 @@ the security features a private repo can't use).
    `PROJECT_IN_PROGRESS_OPTION` and `PROJECT_IN_REVIEW_OPTION`, each with
    `--repo $R --body <value>`.
 
+**`github:core:vault`** runs last in the GitHub configuration, after every
+selected module's section 4, because their steps add rows to the staged
+threat model. It moves `.bootstrap/vault/` into the owner's private docs
+repository, `<owner>/<owner>-vault`, in one PR:
+
+1. Find the vault checkout: `--vault <dir>` if the user gave one, otherwise
+   `../<owner>-vault` beside the project. If it isn't a git checkout whose
+   `origin` is `<owner>/<owner>-vault`, record
+   `node scripts/state.mjs skip <dir> github:core:vault "no vault checkout"`
+   and go on. The staged files stay, so the step can run later.
+2. If the vault's `main` already has a `<slug>/` folder, stop and ask: never
+   overwrite another project's docs.
+3. Open an issue in the vault, "Add <name>'s private docs", and record its
+   number as `vault_issue`.
+4. Never touch the checkout's current branch. Make a worktree from the
+   vault's `origin/main`:
+   `git -C <vault> fetch origin main`, then
+   `git -C <vault> worktree add -b docs/<vault_issue>-<slug>-docs <tmp> origin/main`.
+5. Copy the staged files in: `cp -R <dir>/.bootstrap/vault/. <tmp>/<slug>/`.
+6. Commit (signed) "Add <name>'s private docs", push, and open a ready PR
+   that closes the issue
+   (`gh pr create --repo <owner>/<owner>-vault --title "Add <name>'s private docs" --body "Closes #<vault_issue>."`).
+   Record its URL as `vault_pr`, then remove the worktree
+   (`git -C <vault> worktree remove <tmp>`).
+
+Leave the PR for the user to merge at the handover. A row a module adds
+after this step goes into the vault by hand, in another vault PR.
+
 Verify: `gh api repos/$R/rulesets` lists `default-branch-protection` as
 `active` (unless skipped); `gh label list --repo $R` shows the four release
-labels; `gh variable list --repo $R` shows the four project variables.
+labels; `gh variable list --repo $R` shows the four project variables;
+`gh pr view <vault_pr> --json files --jq '.files[].path'` lists every file
+under `.bootstrap/vault/`, under `<slug>/` (unless skipped).
 
 ## 5. Manual steps
 

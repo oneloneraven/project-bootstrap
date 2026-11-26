@@ -23,7 +23,7 @@ To change the schema:
 3. Merge it. The release tag's deploy applies new migrations before the
    code is deployed, so the live code must work with the schema both before
    and after them: expand and contract, as in
-   [versioning](../docs/versioning.md#database-migrations-expand-and-contract).
+   [versioning]({{repo_url}}/blob/main/docs/versioning.md#database-migrations-expand-and-contract).
 
 Before applying migrations, the deploy records a Time Travel bookmark in its
 job summary, with the command to restore it:

@@ -68,13 +68,13 @@ test("model routing names tiers, not model IDs", () => {
 });
 
 test("the screening ADR points at the register and no longer holds the table", () => {
-  const adr = read("docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md");
+  const adr = read(".bootstrap/vault/adr/0002-screen-dependencies-against-bds-boycott-lists.md");
   assert.doesNotMatch(adr, /\| Dependency/);
-  assert.match(adr, /## Screening record\n\n[^|]*\(\.\.\/dependency-register\.md\)/);
+  assert.match(adr, /## Screening record\n\n[^|]*\(https:\/\/github\.com\/[^)]+\/blob\/main\/docs\/dependency-register\.md\)/);
 });
 
 test("the CLAUDE.md index, definition of done and PR template point at the register", () => {
-  assert.match(read("CLAUDE.md"), /^- Screen new dependencies and vendors and record each in \[the register\]\(docs\/dependency-register\.md\): \[ADR-0002\]/m);
+  assert.match(read("CLAUDE.md"), /^- Screen new dependencies and vendors and record each in \[the register\]\(docs\/dependency-register\.md\): ADR-0002 \(in the vault\)\.$/m);
   assert.match(read("docs/definition-of-done.md").replace(/\s+/g, " "), /row added to \[the dependency register\]\(dependency-register\.md\)/);
   assert.match(read(".github/pull_request_template.md"), /^- \[ \] Screened: .*rows? added to docs\/dependency-register\.md/m);
 });

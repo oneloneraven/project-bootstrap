@@ -245,7 +245,8 @@
     },
     {
       "from": "templates/infra/README.md",
-      "to": "infra/README.md"
+      "to": "infra/README.md",
+      "vault": true
     },
     {
       "from": "templates/github/workflows/infra.yml",
@@ -334,8 +335,8 @@
     ]
   },
   "claudeIndexLines": [
-    "- Cloudflare Workers, deployed by wrangler from release tags; infrastructure in OpenTofu: [coding standards](docs/coding-standards.md#cloudflare-and-opentofu), [infra](infra/README.md). Merging `infra/` is a production change.",
-    "- Never change anything `infra/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: [infra](infra/README.md#changing-infrastructure)."
+    "- Cloudflare Workers, deployed by wrangler from release tags; infrastructure in OpenTofu: [coding standards](docs/coding-standards.md#cloudflare-and-opentofu), infra (in the vault). Merging `infra/` is a production change.",
+    "- Never change anything `infra/` manages, or add to a zone it manages, through an API, an MCP tool or the dashboard. Change it in `infra/` through a PR: \"Changing infrastructure\" in the infra README (in the vault)."
   ],
   "screening": [
     {

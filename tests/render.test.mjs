@@ -339,16 +339,44 @@ const answersFile = (dir, extra = {}) => {
   return path;
 };
 
+function vaultModule(to) {
+  const dir = tmp();
+  mkdirSync(join(dir, "v", "templates"), { recursive: true });
+  writeFileSync(join(dir, "v", "templates", "doc.md"), "{{name}} private doc\n");
+  return { modulesDir: dir, modules: [{ name: "v", files: [{ from: "templates/doc.md", to, vault: true }] }] };
+}
+
+test("render stages a vault file under .bootstrap/vault, never in the project itself", () => {
+  const dest = tmp();
+  const { modules, modulesDir } = vaultModule("runbooks/doc.md");
+  const { answers } = validateAnswers({ name: "Demo" });
+  assert.deepEqual(render({ modules, answers, modulesDir, destDir: dest }), [".bootstrap/vault/runbooks/doc.md"]);
+  assert.equal(readFileSync(join(dest, ".bootstrap/vault/runbooks/doc.md"), "utf8"), "Demo private doc\n");
+  assert.deepEqual(readdirSync(dest), [".bootstrap"]);
+});
+
+test("render rejects a vault file that escapes the staging folder", () => {
+  const dest = tmp();
+  const { modules, modulesDir } = vaultModule("../state.json");
+  const { answers } = validateAnswers({ name: "Demo" });
+  assert.throws(() => render({ modules, answers, modulesDir, destDir: dest }), { message: "Path escapes destination: ../state.json" });
+  assert.deepEqual(readdirSync(dest), []);
+});
+
 test("bootstrapOnly writes only the .bootstrap files and leaves the project's own files alone", () => {
   const project = tmp();
   writeFileSync(join(project, "CLAUDE.md"), "mine\n");
   mkdirSync(join(project, "infra"));
   writeFileSync(join(project, "infra", "main.tf"), "mine\n");
+  mkdirSync(join(project, ".bootstrap", "vault", "infra"), { recursive: true });
+  writeFileSync(join(project, ".bootstrap", "vault", "infra", "README.md"), "staged\n");
   const real = fileURLToPath(new URL("../skills/bootstrap/modules", import.meta.url));
   const { answers } = validateAnswers({ ...JSON.parse(readFileSync(new URL("./fixtures/answers-core.json", import.meta.url), "utf8")), zone_name: "example.test", beta: false });
   const written = render({ modules: resolveModules(["cloudflare-opentofu"], real), answers, modulesDir: real, destDir: project, bootstrapOnly: true });
   assert.ok(written.includes(".bootstrap/cloudflare/tokens.json"));
   assert.ok(written.every(path => path.startsWith(".bootstrap/")), written.join(", "));
+  assert.ok(!written.some(path => path.startsWith(".bootstrap/vault/")), written.join(", "));
+  assert.equal(readFileSync(join(project, ".bootstrap", "vault", "infra", "README.md"), "utf8"), "staged\n");
   assert.equal(readFileSync(join(project, "CLAUDE.md"), "utf8"), "mine\n");
   assert.equal(readFileSync(join(project, "infra", "main.tf"), "utf8"), "mine\n");
   assert.deepEqual(readdirSync(project).sort(), [".bootstrap", "CLAUDE.md", "infra"]);

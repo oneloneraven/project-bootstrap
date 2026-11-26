@@ -22,4 +22,4 @@ None recorded yet.
 
 ## Security measures
 
-See the [threat model](threat-model.md) and [privacy rules](privacy.md).
+See the threat model (in the vault) and [privacy rules](privacy.md).

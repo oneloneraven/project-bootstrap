@@ -116,8 +116,8 @@ test("a published page with a shared section twice, or one the base no longer ha
 test("core ships the script, the workflow and the runbook, but leaves the published paths to the project", () => {
   assert.ok(!existsSync(join(dest, ".github/public-pages.json")));
   assert.match(read(".github/workflows/check-public-pages.yml"), /run: node \.github\/scripts\/check-public-pages\.mjs/);
-  assert.match(read("CLAUDE.md"), /^- Publish the ethics and privacy pages .*\[public pages\]\(docs\/runbooks\/public-pages\.md\)\.$/m);
-  assert.match(read("docs/runbooks/public-pages.md"), /## Adopting the shared pages in an existing project/);
+  assert.match(read("CLAUDE.md"), /^- Publish the ethics and privacy pages .*: public pages runbook \(in the vault\)\.$/m);
+  assert.match(read(".bootstrap/vault/runbooks/public-pages.md"), /## Adopting the shared pages in an existing project/);
 });
 
 test("the script exits non-zero and annotates the file and section", () => {

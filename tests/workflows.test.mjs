@@ -237,7 +237,7 @@ for (const [name, key] of [["beta", "cfBeta"], ["no beta", "cfNoBeta"]]) {
     assert.ok(input, "allow_deletes under workflow_dispatch inputs");
     assert.match(input[1], /^ {8}type: boolean$/m);
     assert.match(input[1], /^ {8}default: false$/m);
-    assert.match(input[1], /^ {8}description: ".*infra\/README\.md.*"$/m);
+    assert.match(input[1], /^ {8}description: ".*the infra README in the vault.*"$/m);
   });
 
   test(`the delete guard is skipped only by allow_deletes, and still runs on push ${name}`, () => {
@@ -253,7 +253,7 @@ for (const [name, key] of [["beta", "cfBeta"], ["no beta", "cfNoBeta"]]) {
   });
 
   test(`the infra README explains deliberate deletes ${name}`, () => {
-    const readme = read(renders[key], "infra/README.md");
+    const readme = read(renders[key], ".bootstrap/vault/infra/README.md");
     const text = readme.split("## Deleting resources")[1]?.split("\n## ")[0];
     assert.ok(text, "Deleting resources section");
     assert.match(text, /fails its apply and changes nothing/);

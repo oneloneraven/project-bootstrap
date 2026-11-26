@@ -14,7 +14,7 @@ same list.
 4. **Verified.** User-facing changes have been driven in a browser, in light
    and dark themes, at desktop and phone widths.
 5. **Screened.** Any new dependency or vendor has been checked
-   ([ADR-0002](adr/0002-screen-dependencies-against-bds-boycott-lists.md)) and
+   (ADR-0002 (in the vault)) and
    its row added to [the dependency register](dependency-register.md).
 6. **Documented.** Docs and ADRs are updated where behaviour or a decision
    changed, and the diff adds no narrative comments.

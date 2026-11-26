@@ -98,8 +98,8 @@ After core's configuration. Steps `github:cloudflare-tofu-base:<n>`.
      `node scripts/state.mjs record <dir> skipped_envs <comma list of skipped environments>`;
    - set the secrets of a skipped environment at repository level (the
      manual steps say how);
-   - add a row to `docs/threat-model.md`'s STRIDE table, after the existing
-     rows, on the first PR's branch: threat "Any workflow on any branch can
+   - add a row to `.bootstrap/vault/threat-model.md`'s STRIDE table, after the existing
+     rows: threat "Any workflow on any branch can
      read the repository-level infra apply and state read-write
      credentials", category Elevation of privilege, mitigation "Environment
      branch policies weren't available on this repository when it was
@@ -111,8 +111,8 @@ After core's configuration. Steps `github:cloudflare-tofu-base:<n>`.
 
 ## 5. Manual steps
 
-Do these in order. `infra/README.md` (rendered into the project) has the
-same steps for later rebuilds.
+Do these in order. `.bootstrap/vault/infra/README.md` (in the vault once
+`github:core:vault` has run) has the same steps for later rebuilds.
 
 ### cloudflare-tofu-base:1 Create the Cloudflare API tokens
 
@@ -158,7 +158,7 @@ same account is asked only for its zone id.
 **By hand:** In the Cloudflare dashboard → My Profile → API Tokens (or Manage
 Account → Account API Tokens for account-owned tokens) → Create Token →
 Custom token. Create each token the "Cloudflare API tokens" table in
-`infra/README.md` lists, each with a one-year expiry, scoped to this account
+`.bootstrap/vault/infra/README.md` lists, each with a one-year expiry, scoped to this account
 and, for zone permissions, to the stack's zone only. The table gives each
 token's permissions, its secret name, and whether it belongs to the
 repository or to named environments. Then set each secret, with

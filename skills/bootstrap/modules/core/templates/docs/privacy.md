@@ -18,7 +18,8 @@ processed, and by whom, is in [data protection](data-protection.md).
 - **Telemetry is aggregate and minimal.** Prefer approaches that need no
   consent banner because they collect nothing personal.
 - **A new processor** (any third party that receives personal data) is
-  added to the record of processing and the threat model in the same PR.
+  added to the record of processing in the same PR, and to the threat model
+  in a paired vault PR.
 - **The public privacy page** is built from the shared base in
   `docs/public/privacy.md` and must match the record of processing. How to
-  publish and update it is in the [runbook](runbooks/public-pages.md).
+  publish and update it is in the public pages runbook (in the vault).

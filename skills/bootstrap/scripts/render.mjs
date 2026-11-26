@@ -13,6 +13,8 @@ export { maxSlugLength, resolveModules, validateAnswers };
 const BINARY = /\.(png|ico|jpg|jpeg|gif|webp|woff2?|zip|pem|jar)$/i;
 const PLACEHOLDER = /(?<!\$)\{\{\s*([a-z0-9_]+)\s*\}\}/g;
 
+export const VAULT_STAGING = join(".bootstrap", "vault");
+
 const SCREENING_FIELDS = ["dependency", "usedFor", "maintainer", "listed", "decision", "screenedOn"];
 
 function screeningRows(modules) {
@@ -112,7 +114,7 @@ function deriveKeys(modules, answers, modulesDir) {
       noneForbidden: [...new Set(modules.flatMap(m => m.releasePaths?.noneForbidden ?? []))],
     }),
     ...mergePolicyKeys(modules, answers.merge_policy),
-    ...(answers.owner && { repo_url: `https://github.com/${answers.owner}/${answers.slug}` }),
+    ...(answers.owner && { repo_url: `https://github.com/${answers.owner}/${answers.slug}`, vault_repo: `${answers.owner}-vault` }),
   };
 }
 
@@ -180,12 +182,15 @@ export function render({ modules, answers, modulesDir, destDir, dryRun = false, 
     for (const file of module.files ?? []) {
       if (!included(file, answers)) continue;
       if (stage && (file.stage ?? "initial") !== stage) continue;
+      if (bootstrapOnly && file.vault) continue;
       const to = substitute(file.to, values, file.to);
-      const target = resolve(root, normalize(to));
-      const rel = relative(root, target);
-      if (rel === "" || rel === ".." || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+      const base = file.vault ? resolve(root, VAULT_STAGING) : root;
+      const target = resolve(base, normalize(to));
+      const within = relative(base, target);
+      if (within === "" || within === ".." || within.startsWith(`..${sep}`) || isAbsolute(within)) {
         throw new Error(`Path escapes destination: ${to}`);
       }
+      const rel = relative(root, target);
       if (bootstrapOnly && !rel.startsWith(`.bootstrap${sep}`)) continue;
       const source = join(modulesDir, module.name, file.from);
       const content = BINARY.test(source)

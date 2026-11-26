@@ -23,9 +23,10 @@ Read a doc when the work touches it, not up front.
 - Code is reviewed against [coding standards](docs/coding-standards.md); hold it to the [engineering standards](.claude/skills/engineering-standards/SKILL.md).
 - No comments by default; one line for a "why" the code can't express: [comments](docs/coding-standards.md#comments-and-docs).
 - Privacy and data rules: [privacy](docs/privacy.md), [record of processing](docs/data-protection.md).
-- Publish the ethics and privacy pages from the shared base in `docs/public/`, and keep their shared sections identical to it: [public pages](docs/runbooks/public-pages.md).
-- Keep the [threat model](docs/threat-model.md) current whenever a trust boundary moves.
-- Screen new dependencies and vendors and record each in [the register](docs/dependency-register.md): [ADR-0002](docs/adr/0002-screen-dependencies-against-bds-boycott-lists.md).
+- Publish the ethics and privacy pages from the shared base in `docs/public/`, and keep their shared sections identical to it: public pages runbook (in the vault).
+- ADRs, specs, plans, runbooks, the threat model and architecture docs are written in `{{vault_repo}}/{{slug}}/`, never here. Keep the threat model current whenever a trust boundary moves.
+- Raise security-sensitive issues in `{{vault_repo}}`, not here. Never copy vault content into this repository, its issues, PRs or commits.
+- Screen new dependencies and vendors and record each in [the register](docs/dependency-register.md): ADR-0002 (in the vault).
 - Significant decisions get an [ADR](docs/adr/README.md).
 - Verify before claiming anything works; report failures and unverified steps plainly.
 
