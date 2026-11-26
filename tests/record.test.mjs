@@ -86,7 +86,7 @@ test("record.mjs write builds the record from state.json and publishes it in .gi
   const out = execFileSync("node", [script, "write", dir], { encoding: "utf8" });
   assert.match(out, /from state\.json/);
   assert.match(out, /replaced \.bootstrap\/ with/);
-  assert.equal(readFileSync(join(dir, ".gitignore"), "utf8"), "node_modules/\n.bootstrap/*\n!.bootstrap/record.json\ndist/\n");
+  assert.equal(readFileSync(join(dir, ".gitignore"), "utf8"), "node_modules/\n.bootstrap/*\ndist/\n!.bootstrap/record.json\n");
   assert.deepEqual(record(dir).modules, ["core"]);
 });
 
@@ -107,6 +107,33 @@ test("the .gitignore change is idempotent and appends when nothing ignored .boot
   assert.match(publishRecordInGitignore(dir), /^added/);
   assert.equal(readFileSync(join(dir, ".gitignore"), "utf8"), "dist/\n.bootstrap/*\n!.bootstrap/record.json\n");
   assert.equal(publishRecordInGitignore(dir), "unchanged");
+});
+
+test("the record's negation goes after every other rule, so a later pattern can't ignore it again", () => {
+  const dir = tmp();
+  writeFileSync(join(dir, ".gitignore"), ".bootstrap/\n\n*.json\n");
+  publishRecordInGitignore(dir);
+  assert.equal(readFileSync(join(dir, ".gitignore"), "utf8"), ".bootstrap/*\n\n*.json\n!.bootstrap/record.json\n");
+  mkdirSync(join(dir, ".bootstrap"));
+  writeFileSync(join(dir, ".bootstrap", "record.json"), "{}");
+  execFileSync("git", ["init", "-q"], { cwd: dir });
+  assert.equal(spawnSync("git", ["check-ignore", ".bootstrap/record.json"], { cwd: dir }).status, 1);
+});
+
+test("a short private answer doesn't refuse every reason, and a refusal says where to reword it", () => {
+  const dir = tmp();
+  saveAnswers(dir, { ...base, licensor: "AB" }, [], realModulesDir);
+  markSkipped(dir, "github:core:4", "ABOUT to upgrade the plan");
+  assert.throws(() => markSkipped(dir, "github:core:5", "ask x@example.com"), { message: /reword it in \.bootstrap\/state\.json$/ });
+});
+
+test("record.mjs write refuses --modules and --visibility when a state.json exists", () => {
+  const dir = tmp();
+  saveAnswers(dir, base, [], realModulesDir);
+  const refused = spawnSync("node", [script, "write", dir, "--visibility", "private"], { encoding: "utf8" });
+  assert.equal(refused.status, 1);
+  assert.match(refused.stderr, /drop --modules and --visibility/);
+  assert.equal(record(dir).visibility, "public");
 });
 
 test("a new project's .gitignore commits the record and nothing else from .bootstrap", () => {

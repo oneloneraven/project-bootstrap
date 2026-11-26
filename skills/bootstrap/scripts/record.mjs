@@ -23,13 +23,14 @@ function conditionNames(value) {
 
 function privateValues(answers, manifests) {
   const keys = ["licensor", ...manifests.flatMap(m => m.questions ?? []).filter(q => !PUBLIC_QUESTION_TYPES.has(q.type)).map(q => q.key)];
-  return keys.map(key => answers[key]).filter(value => typeof value === "string" && value.trim());
+  return keys.map(key => answers[key]).filter(value => typeof value === "string" && value.trim().length >= 4);
 }
 
-function checkPublishable(field, text, secrets) {
-  if (CREDENTIAL_URL.test(text)) throw new Error(`${field} holds a URL with credentials, and the record is public`);
-  if (EMAIL.test(text)) throw new Error(`${field} holds an email address, and the record is public`);
-  if (secrets.some(secret => text.includes(secret))) throw new Error(`${field} holds a private answer, and the record is public`);
+function checkPublishable(field, text, secrets, fix) {
+  const refuse = what => new Error(`${field} holds ${what}, and the record is public: ${fix}`);
+  if (CREDENTIAL_URL.test(text)) throw refuse("a URL with credentials");
+  if (EMAIL.test(text)) throw refuse("an email address");
+  if (secrets.some(secret => text.includes(secret))) throw refuse("a private answer");
 }
 
 function checkExceptions(exceptions) {
@@ -43,10 +44,6 @@ function checkExceptions(exceptions) {
   });
 }
 
-/**
- * The public record of a bootstrapped project, from its state. Throws when a reason would publish a private detail.
- * @param {{ answers: Record<string, unknown>, modules: string[], skipped?: Record<string, string> }} state
- */
 export function buildRecord(state, { modulesDir = MODULES_DIR, exceptions = [] } = {}) {
   const { answers } = state;
   if (!["public", "private"].includes(String(answers?.visibility))) throw new Error("The record needs the visibility");
@@ -57,8 +54,8 @@ export function buildRecord(state, { modulesDir = MODULES_DIR, exceptions = [] }
   const skipped = Object.fromEntries(Object.entries(state.skipped ?? {}).sort(([a], [b]) => a.localeCompare(b)));
   const checked = checkExceptions(exceptions);
   const secrets = privateValues(answers, manifests);
-  for (const [step, reason] of Object.entries(skipped)) checkPublishable(`skipped["${step}"]`, reason, secrets);
-  checked.forEach(({ reason }, i) => checkPublishable(`exceptions[${i}].reason`, reason, secrets));
+  for (const [step, reason] of Object.entries(skipped)) checkPublishable(`skipped["${step}"]`, reason, secrets, "reword it in .bootstrap/state.json");
+  checked.forEach(({ reason }, i) => checkPublishable(`exceptions[${i}].reason`, reason, secrets, "reword it in .bootstrap/record.json"));
   return { version: RECORD_VERSION, modules: manifests.map(m => m.name), visibility: answers.visibility, flags, skipped, exceptions: checked };
 }
 
@@ -71,7 +68,6 @@ export function readRecord(dir) {
   }
 }
 
-/** Rebuilds the record from `state`, keeping the exceptions the maintainer wrote. A state without answers has no record yet. */
 export function writeRecord(dir, state, modulesDir = MODULES_DIR) {
   if (!state.answers?.visibility) return null;
   const record = buildRecord(state, { modulesDir, exceptions: readRecord(dir)?.exceptions ?? [] });
@@ -84,21 +80,19 @@ export function writeRecord(dir, state, modulesDir = MODULES_DIR) {
 
 export const IGNORE_RULES = [".bootstrap/*", "!.bootstrap/record.json"];
 
-/** Switches a project's `.gitignore` from ignoring `.bootstrap/` to publishing its record. Returns what changed. */
+const [IGNORE_FOLDER, PUBLISH_RECORD] = IGNORE_RULES;
+
 export function publishRecordInGitignore(dir) {
   const path = join(dir, ".gitignore");
-  const lines = existsSync(path) ? readFileSync(path, "utf8").split("\n") : [];
-  if (IGNORE_RULES.every(rule => lines.includes(rule))) return "unchanged";
+  const text = existsSync(path) ? readFileSync(path, "utf8").replace(/\n+$/, "") : "";
+  const lines = text ? text.split("\n") : [];
+  if (lines.includes(IGNORE_FOLDER) && lines.lastIndexOf(PUBLISH_RECORD) > lines.indexOf(IGNORE_FOLDER)) return "unchanged";
   const old = lines.findIndex(line => [".bootstrap/", ".bootstrap", "/.bootstrap/", "/.bootstrap"].includes(line.trim()));
-  const kept = lines.filter(line => !IGNORE_RULES.includes(line));
-  if (old >= 0) {
-    const at = kept.findIndex(line => line === lines[old]);
-    kept.splice(at, 1, ...IGNORE_RULES);
-  } else {
-    if (kept.length && kept.at(-1) === "") kept.pop();
-    kept.push(...IGNORE_RULES, "");
-  }
-  writeFileSync(path, kept.join("\n").replace(/\n*$/, "\n"));
+  const kept = lines.filter(line => line !== PUBLISH_RECORD);
+  if (old >= 0) kept.splice(kept.indexOf(lines[old]), 1, IGNORE_FOLDER);
+  else if (!kept.includes(IGNORE_FOLDER)) kept.push(IGNORE_FOLDER);
+  kept.push(PUBLISH_RECORD);
+  writeFileSync(path, `${kept.join("\n")}\n`);
   return old >= 0 ? `replaced ${lines[old].trim()} with ${IGNORE_RULES.join(" and ")}` : `added ${IGNORE_RULES.join(" and ")}`;
 }
 
@@ -118,6 +112,9 @@ function main() {
   const [command, dir] = positionals;
   if (command !== "write" || !dir) throw new Error(USAGE);
   const state = loadStateFile(dir);
+  if (state?.answers?.visibility && (values.modules || values.visibility)) {
+    throw new Error(`${dir} has a .bootstrap/state.json, which the record is built from: drop --modules and --visibility`);
+  }
   const from = state?.answers?.visibility
     ? state
     : { answers: { visibility: values.visibility }, modules: (values.modules ?? "").split(",").filter(Boolean), skipped: {} };

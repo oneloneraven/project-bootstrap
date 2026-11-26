@@ -269,8 +269,8 @@ needs is missing.
     staged in `.bootstrap/vault/` when `github:core:vault` was skipped.
     Leave `.bootstrap/` in place: everything in it but `record.json` is
     gitignored. If `git status` shows `.bootstrap/record.json` changed since
-    the last merge (a later skip changes it), commit it on a `chore/` branch
-    and open a PR with `release: none`.
+    the last merge (a later skip changes it), open an issue for it, commit it
+    on `chore/<issue>-bootstrap-record` and open a PR with `release: none`.
 
 ## When something fails
 
