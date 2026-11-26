@@ -1,4 +1,5 @@
-.bootstrap/
+.bootstrap/*
+!.bootstrap/record.json
 .superpowers/
 .dev.vars
 .env*

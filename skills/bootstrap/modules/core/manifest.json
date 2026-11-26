@@ -250,6 +250,7 @@
   ],
   "releasePaths": {
     "noneAllowed": [
+      ".bootstrap/record.json",
       "docs/",
       ".github/",
       ".claude/",

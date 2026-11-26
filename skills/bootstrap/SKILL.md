@@ -253,6 +253,8 @@ needs is missing.
       `feature/<n>-initial-app`, render with
       `--stage app`, run the scaffold formatting, commit, and open a draft
       PR with `release: minor` set at creation (`gh pr create --draft --label`).
+      Include `.bootstrap/record.json` if the GitHub configuration's skips
+      changed it.
       Mark it ready, wait with `gh pr checks --watch --fail-fast`, and merge
       once green. Then run the manual steps marked "after the first PR".
       Confirm the `v0.1.0` tag, the GitHub Release with any artefact, and
@@ -265,7 +267,10 @@ needs is missing.
     `state.mjs show`), and every listed screening row. Give the vault PR
     (`vault_pr`) for the user to merge, or say the private docs are still
     staged in `.bootstrap/vault/` when `github:core:vault` was skipped.
-    Leave `.bootstrap/` in place (it's gitignored).
+    Leave `.bootstrap/` in place: everything in it but `record.json` is
+    gitignored. If `git status` shows `.bootstrap/record.json` changed since
+    the last merge (a later skip changes it), commit it on a `chore/` branch
+    and open a PR with `release: none`.
 
 ## When something fails
 

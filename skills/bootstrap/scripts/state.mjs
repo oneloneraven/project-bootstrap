@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { pluginVersion } from "./plugin-version.mjs";
 import { validateAnswers } from "./answers.mjs";
 import { maxSlugLength, mergePolicies, resolveModules } from "./modules.mjs";
+import { MODULES_DIR, writeRecord } from "./record.mjs";
 
 const EMPTY = { steps: {}, answers: null, modules: [], ids: {}, skipped: {} };
 const folder = dir => join(dir, ".bootstrap");
@@ -29,8 +30,13 @@ function save(dir, state) {
   writeAtomic(file(dir), `${JSON.stringify(state, null, 2)}\n`);
 }
 
-export function saveRun(dir, { answers, modules }, version = pluginVersion()) {
-  save(dir, { ...loadState(dir), answers, modules, pluginVersion: version });
+function saveWithRecord(dir, state, modulesDir = MODULES_DIR) {
+  writeRecord(dir, state, modulesDir);
+  save(dir, state);
+}
+
+export function saveRun(dir, { answers, modules }, version = pluginVersion(), modulesDir = MODULES_DIR) {
+  saveWithRecord(dir, { ...loadState(dir), answers, modules, pluginVersion: version }, modulesDir);
 }
 
 const HOSTNAME = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
@@ -82,7 +88,7 @@ export function saveAnswers(dir, input, modules, modulesDir) {
   checkQuestions(input, manifests);
   const limit = maxSlugLength(manifests);
   const { answers, slug } = validateAnswers(input, { maxSlugLength: limit });
-  saveRun(dir, { answers, modules });
+  saveRun(dir, { answers, modules }, pluginVersion(), modulesDir);
   writeAtomic(join(folder(dir), "answers.json"), `${JSON.stringify(input, null, 2)}\n`);
   return { slug };
 }
@@ -90,14 +96,14 @@ export function saveAnswers(dir, input, modules, modulesDir) {
 export function markDone(dir, stepId) {
   const state = loadState(dir);
   const { [stepId]: _cleared, ...skipped } = state.skipped;
-  save(dir, { ...state, steps: { ...state.steps, [stepId]: "done" }, skipped });
+  saveWithRecord(dir, { ...state, steps: { ...state.steps, [stepId]: "done" }, skipped });
 }
 
 export function markSkipped(dir, stepId, reason) {
   if (typeof reason !== "string" || !reason.trim()) throw new Error("A skipped step needs a reason");
   const state = loadState(dir);
   if (state.steps[stepId] === "done") throw new Error(`Step ${stepId} is already done`);
-  save(dir, {
+  saveWithRecord(dir, {
     ...state,
     steps: { ...state.steps, [stepId]: "skipped" },
     skipped: { ...state.skipped, [stepId]: reason.trim() },
@@ -122,7 +128,7 @@ const USAGE = `Usage:
   state.mjs show <dir>
   state.mjs save-answers <dir> <answers.json> <modules,comma,separated>
   state.mjs done <dir> <step-id>
-  state.mjs skip <dir> <step-id> <reason...>
+  state.mjs skip <dir> <step-id> <reason...>   (the reason is published in .bootstrap/record.json)
   state.mjs next <dir> <step-id,step-id,...>
   state.mjs record <dir> <key> <value>
   state.mjs get <dir> <key>`;

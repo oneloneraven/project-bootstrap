@@ -21,6 +21,13 @@ description, GitHub owner and visibility.
   sections), definition of done, privacy, record of processing, working
   with Claude, the ADR index and the shared ethics and privacy page base
   (`docs/public/`).
+- `.bootstrap/record.json`, the project's public record: its modules,
+  visibility, boolean flags, skipped steps with their reasons, and
+  conformance exceptions. `state.mjs` rewrites it whenever the answers or a
+  step's status change, and refuses a reason that would publish an email
+  address, a URL with credentials or a private answer. It's the only file in
+  `.bootstrap/` that's committed. Add a conformance exception by editing its
+  `exceptions` (`check`, optional `match`, `reason`); rewrites keep them.
 - `.bootstrap/vault/`, for the owner's private docs repository
   (`<owner>-vault`), never committed to the project: the threat model,
   ADRs 0001 and 0002, the incident runbooks and the public pages runbook.

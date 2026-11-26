@@ -279,7 +279,7 @@ function main() {
   });
   if (values["bootstrap-only"] && !values["dry-run"]) {
     const recorded = loadState(values.dest).modules;
-    saveRun(values.dest, { answers, modules: [...new Set([...recorded, ...selected])] });
+    saveRun(values.dest, { answers, modules: [...new Set([...recorded, ...selected])] }, undefined, values["modules-dir"]);
   }
   console.log(written.sort().join("\n"));
 }
