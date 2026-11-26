@@ -45,9 +45,9 @@ initial push, and the verification. The plugin's routing mod
 (`hooks/register.js`) forces every subagent onto Sonnet, whatever its type
 or the model the call asks for (forks inherit the parent's model and are
 exempt), and refuses a second subagent while one is active:
-[ADR-0003](adr/0003-enforce-model-routing-with-executor-agent-and-mod.md),
-[ADR-0004](adr/0004-limit-every-subagent-spawn-to-one-at-a-time.md),
-[ADR-0005](adr/0005-force-sonnet-on-every-subagent-spawn.md).
+ADR-0003 (in the vault),
+ADR-0004 (in the vault),
+ADR-0005 (in the vault).
 
 ## Memory
 

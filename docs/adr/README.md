@@ -9,11 +9,13 @@ old one's status becomes "Superseded by ADR-NNNN".
 
 | ADR | Decision |
 |---|---|
-| [0001](0001-record-architecture-decisions.md) | Record architecture decisions |
-| [0002](0002-screen-dependencies-against-bds-boycott-lists.md) | Screen dependencies and vendors against BDS boycott lists |
-| [0003](0003-enforce-model-routing-with-executor-agent-and-mod.md) | Enforce model routing with an executor agent and a plugin mod |
-| [0004](0004-limit-every-subagent-spawn-to-one-at-a-time.md) | Limit every subagent spawn to one at a time |
-| [0005](0005-force-sonnet-on-every-subagent-spawn.md) | Force Sonnet on every subagent spawn |
-| [0006](0006-automate-project-credentials-and-board-setup.md) | Automate project credentials and the board from a template (in the vault) |
-| [0007](0007-sync-organisation-boards-with-a-github-app.md) | Sync organisation boards with a GitHub App (in the vault) |
-| [0008](0008-separate-the-central-systems-jobs.md) | Separate the central systems' jobs (in the vault) |
+| 0001 | Record architecture decisions |
+| 0002 | Screen dependencies and vendors against BDS boycott lists |
+| 0003 | Enforce model routing with an executor agent and a plugin mod |
+| 0004 | Limit every subagent spawn to one at a time |
+| 0005 | Force Sonnet on every subagent spawn |
+| 0006 | Automate project credentials and the board from a template |
+| 0007 | Sync organisation boards with a GitHub App |
+| 0008 | Separate the central systems' jobs |
+
+Every ADR is kept in the private vault, at `oneloneraven-vault/project-bootstrap/adr/`. This index lists their numbers and titles only.
