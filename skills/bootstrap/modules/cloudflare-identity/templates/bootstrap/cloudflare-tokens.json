@@ -8,6 +8,7 @@
       "Access: Organizations, Identity Providers, and Groups Read",
       "Access: Apps Read",
       "Access: Policies Read",
+      "Access: Service Tokens Read",
       "Turnstile Sites Read"
     ]
   },
@@ -22,6 +23,7 @@
       "Access: Organizations, Identity Providers, and Groups Write",
       "Access: Apps Write",
       "Access: Policies Write",
+      "Access: Service Tokens Write",
       "Turnstile Sites Write"
     ]
   }

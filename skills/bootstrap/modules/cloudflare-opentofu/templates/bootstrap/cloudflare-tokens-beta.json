@@ -26,6 +26,7 @@
     "permissions": [
       "Individual Workers Editor",
       "Account Settings Read",
+      "Workers Scripts Read",
       "Workers Routes Write"{{fragment_d1_token_write}}
     ]
   },

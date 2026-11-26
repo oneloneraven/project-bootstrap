@@ -61,9 +61,11 @@ account and, for zone permissions, to `{{zone_name}}` only.
 | Token | GitHub secret | Permissions |
 |---|---|---|
 | Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Individual Workers Editor (this project's `preview` Worker only), Account Settings Read{{fragment_d1_readme_write}} |
-| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read{{fragment_d1_readme_write}}. Zone: Workers Routes Edit |
+| Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read, Workers Scripts Read{{fragment_d1_readme_write}}. Zone: Workers Routes Edit |
 | Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read{{fragment_d1_readme_read}}. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
 | Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit{{fragment_d1_readme_write}}. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
+
+Workers Scripts Read is account-scoped too, so the Deploy token can read every Worker's code and settings in the account, but not its secrets. Wrangler needs it to deploy a Worker whose last change didn't come from Wrangler (a secret or setting changed through the API or the dashboard). In that case, before uploading, it reads the Worker's routes through an account endpoint that neither Individual Workers Editor nor Workers Routes Edit can read (cloudflare/workers-sdk#16390).
 
 Transform Rules is account-scoped, so the infra tokens' Transform Rules permission covers every zone in the account, not just `{{zone_name}}`.
 

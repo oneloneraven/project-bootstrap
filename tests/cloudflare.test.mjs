@@ -363,7 +363,8 @@ test("the docs say tokens are scoped to the project's own Workers, which the boo
   assert.match(readme, /Individual Workers Editor \(this project's `preview` Worker only\)/);
   assert.match(readme, /### Reissuing tokens with per-Worker scope/);
   assert.match(readme, /`sample-project-preview`, `sample-project-production` and, with a\nbeta, `sample-project-beta`/);
-  assert.doesNotMatch(readme.split("\n").filter(line => line.startsWith("| ")).join("\n"), /Workers Scripts/);
+  assert.doesNotMatch(readme.split("\n").filter(line => line.startsWith("| ")).join("\n"), /Workers Scripts (Write|Edit)/);
+  assert.match(readme, /Workers Scripts Read is account-scoped too, so the Deploy token can read every Worker's code and settings in the account, but not its secrets/);
   assert.match(moduleDoc, /The bootstrap creates empty Workers before the first deploy/);
   assert.match(baseDoc, /"Individual Workers Editor"\s+permission\s+and\s+`"workers": \[\.\.\.\]`/);
   assert.match(baseDoc, /"Workers Admin"/);
