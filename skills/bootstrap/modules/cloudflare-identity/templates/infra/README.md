@@ -70,8 +70,8 @@ account. Neither token has a zone permission.
 
 | Token | GitHub secret | Permissions |
 |---|---|---|
-| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Access: Organizations, Identity Providers, and Groups Read, Access: Apps Read, Access: Policies Read, Turnstile Sites Read |
-| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Access: Organizations, Identity Providers, and Groups Edit, Access: Apps Edit, Access: Policies Edit, Turnstile Sites Edit |
+| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Access: Organizations, Identity Providers, and Groups Read, Access: Apps Read, Access: Policies Read, Access: Service Tokens Read, Turnstile Sites Read |
+| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Access: Organizations, Identity Providers, and Groups Edit, Access: Apps Edit, Access: Policies Edit, Access: Service Tokens Edit, Turnstile Sites Edit |
 
 The organisations permission is the one name not yet proven on a real
 account: if creating the tokens fails because it doesn't resolve, the error

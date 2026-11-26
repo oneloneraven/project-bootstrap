@@ -27,7 +27,7 @@ const ADMIN_ID = "98d78cd2433d4c3687191bc0244ef948";
 const tagOf = name => createHash("md5").update(name).digest("hex");
 
 const NAMES = {
-  [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write", "Access: Organizations, Identity Providers, and Groups Read", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Read", "Access: Apps Write", "Access: Policies Read", "Access: Policies Write", "Turnstile Sites Read", "Turnstile Sites Write"],
+  [ACCOUNT_SCOPE]: ["Workers Scripts Write", "Workers Scripts Read", "Account Settings Read", "Workers R2 Storage Read", "Workers R2 Storage Write", "Transform Rules Read", "Transform Rules Write", "Access: Organizations, Identity Providers, and Groups Read", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Read", "Access: Apps Write", "Access: Policies Read", "Access: Policies Write", "Access: Service Tokens Read", "Access: Service Tokens Write", "Turnstile Sites Read", "Turnstile Sites Write"],
   [ZONE_SCOPE]: ["Workers Routes Write", "DNS Read", "DNS Write", "Zone Settings Read", "Zone Settings Write", "Zone WAF Read", "Zone WAF Write", "Cache Settings Read", "Cache Settings Write", "Dynamic URL Redirects Read", "Dynamic URL Redirects Write"],
 };
 const GROUPS = [
@@ -561,8 +561,8 @@ test("a malformed token definitions file reports the parse error, not a missing 
 });
 
 const IDENTITY_TOKENS = [
-  { token: "Infra plan", secret: "CLOUDFLARE_INFRA_PLAN_TOKEN", env: null, permissions: ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Turnstile Sites Read"] },
-  { token: "Infra apply", secret: "CLOUDFLARE_INFRA_APPLY_TOKEN", env: ["infra"], permissions: ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Turnstile Sites Write"] },
+  { token: "Infra plan", secret: "CLOUDFLARE_INFRA_PLAN_TOKEN", env: null, permissions: ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Access: Service Tokens Read", "Turnstile Sites Read"] },
+  { token: "Infra apply", secret: "CLOUDFLARE_INFRA_APPLY_TOKEN", env: ["infra"], permissions: ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Access: Service Tokens Write", "Turnstile Sites Write"] },
 ];
 
 const tokensIn = dir => JSON.parse(readFileSync(join(dir, ".bootstrap", "cloudflare", "tokens.json"), "utf8"));
@@ -784,7 +784,7 @@ test("the rendered token definitions scope preview and deploy to their own Worke
     assert.deepEqual(by("Deploy").workers, beta ? ["production", "beta"] : ["production"]);
     assert.ok(!("workers" in by("Infra plan")) && !("workers" in by("Infra apply")));
     assert.deepEqual(by("Preview").permissions, ["Individual Workers Editor", "Account Settings Read"]);
-    assert.deepEqual(by("Deploy").permissions, ["Individual Workers Editor", "Account Settings Read", "Workers Routes Write"]);
+    assert.deepEqual(by("Deploy").permissions, ["Individual Workers Editor", "Account Settings Read", "Workers Scripts Read", "Workers Routes Write"]);
     assert.equal(by("Deploy").zone, true);
     for (const entry of tokens) assert.ok(!entry.permissions.includes("Workers Scripts Write"), entry.token);
   }

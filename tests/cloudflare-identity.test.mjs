@@ -126,12 +126,12 @@ test("the token definitions are the plan and apply tokens, account-scoped, with 
   const tokens = JSON.parse(read(".bootstrap/cloudflare/tokens.json"));
   assert.deepEqual(tokens.map(t => t.token), ["Infra plan", "Infra apply"]);
   assert.ok(tokens.every(t => !t.zone));
-  assert.deepEqual(tokens[0].permissions, ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Turnstile Sites Read"]);
-  assert.deepEqual(tokens[1].permissions, ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Turnstile Sites Write"]);
+  assert.deepEqual(tokens[0].permissions, ["Workers R2 Storage Read", "Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Access: Service Tokens Read", "Turnstile Sites Read"]);
+  assert.deepEqual(tokens[1].permissions, ["Workers R2 Storage Write", "Access: Organizations, Identity Providers, and Groups Write", "Access: Apps Write", "Access: Policies Write", "Access: Service Tokens Write", "Turnstile Sites Write"]);
   assert.deepEqual(tokens.map(t => [t.secret, t.env]), [["CLOUDFLARE_INFRA_PLAN_TOKEN", null], ["CLOUDFLARE_INFRA_APPLY_TOKEN", ["infra"]]]);
   const readme = read("infra/README.md");
   for (const row of ["| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) |", "| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) |"]) assert.ok(readme.includes(row), row);
-  for (const name of ["Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Turnstile Sites Read", "Access: Organizations, Identity Providers, and Groups Edit", "Access: Apps Edit", "Access: Policies Edit", "Turnstile Sites Edit"]) assert.ok(readme.includes(name), name);
+  for (const name of ["Access: Organizations, Identity Providers, and Groups Read", "Access: Apps Read", "Access: Policies Read", "Access: Service Tokens Read", "Turnstile Sites Read", "Access: Organizations, Identity Providers, and Groups Edit", "Access: Apps Edit", "Access: Policies Edit", "Access: Service Tokens Edit", "Turnstile Sites Edit"]) assert.ok(readme.includes(name), name);
   assert.match(readme, /organisations permission is the one name not yet proven/);
 });
 
