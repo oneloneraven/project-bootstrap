@@ -95,6 +95,9 @@ the security features a private repo can't use).
    read unless the workflow asks for more, and can never approve a pull
    request:
    `gh api -X PUT repos/$R/actions/permissions/workflow --input .bootstrap/github/actions-permissions.json`.
+   If the owner's own policy refuses the change (a `409`), read the current
+   value: when it already matches, record the step done; otherwise stop and
+   say which setting the owner must change.
 
 **`github:core:vault`** runs last in the GitHub configuration, after every
 selected module's section 4, because their steps add rows to the staged

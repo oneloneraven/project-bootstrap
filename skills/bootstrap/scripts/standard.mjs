@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateRequiredChecks } from "./conformance-rules.mjs";
@@ -116,7 +116,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (args[0] === "--write") {
     writeFileSync(STANDARD_PATH, formatStandard(generated));
   } else if (args[0] === "--check") {
-    if (formatStandard(withoutStamp(readJson(STANDARD_PATH))) !== formatStandard(generated)) {
+    if (!existsSync(STANDARD_PATH) || formatStandard(withoutStamp(readJson(STANDARD_PATH))) !== formatStandard(generated)) {
       console.error("conformance/standard.json is out of date: run node skills/bootstrap/scripts/standard.mjs --write");
       process.exit(1);
     }

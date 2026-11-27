@@ -25,9 +25,6 @@ jobs:
         run: |
           zip -qr project-bootstrap.zip .claude-plugin skills agents hooks LICENSE.md LICENSE-SCHEDULE.md README.md
           gh release upload "$TAG" project-bootstrap.zip --repo "$GITHUB_REPOSITORY" --clobber
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
       - name: Attach the standard and its checksum
         env:
           GH_TOKEN: ${{ github.token }}
