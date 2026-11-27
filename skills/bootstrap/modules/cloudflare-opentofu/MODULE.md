@@ -31,7 +31,8 @@ adds only its own records and leaves the zone to that stack.
   production.
 - **`admin`** (yes or no): whether the app has an admin section for its
   owner. If yes, the module adds the admin hostname, its Worker route, the
-  Access vars and an owner check in the Worker, and the project's Access
+  Access vars and an owner check in the Worker (with `run_worker_first`, so
+  static files on the admin host pass the check too), and the project's Access
   application is added to the central identity stack by hand (a manual step).
   The owner's email, `OWNER_EMAIL`, is a Worker secret set through the "Sync
   Worker secrets" workflow.
