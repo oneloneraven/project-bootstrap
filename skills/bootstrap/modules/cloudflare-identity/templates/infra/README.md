@@ -160,6 +160,13 @@ section. Keep it on passkey or security-key two-factor only, with no
 authenticator-app or email fallback, and keep its backup codes somewhere other
 than the passkey's own store.
 
+The GitHub organisation holds every repository and its secrets:
+
+- Turn on "Require two-factor authentication" and "Only allow secure
+  two-factor methods" in the organisation's authentication security settings.
+- Sign in with passkeys, and remove the authenticator app (TOTP) once
+  passkeys are set up, if GitHub allows it.
+
 ## Disaster recovery
 
 1. Run "Bootstrap OpenTofu state bucket".

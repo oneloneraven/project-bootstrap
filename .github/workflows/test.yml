@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: 22
       - run: pnpm test
+      - name: The published standard is up to date
+        run: node skills/bootstrap/scripts/standard.mjs --check
       - name: Rendered templates are Biome-formatted
         run: |
           dir="$(mktemp -d)"

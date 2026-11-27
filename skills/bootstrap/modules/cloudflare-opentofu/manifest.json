@@ -89,7 +89,10 @@
     },
     "sync_secrets_readme": {
       "path": "templates/fragments/sync-secrets-readme.md",
-      "when": ["admin", "turnstile"]
+      "when": [
+        "admin",
+        "turnstile"
+      ]
     },
     "turnstile_sync_beta": {
       "path": "templates/fragments/turnstile-sync-beta.txt",
@@ -274,7 +277,10 @@
     {
       "from": "templates/github/workflows/sync-worker-secrets.yml",
       "to": ".github/workflows/sync-worker-secrets.yml",
-      "when": ["admin", "turnstile"]
+      "when": [
+        "admin",
+        "turnstile"
+      ]
     },
     {
       "from": "templates/src/worker.js",
@@ -361,5 +367,62 @@
       "allow": true,
       "reason": "wrangler's local runtime downloads its platform binary at install."
     }
-  }
+  },
+  "environments": [
+    {
+      "name": "production",
+      "refs": [
+        {
+          "ref": "branch:main",
+          "when": [
+            "beta",
+            "admin",
+            "turnstile"
+          ]
+        },
+        "tag:v*"
+      ],
+      "step": "github:cloudflare-opentofu:1"
+    },
+    {
+      "name": "beta",
+      "refs": [
+        "tag:v*"
+      ],
+      "when": "beta",
+      "step": "github:cloudflare-opentofu:1"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "CLOUDFLARE_PREVIEW_TOKEN"
+    },
+    {
+      "name": "CLOUDFLARE_DEPLOY_TOKEN",
+      "scope": "environment",
+      "environment": "production",
+      "step": "github:cloudflare-opentofu:1"
+    },
+    {
+      "name": "CLOUDFLARE_DEPLOY_TOKEN",
+      "scope": "environment",
+      "environment": "beta",
+      "when": "beta",
+      "step": "github:cloudflare-opentofu:1"
+    },
+    {
+      "name": "OWNER_EMAIL",
+      "scope": "environment",
+      "environment": "production",
+      "when": "admin",
+      "step": "github:cloudflare-opentofu:1"
+    },
+    {
+      "name": "TURNSTILE_SECRET_KEY",
+      "scope": "environment",
+      "environment": "production",
+      "when": "turnstile",
+      "step": "github:cloudflare-opentofu:1"
+    }
+  ]
 }

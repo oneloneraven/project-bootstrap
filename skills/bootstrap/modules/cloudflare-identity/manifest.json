@@ -77,5 +77,10 @@
       "decision": "Allowed",
       "screenedOn": "2026-11-15"
     }
+  ],
+  "secrets": [
+    {
+      "name": "OWNER_EMAIL"
+    }
   ]
 }

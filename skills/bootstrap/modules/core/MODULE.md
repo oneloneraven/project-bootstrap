@@ -91,6 +91,10 @@ the security features a private repo can't use).
    `gh variable set PROJECT_ID`, `PROJECT_STATUS_FIELD_ID`,
    `PROJECT_IN_PROGRESS_OPTION` and `PROJECT_IN_REVIEW_OPTION`, each with
    `--repo $R --body <value>`.
+7. Actions workflow permissions, so a workflow's `GITHUB_TOKEN` can only
+   read unless the workflow asks for more, and can never approve a pull
+   request:
+   `gh api -X PUT repos/$R/actions/permissions/workflow --input .bootstrap/github/actions-permissions.json`.
 
 **`github:core:vault`** runs last in the GitHub configuration, after every
 selected module's section 4, because their steps add rows to the staged
@@ -129,6 +133,8 @@ after this step goes into the vault by hand, in another vault PR.
 Verify: `gh api repos/$R/rulesets` lists `default-branch-protection` as
 `active` (unless skipped); `gh label list --repo $R` shows the four release
 labels; `gh variable list --repo $R` shows the four project variables;
+`gh api repos/$R/actions/permissions/workflow` matches
+`.bootstrap/github/actions-permissions.json`;
 `gh pr view <vault_pr> --json files --jq '.files[].path'` lists every file
 under `.bootstrap/vault/`, under `<slug>/` (unless skipped).
 
