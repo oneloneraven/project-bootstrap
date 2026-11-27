@@ -1,4 +1,4 @@
 {
-  "noneAllowed": ["docs/", ".github/", ".claude/", ".gitignore", "*.md", "tests/", "package.json", "pnpm-lock.yaml", ".bootstrap/"],
+  "noneAllowed": ["docs/", ".github/", ".claude/", ".gitignore", "*.md", "tests/", "package.json", "pnpm-lock.yaml", ".bootstrap/record.json"],
   "noneForbidden": []
 }
