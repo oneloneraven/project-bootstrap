@@ -1,12 +1,6 @@
 # Infrastructure
 
-Everything provisionable is managed here with
-[OpenTofu](https://opentofu.org), the open-source fork of Terraform (same HCL,
-providers and state format): DNS, TLS and HSTS, DNSSEC, CAA, security headers,
-cache rules and the `www` redirect for `{{zone_name}}`. The Worker itself is
-deployed by wrangler from the release workflows. The only things outside
-OpenTofu are the state bucket (it must exist before OpenTofu can use it),
-Worker runtime secrets and the CI credentials below.
+{{fragment_infra_readme_intro_owned}}{{fragment_infra_readme_intro_shared}}
 
 State lives in the R2 bucket `{{slug}}-tfstate`, never in git.
 
@@ -22,10 +16,7 @@ State lives in the R2 bucket `{{slug}}-tfstate`, never in git.
 
 ## Changing infrastructure
 
-Everything `infra/` declares (the DNS records, the TLS, HTTPS, HSTS and DNSSEC
-settings, and the security header, cache and redirect rules for
-`{{zone_name}}`) changes only through a PR to `infra/`, applied by `infra.yml`.
-The Worker's routes come from `wrangler.jsonc` and change through wrangler.
+{{fragment_infra_readme_changing_owned}}{{fragment_infra_readme_changing_shared}}
 
 - Before writing to Cloudflare through an API, an MCP tool or the dashboard,
   check whether `infra/` declares that resource. If it does, make the change
@@ -41,17 +32,7 @@ The Worker's routes come from `wrangler.jsonc` and change through wrangler.
 
 ## Setup
 
-1. The zone `{{zone_name}}` is active on Cloudflare.
-2. Create the CI tokens below, the R2 state credentials, and the GitHub
-   secrets and variables: `node <plugin>/skills/bootstrap/scripts/secrets.mjs cloudflare-tokens <project dir>`
-   does the CI tokens, or follow this page by hand.
-3. Run "Bootstrap OpenTofu state bucket".
-4. Run "Infra" (dispatch it, or merge a change under `infra/`).
-5. Cloudflare Registrar adds the DS record within one to two days; check it
-   with `dig +short DS {{zone_name}}`. Until then, plans show the DNSSEC
-   status as `pending -> active`. That's expected, and it clears once the
-   registry has the record.
-6. In the dashboard, check the Worker's Preview URLs setting is on.
+{{fragment_infra_readme_setup_owned}}{{fragment_infra_readme_setup_shared}}
 
 ### Cloudflare API tokens
 
@@ -62,14 +43,12 @@ account and, for zone permissions, to `{{zone_name}}` only.
 |---|---|---|
 | Preview | `CLOUDFLARE_PREVIEW_TOKEN` (repository) | Account: Individual Workers Editor (this project's `preview` Worker only), Account Settings Read{{fragment_d1_readme_write}} |
 | Deploy | `CLOUDFLARE_DEPLOY_TOKEN` (environments `production`, and `beta` if used) | Account: Individual Workers Editor (this project's Workers for those environments only), Account Settings Read, Workers Scripts Read{{fragment_d1_readme_write}}. Zone: Workers Routes Edit |
-| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read, Transform Rules Read{{fragment_d1_readme_read}}. Zone: DNS Read, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read |
-| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit, Transform Rules Edit{{fragment_d1_readme_write}}. Zone: DNS Edit, Zone Settings Edit, Zone WAF Edit, Cache Settings Edit, Single Redirect Edit |
+| Infra plan | `CLOUDFLARE_INFRA_PLAN_TOKEN` (repository) | Account: Workers R2 Storage Read{{fragment_zone_owned_readme_transform_read}}{{fragment_d1_readme_read}}. Zone: DNS Read{{fragment_zone_owned_readme_read}} |
+| Infra apply | `CLOUDFLARE_INFRA_APPLY_TOKEN` (environment `infra`) | Account: Workers R2 Storage Edit{{fragment_zone_owned_readme_transform_write}}{{fragment_d1_readme_write}}. Zone: DNS Edit{{fragment_zone_owned_readme_write}} |
 
 Workers Scripts Read is account-scoped too, so the Deploy token can read every Worker's code and settings in the account, but not its secrets. Wrangler needs it to deploy a Worker whose last change didn't come from Wrangler (a secret or setting changed through the API or the dashboard). In that case, before uploading, it reads the Worker's routes through an account endpoint that neither Individual Workers Editor nor Workers Routes Edit can read (cloudflare/workers-sdk#16390).
 
-Transform Rules is account-scoped, so the infra tokens' Transform Rules permission covers every zone in the account, not just `{{zone_name}}`.
-
-If a plan or apply fails with an authorisation error, the error names the
+{{fragment_infra_readme_transform_owned}}If a plan or apply fails with an authorisation error, the error names the
 missing permission: add exactly that one.
 
 The preview and deploy tokens can edit only this project's own Workers, named
@@ -124,19 +103,4 @@ gitignored.
 
 Deliberately deleting the project's infrastructure:
 
-1. In a PR to `infra/`, set `cloudflare_zone_dnssec.app`'s `status` to
-   `"disabled"` and let Infra apply it.
-2. Wait until the zone's DNSSEC status is `disabled`. Cloudflare Registrar
-   withdraws the DS record once the zone's CDS records are zeroed; check with
-   `dig +short DS {{zone_name}}` returning nothing.
-3. Wait at least 1.5 times the DS record's TTL before continuing.
-4. Remove `prevent_destroy` from every resource in a PR (the infra workflow
-   refuses plans that delete, so run the destroy locally).
-5. Locally, with the infra apply token and state credentials in your
-   environment:
-   `tofu init -backend-config="endpoints={s3=\"https://<account id>.r2.cloudflarestorage.com\"}"`
-   then `tofu destroy`.
-6. Delete the Workers: `pnpm exec wrangler delete --env <env>` for each
-   environment.
-7. Empty and delete the `{{slug}}-tfstate` bucket in the dashboard.
-8. Revoke the four Cloudflare tokens and the R2 credentials.
+{{fragment_infra_readme_teardown_owned}}{{fragment_infra_readme_teardown_shared}}

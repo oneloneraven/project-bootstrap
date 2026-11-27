@@ -3,7 +3,8 @@
 A Cloudflare Worker serving the app's static assets and a `/api/health`
 endpoint, deployed by wrangler from release tags, with the zone's DNS,
 TLS, headers, cache rules and a `www` redirect in OpenTofu (the open-source
-Terraform fork) and state in R2.
+Terraform fork) and state in R2. On a zone another project's stack manages, it
+adds only its own records and leaves the zone to that stack.
 
 ## 1. Depends on
 
@@ -13,6 +14,17 @@ Terraform fork) and state in R2.
 
 - **`zone_name`**: the domain the app is served from. It must already be an
   active zone in the user's Cloudflare account. Ask them to confirm.
+- **`zone_shared`** (yes or no): whether the zone is already managed by another
+  project's stack, so this project adds only its own records. If yes, the app
+  is served from `<app_subdomain>.<zone>` instead of the apex, and the module
+  leaves out everything zone-wide: the apex and `www` records, the redirect,
+  CAA, TLS, HTTPS, HSTS, DNSSEC, the security header and cache rules, and
+  their permissions on the infra tokens. Those stay with the stack that owns
+  the zone.
+- **`app_subdomain`** (asked only when `zone_shared` is yes): the app
+  hostname's first label, such as `status` for `status.<zone>`. One lower-case
+  DNS label, different from `admin_subdomain`. With a beta, the beta hostname
+  is `<app_subdomain>-beta.<zone>`.
 - **`beta`** (yes or no): with a beta, each release tag deploys to
   `beta.<zone>` and a person promotes a chosen tag to production with
   "Promote to production". Without one, each tag deploys straight to
@@ -42,7 +54,7 @@ and preview hostnames are built from it.
 
 ### Plan warnings
 
-- **The app takes over the zone's apex.** OpenTofu adds a proxied
+- **The app takes over the zone's apex** (without `zone_shared`). OpenTofu adds a proxied
   placeholder A record for `<zone>` (and `beta.<zone>`), a proxied `www`
   CNAME to the apex with a rule that 301s `www.<zone>` to `https://<zone>`,
   and the production Worker route is `<zone>/*`. Ask the user to check the
@@ -52,7 +64,16 @@ and preview hostnames are built from it.
   traffic with an existing A record. If the zone already has Redirect Rules,
   stop and agree what happens to them too: the apply fails while a
   `http_request_dynamic_redirect` ruleset exists.
-- Without a beta, the first merged release deploys straight to the apex.
+- **On a shared zone, the app adds records to a zone it doesn't own** (with
+  `zone_shared`). OpenTofu adds proxied placeholder A records for
+  `<app_subdomain>.<zone>` (and `<app_subdomain>-beta.<zone>`, and the admin
+  hostname), and the production Worker route is `<app_subdomain>.<zone>/*`.
+  Ask the user to check none of those hostnames has a record or a Worker route
+  yet, and that the stack managing the zone doesn't declare them: stop and
+  agree what happens if one does. The zone's TLS, HSTS and security headers
+  come from that stack and apply to these hostnames too.
+- Without a beta, the first merged release deploys straight to the apex (or,
+  with `zone_shared`, to `<app_subdomain>.<zone>`).
 - **The bootstrap creates empty Workers before the first deploy.** The preview
   and deploy tokens may edit only this project's own Workers, and a token can
   only be scoped to a Worker that exists, so token creation first uploads a
@@ -125,7 +146,9 @@ and preview hostnames are built from it.
 - `infra/`: provider and R2 backend, DNS placeholder records (and `beta.`),
   CAA, TLS 1.2 minimum, HSTS, always HTTPS, DNSSEC, security headers, cache
   rules, and a README with setup, deleting resources, disaster recovery and
-  teardown.
+  teardown. With `zone_shared`, only the provider, backend, this project's own
+  placeholder records (`infra/dns-shared.tf`, and the beta and admin ones) and
+  the README.
 - The workflows `infra.yml`, `preview.yml`, `deploy.yml`, and `promote.yml`
   (beta only), and with `admin` or `turnstile` `sync-worker-secrets.yml`.
   `infra.yml` refuses plans that delete or replace; a manual run with
@@ -191,6 +214,9 @@ permission: the user adds exactly that one to the infra token and Claude
 re-runs it.
 
 ### cloudflare-opentofu:2 Confirm DNSSEC
+
+Only without `zone_shared`: on a shared zone, DNSSEC belongs to the stack that
+manages it.
 
 **Why:** DNSSEC isn't fully active until the DS record is published.
 Cloudflare Registrar adds it itself, from the zone's CDS and CDNSKEY
@@ -261,8 +287,10 @@ Only with `turnstile`.
 **Do:**
 1. In the central identity stack, add the project to `widgets` in
    `infra/terraform.tfvars.json`, keyed by the project slug, by PR:
-   `"<slug>": { "name": "<slug>", "domains": ["<zone_name>"], "mode": "managed" }`.
-   With a beta, `domains` also lists `beta.<zone_name>`. After its apply, read
+   `"<slug>": { "name": "<slug>", "domains": ["<app host>"], "mode": "managed" }`,
+   where the app host is `<zone_name>`, or `<app_subdomain>.<zone_name>` with
+   `zone_shared`. With a beta, `domains` also lists `beta.<zone_name>` (or
+   `<app_subdomain>-beta.<zone_name>`). After its apply, read
    the `widget_sitekey` output for the project.
 2. In this project's `wrangler.jsonc`, set `TURNSTILE_SITEKEY` in the
    `production` vars (and the `beta` vars, with a beta) to it, by PR.
