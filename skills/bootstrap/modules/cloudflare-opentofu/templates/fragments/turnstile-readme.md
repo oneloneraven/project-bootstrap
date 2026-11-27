@@ -2,7 +2,7 @@
 
 The public form is guarded by a Turnstile widget that lives in the central
 identity stack (the `cloudflare-identity` repository), which never outputs its
-secret. The widget covers `{{zone_name}}` and, with a beta, `beta.{{zone_name}}`.
+secret. The widget covers `{{app_host}}` and, with a beta, `{{beta_label}}.{{zone_name}}`.
 
 - **Sitekey.** `TURNSTILE_SITEKEY` in the `production` vars (and the `beta`
   vars, with a beta) of `wrangler.jsonc` is empty until it is set, by PR, to

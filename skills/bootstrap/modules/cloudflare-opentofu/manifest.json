@@ -12,6 +12,17 @@
       "prompt": "Which domain (Cloudflare zone) will the app be served from?"
     },
     {
+      "key": "zone_shared",
+      "type": "boolean",
+      "prompt": "Is the zone already managed by another project's stack, so this project adds only its own records?"
+    },
+    {
+      "key": "app_subdomain",
+      "type": "dns_label",
+      "when": "zone_shared",
+      "prompt": "Which subdomain serves the app on the shared zone?"
+    },
+    {
       "key": "beta",
       "type": "boolean",
       "prompt": "Do you want a beta environment, with releases deployed to beta first and promoted to production by hand?"
@@ -161,6 +172,74 @@
     "d1_preview_cleanup": {
       "path": "templates/fragments/d1-preview-cleanup.yml",
       "when": "d1"
+    },
+    "zone_owned_token_transform_read": {
+      "path": "templates/fragments/zone-owned-token-transform-read.json",
+      "when": "!zone_shared"
+    },
+    "zone_owned_token_transform_write": {
+      "path": "templates/fragments/zone-owned-token-transform-write.json",
+      "when": "!zone_shared"
+    },
+    "zone_owned_token_read": {
+      "path": "templates/fragments/zone-owned-token-read.json",
+      "when": "!zone_shared"
+    },
+    "zone_owned_token_write": {
+      "path": "templates/fragments/zone-owned-token-write.json",
+      "when": "!zone_shared"
+    },
+    "zone_owned_readme_transform_read": {
+      "path": "templates/fragments/zone-owned-readme-transform-read.txt",
+      "when": "!zone_shared"
+    },
+    "zone_owned_readme_transform_write": {
+      "path": "templates/fragments/zone-owned-readme-transform-write.txt",
+      "when": "!zone_shared"
+    },
+    "zone_owned_readme_read": {
+      "path": "templates/fragments/zone-owned-readme-read.txt",
+      "when": "!zone_shared"
+    },
+    "zone_owned_readme_write": {
+      "path": "templates/fragments/zone-owned-readme-write.txt",
+      "when": "!zone_shared"
+    },
+    "infra_readme_transform_owned": {
+      "path": "templates/fragments/infra-readme-transform-owned.md",
+      "when": "!zone_shared"
+    },
+    "infra_readme_intro_owned": {
+      "path": "templates/fragments/infra-readme-intro-owned.md",
+      "when": "!zone_shared"
+    },
+    "infra_readme_intro_shared": {
+      "path": "templates/fragments/infra-readme-intro-shared.md",
+      "when": "zone_shared"
+    },
+    "infra_readme_changing_owned": {
+      "path": "templates/fragments/infra-readme-changing-owned.md",
+      "when": "!zone_shared"
+    },
+    "infra_readme_changing_shared": {
+      "path": "templates/fragments/infra-readme-changing-shared.md",
+      "when": "zone_shared"
+    },
+    "infra_readme_setup_owned": {
+      "path": "templates/fragments/infra-readme-setup-owned.md",
+      "when": "!zone_shared"
+    },
+    "infra_readme_setup_shared": {
+      "path": "templates/fragments/infra-readme-setup-shared.md",
+      "when": "zone_shared"
+    },
+    "infra_readme_teardown_owned": {
+      "path": "templates/fragments/infra-readme-teardown-owned.md",
+      "when": "!zone_shared"
+    },
+    "infra_readme_teardown_shared": {
+      "path": "templates/fragments/infra-readme-teardown-shared.md",
+      "when": "zone_shared"
     }
   },
   "overrides": [],
@@ -194,11 +273,18 @@
     },
     {
       "from": "templates/infra/outputs.tf",
-      "to": "infra/outputs.tf"
+      "to": "infra/outputs.tf",
+      "when": "!zone_shared"
     },
     {
       "from": "templates/infra/dns.tf",
-      "to": "infra/dns.tf"
+      "to": "infra/dns.tf",
+      "when": "!zone_shared"
+    },
+    {
+      "from": "templates/infra/dns-shared.tf",
+      "to": "infra/dns-shared.tf",
+      "when": "zone_shared"
     },
     {
       "from": "templates/infra/dns-beta.tf",
@@ -222,15 +308,18 @@
     },
     {
       "from": "templates/infra/redirects.tf",
-      "to": "infra/redirects.tf"
+      "to": "infra/redirects.tf",
+      "when": "!zone_shared"
     },
     {
       "from": "templates/infra/security.tf",
-      "to": "infra/security.tf"
+      "to": "infra/security.tf",
+      "when": "!zone_shared"
     },
     {
       "from": "templates/infra/cache.tf",
-      "to": "infra/cache.tf"
+      "to": "infra/cache.tf",
+      "when": "!zone_shared"
     },
     {
       "from": "templates/infra/terraform.tfvars.example",

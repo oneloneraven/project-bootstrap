@@ -114,6 +114,10 @@ function deriveKeys(modules, answers, modulesDir) {
       noneForbidden: [...new Set(modules.flatMap(m => m.releasePaths?.noneForbidden ?? []))],
     }),
     ...mergePolicyKeys(modules, answers.merge_policy),
+    ...(answers.zone_name && {
+      app_host: answers.zone_shared ? `${answers.app_subdomain}.${answers.zone_name}` : answers.zone_name,
+      beta_label: answers.zone_shared ? `${answers.app_subdomain}-beta` : "beta",
+    }),
     ...(answers.owner && { repo_url: `https://github.com/${answers.owner}/${answers.slug}`, vault_repo: `${answers.owner}-vault` }),
   };
 }

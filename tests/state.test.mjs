@@ -65,7 +65,7 @@ test("saveAnswers validates, saves the run and writes answers.json", () => {
 
 test("saveAnswers applies the selected modules' slug limit", () => {
   assert.throws(
-    () => saveAnswers(tmp(), { owner_type: "User", name: "x".repeat(45), visibility: "public", beta: false, admin: false, turnstile: false, d1: false, zone_name: "example.com", merge_policy: "claude" }, ["cloudflare-opentofu"], realModulesDir),
+    () => saveAnswers(tmp(), { owner_type: "User", name: "x".repeat(45), visibility: "public", beta: false, admin: false, turnstile: false, d1: false, zone_name: "example.com", zone_shared: false, merge_policy: "claude" }, ["cloudflare-opentofu"], realModulesDir),
     /allow at most 40/,
   );
 });
@@ -115,7 +115,7 @@ test("saveAnswers requires a known merge_policy, checked after the module questi
 });
 
 test("saveAnswers checks each selected module's questions by type", () => {
-  const base = { owner_type: "User", name: "A", visibility: "public", zone_name: "example.com", admin: false, turnstile: false, d1: false };
+  const base = { owner_type: "User", name: "A", visibility: "public", zone_name: "example.com", zone_shared: false, admin: false, turnstile: false, d1: false };
   assert.throws(() => saveAnswers(tmp(), { ...base, beta: "no" }, ["cloudflare-opentofu"], realModulesDir), {
     message: "beta must be true or false",
   });
@@ -126,7 +126,7 @@ test("saveAnswers checks each selected module's questions by type", () => {
 
 test("saveAnswers rejects a zone that isn't a hostname", () => {
   assert.throws(
-    () => saveAnswers(tmp(), { owner_type: "User", name: "A", visibility: "public", beta: false, admin: false, turnstile: false, d1: false, zone_name: 'ex"ample.com' }, ["cloudflare-opentofu"], realModulesDir),
+    () => saveAnswers(tmp(), { owner_type: "User", name: "A", visibility: "public", beta: false, admin: false, turnstile: false, d1: false, zone_name: 'ex"ample.com', zone_shared: false }, ["cloudflare-opentofu"], realModulesDir),
     { message: "zone_name must be a domain name such as example.com" },
   );
 });
@@ -275,7 +275,7 @@ test("saveRun records the plugin version beside the answers", () => {
   assert.equal(loadState(tmp()).pluginVersion, undefined);
 });
 
-const adminBase = { owner_type: "User", name: "A", visibility: "public", merge_policy: "claude", zone_name: "example.com", beta: false, turnstile: false, d1: false };
+const adminBase = { owner_type: "User", name: "A", visibility: "public", merge_policy: "claude", zone_name: "example.com", zone_shared: false, beta: false, turnstile: false, d1: false };
 
 test("saveAnswers asks the admin hostname question only when admin is yes", () => {
   const dir = tmp();

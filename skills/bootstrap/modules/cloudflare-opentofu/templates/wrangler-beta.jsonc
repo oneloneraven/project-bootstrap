@@ -26,7 +26,7 @@
       }{{fragment_d1_wrangler_env}},
       "routes": [
         {
-          "pattern": "{{zone_name}}/*",
+          "pattern": "{{app_host}}/*",
           "zone_name": "{{zone_name}}"
         }{{fragment_admin_production_route}}
       ]
@@ -41,7 +41,7 @@
       }{{fragment_d1_wrangler_env}},
       "routes": [
         {
-          "pattern": "beta.{{zone_name}}/*",
+          "pattern": "{{beta_label}}.{{zone_name}}/*",
           "zone_name": "{{zone_name}}"
         }
       ]

@@ -1,6 +1,6 @@
 resource "cloudflare_dns_record" "app_beta" {
   zone_id = data.cloudflare_zone.app.id
-  name    = "beta.${var.app_zone_name}"
+  name    = "{{beta_label}}.${var.app_zone_name}"
   type    = "A"
   content = "192.0.2.1"
   ttl     = 1

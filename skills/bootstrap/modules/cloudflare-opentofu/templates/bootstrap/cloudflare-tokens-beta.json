@@ -36,13 +36,8 @@
     "env": null,
     "zone": true,
     "permissions": [
-      "Workers R2 Storage Read",
-      "Transform Rules Read",
-      "DNS Read",
-      "Zone Settings Read",
-      "Zone WAF Read",
-      "Cache Settings Read",
-      "Dynamic URL Redirects Read"{{fragment_d1_token_read}}
+      "Workers R2 Storage Read",{{fragment_zone_owned_token_transform_read}}
+      "DNS Read"{{fragment_zone_owned_token_read}}{{fragment_d1_token_read}}
     ]
   },
   {
@@ -53,13 +48,8 @@
     ],
     "zone": true,
     "permissions": [
-      "Workers R2 Storage Write",
-      "Transform Rules Write",
-      "DNS Write",
-      "Zone Settings Write",
-      "Zone WAF Write",
-      "Cache Settings Write",
-      "Dynamic URL Redirects Write"{{fragment_d1_token_write}}
+      "Workers R2 Storage Write",{{fragment_zone_owned_token_transform_write}}
+      "DNS Write"{{fragment_zone_owned_token_write}}{{fragment_d1_token_write}}
     ]
   }
 ]

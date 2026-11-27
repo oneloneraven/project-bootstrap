@@ -14,7 +14,7 @@ const tmp = () => mkdtempSync(join(tmpdir(), "record-"));
 const script = fileURLToPath(new URL("../skills/bootstrap/scripts/record.mjs", import.meta.url));
 const record = dir => JSON.parse(readFileSync(join(dir, ".bootstrap", "record.json"), "utf8"));
 const base = { owner_type: "User", name: "Demo", owner: "sample-owner", visibility: "public", merge_policy: "claude", licensor: "Private Person" };
-const cloudflare = { ...base, zone_name: "example.test", beta: true, admin: false, turnstile: true, d1: false };
+const cloudflare = { ...base, zone_name: "example.test", zone_shared: false, beta: true, admin: false, turnstile: true, d1: false };
 
 test("saving the answers writes a record with the resolved modules, visibility and no private answer", () => {
   const dir = tmp();
@@ -33,7 +33,7 @@ test("saving the answers writes a record with the resolved modules, visibility a
 test("flags hold only the boolean answers a manifest's when names", () => {
   const dir = tmp();
   saveAnswers(dir, cloudflare, ["cloudflare-opentofu"], realModulesDir);
-  assert.deepEqual(record(dir).flags, { admin: false, beta: true, d1: false, owner_org: false, turnstile: true });
+  assert.deepEqual(record(dir).flags, { admin: false, beta: true, d1: false, owner_org: false, turnstile: true, zone_shared: false });
 });
 
 test("a skip adds its reason and a later done clears it", () => {

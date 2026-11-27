@@ -1,0 +1,1 @@
+, Zone Settings Read, Zone WAF Read, Cache Settings Read, Single Redirect Read
