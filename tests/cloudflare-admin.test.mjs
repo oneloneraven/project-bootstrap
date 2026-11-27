@@ -65,6 +65,11 @@ for (const [name, dir] of Object.entries(variants)) {
     for (const token of tokens) for (const permission of token.permissions) assert.doesNotMatch(permission, /Access:|Turnstile|Zero Trust/i, `${token.token}: ${permission}`);
     assert.doesNotMatch(read(dir, ".bootstrap/vault/infra/README.md"), /Access: |Turnstile Sites/);
   });
+
+  test(`${name}: every environment runs the Worker before static assets, so the owner check sees every request`, () => {
+    const config = jsonc(read(dir, "wrangler.jsonc"));
+    for (const [envName, env] of Object.entries({ top: config, ...config.env })) assert.equal(env.assets.run_worker_first, true, envName);
+  });
 }
 
 test("a beta has no admin hostname, route or vars of its own", () => {
@@ -83,6 +88,11 @@ test("the admin hostname follows the admin_subdomain answer", () => {
 });
 
 for (const [name, dir] of Object.entries(plain)) {
+  test(`${name}: static assets are served without running the Worker first`, () => {
+    const config = jsonc(read(dir, "wrangler.jsonc"));
+    for (const [envName, env] of Object.entries({ top: config, ...config.env })) assert.equal(env.assets.run_worker_first, undefined, envName);
+  });
+
   test(`${name}: none of the admin files, record, route, vars or text are rendered`, () => {
     const rendered = [...files(dir)];
     for (const file of ADMIN_FILES) assert.ok(!rendered.includes(file), file);

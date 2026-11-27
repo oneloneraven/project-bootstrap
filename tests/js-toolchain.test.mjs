@@ -49,3 +49,7 @@ test("the scaffold fills in .nvmrc, which CI reads", () => {
 test("links still resolve with the module added", () => {
   assert.deepEqual(brokenLinks(dest), []);
 });
+
+test("Biome leaves .bootstrap alone, so it never reformats the record state.mjs writes", () => {
+  assert.ok(JSON.parse(read("biome.json")).files.includes.includes("!**/.bootstrap"));
+});

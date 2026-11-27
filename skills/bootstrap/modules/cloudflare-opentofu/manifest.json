@@ -58,6 +58,14 @@
       "path": "templates/fragments/admin-production-route.json",
       "when": "admin"
     },
+    "admin_run_worker_first_top": {
+      "path": "templates/fragments/admin-run-worker-first-top.json",
+      "when": "admin"
+    },
+    "admin_run_worker_first": {
+      "path": "templates/fragments/admin-run-worker-first.json",
+      "when": "admin"
+    },
     "admin_e2e_vars": {
       "path": "templates/fragments/admin-e2e-vars.json",
       "when": "admin"

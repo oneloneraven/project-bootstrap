@@ -10,7 +10,7 @@
   },
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS"{{fragment_admin_run_worker_first_top}}
   },
   "vars": {
     "APP_ENV": "development"
@@ -22,7 +22,7 @@
       },
       "assets": {
         "directory": "./dist",
-        "binding": "ASSETS"
+        "binding": "ASSETS"{{fragment_admin_run_worker_first}}
       }{{fragment_d1_wrangler_env}},
       "routes": [
         {
@@ -37,7 +37,7 @@
       },
       "assets": {
         "directory": "./dist",
-        "binding": "ASSETS"
+        "binding": "ASSETS"{{fragment_admin_run_worker_first}}
       }{{fragment_d1_wrangler_env}},
       "routes": [
         {
@@ -52,7 +52,7 @@
       },
       "assets": {
         "directory": "./dist",
-        "binding": "ASSETS"
+        "binding": "ASSETS"{{fragment_admin_run_worker_first}}
       }{{fragment_d1_wrangler_preview}},
       "workers_dev": true,
       "preview_urls": true,
@@ -68,7 +68,7 @@
       },
       "assets": {
         "directory": "./dist",
-        "binding": "ASSETS"
+        "binding": "ASSETS"{{fragment_admin_run_worker_first}}
       }{{fragment_d1_wrangler_env}}
     }
   }
