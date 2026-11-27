@@ -239,5 +239,40 @@
       "decision": "Allowed. EPL-1.0 licence. Dev-only.",
       "screenedOn": "2026-11-07"
     }
+  ],
+  "environments": [
+    {
+      "name": "release",
+      "refs": [
+        "tag:v*"
+      ],
+      "step": "github:android-toolchain:1"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "ANDROID_KEYSTORE_BASE64",
+      "scope": "environment",
+      "environment": "release",
+      "step": "github:android-toolchain:1"
+    },
+    {
+      "name": "ANDROID_KEYSTORE_PASSWORD",
+      "scope": "environment",
+      "environment": "release",
+      "step": "github:android-toolchain:1"
+    },
+    {
+      "name": "ANDROID_KEY_ALIAS",
+      "scope": "environment",
+      "environment": "release",
+      "step": "github:android-toolchain:1"
+    },
+    {
+      "name": "ANDROID_KEY_PASSWORD",
+      "scope": "environment",
+      "environment": "release",
+      "step": "github:android-toolchain:1"
+    }
   ]
 }

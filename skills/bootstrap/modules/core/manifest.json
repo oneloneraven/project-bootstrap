@@ -242,6 +242,10 @@
     {
       "from": "templates/bootstrap/labels.json",
       "to": ".bootstrap/github/labels.json"
+    },
+    {
+      "from": "templates/bootstrap/actions-permissions.json",
+      "to": ".bootstrap/github/actions-permissions.json"
     }
   ],
   "requiredChecks": [
@@ -269,5 +273,41 @@
       "decision": "Free tier, industry standard, no viable alternative: allowed under the free-tool exception. Nothing is paid.",
       "screenedOn": "2026-10-28"
     }
-  ]
+  ],
+  "secrets": [
+    {
+      "name": "RELEASE_APP_PRIVATE_KEY"
+    },
+    {
+      "name": "PROJECT_STATUS_PAT",
+      "when": "!owner_org"
+    },
+    {
+      "name": "BOARD_SYNC_APP_PRIVATE_KEY",
+      "when": "owner_org"
+    }
+  ],
+  "apps": [
+    {
+      "slug": "{repo}-release"
+    }
+  ],
+  "organisation": {
+    "apps": [
+      {
+        "slug": "{owner}-board-sync"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "BOARD_SYNC_APP_PRIVATE_KEY"
+      }
+    ],
+    "settings": {
+      "two_factor_requirement_enabled": true,
+      "default_repository_permission": "read",
+      "members_can_create_repositories": false,
+      "members_can_fork_private_repositories": false
+    }
+  }
 }

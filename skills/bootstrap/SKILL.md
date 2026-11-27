@@ -169,7 +169,8 @@ needs is missing.
 4. **`plan-confirmed`**: show the plan and get a yes:
    - the files (`node scripts/render.mjs --modules <list> --answers <dir>/.bootstrap/answers.json --dest <dir> --dry-run`);
    - the GitHub repository and its visibility, the board, ruleset,
-     environments and the security features;
+     environments, the security features and the Actions workflow
+     permissions (`GITHUB_TOKEN` read-only by default);
    - for a private repo, read the recorded `github_plan` (never the API
      again, and a resumed run uses the saved value); on `free`, say
      the ruleset, secret scanning, push protection, dependency review and

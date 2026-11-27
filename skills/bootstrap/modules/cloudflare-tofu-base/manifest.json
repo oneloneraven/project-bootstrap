@@ -28,5 +28,43 @@
       "decision": "Allowed. Chosen over Terraform, whose owner IBM is a No Tech for Apartheid target.",
       "screenedOn": "2026-10-28"
     }
+  ],
+  "environments": [
+    {
+      "name": "infra",
+      "refs": [
+        "branch:main"
+      ],
+      "step": "github:cloudflare-tofu-base:1"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "CLOUDFLARE_INFRA_PLAN_TOKEN"
+    },
+    {
+      "name": "CLOUDFLARE_INFRA_APPLY_TOKEN",
+      "scope": "environment",
+      "environment": "infra",
+      "step": "github:cloudflare-tofu-base:1"
+    },
+    {
+      "name": "TF_STATE_READ_ACCESS_KEY_ID"
+    },
+    {
+      "name": "TF_STATE_READ_SECRET_ACCESS_KEY"
+    },
+    {
+      "name": "TF_STATE_ACCESS_KEY_ID",
+      "scope": "environment",
+      "environment": "infra",
+      "step": "github:cloudflare-tofu-base:1"
+    },
+    {
+      "name": "TF_STATE_SECRET_ACCESS_KEY",
+      "scope": "environment",
+      "environment": "infra",
+      "step": "github:cloudflare-tofu-base:1"
+    }
   ]
 }

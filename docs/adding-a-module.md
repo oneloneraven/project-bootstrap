@@ -19,10 +19,19 @@ manual steps follow [manual-step-format.md](../skills/bootstrap/reference/manual
    committed to the project; link from it to public docs by `{{repo_url}}`),
    `overrides` only to replace a file wholesale, `allowBuilds` for any
    package's install script, `requiredChecks`,
-   `releasePaths`, `claudeIndexLines`. Engage checks every repository's
-   required checks against `conformance/rules.json`, so after changing
-   `requiredChecks` (or adding a module) run
-   `node skills/bootstrap/scripts/conformance-rules.mjs --write`; `pnpm test`
+   `releasePaths`, `claudeIndexLines`, and what the module sets up on
+   GitHub: `environments` (`name`, `refs` such as `branch:main` or `tag:v*`,
+   each a string or `{ "ref", "when" }`), `secrets` (`name`, `scope`
+   `repository` by default or `environment` with `environment`) and `apps`
+   (`slug`, with `{repo}` or `{owner}`). Any of them can take a `when`, and a
+   `step` naming the step that creates it: when the record skips that step,
+   the environment isn't expected and its secrets are expected at
+   repository level instead, as the fallback sets them. A test fails when a
+   secret a module sets isn't declared, or the reverse. Engage checks every
+   repository's required checks against `conformance/rules.json`, and the
+   published standard is `conformance/standard.json`, so after changing a
+   manifest run `node skills/bootstrap/scripts/conformance-rules.mjs --write`
+   and `node skills/bootstrap/scripts/standard.mjs --write`; `pnpm test`
    fails until you do.
 4. **Write the templates.** Use `{{key}}` for answers and derived keys.
    GitHub Actions expressions (`${{ … }}`) pass through untouched. Pin every

@@ -1,0 +1,576 @@
+{
+  "checks": [
+    {
+      "group": "conformance",
+      "id": "bootstrap-record",
+      "kind": "record-present",
+      "modules": [],
+      "path": ".bootstrap/record.json",
+      "title": "Bootstrap record"
+    },
+    {
+      "group": "conformance",
+      "id": "ruleset",
+      "kind": "ruleset-matches",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:4",
+      "title": "Default branch ruleset"
+    },
+    {
+      "group": "conformance",
+      "id": "required-checks",
+      "kind": "required-checks",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:4",
+      "title": "Required checks"
+    },
+    {
+      "group": "conformance",
+      "id": "settings",
+      "kind": "settings-match",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:1",
+      "title": "Repository settings"
+    },
+    {
+      "group": "conformance",
+      "id": "labels",
+      "kind": "labels-match",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:3",
+      "title": "Labels"
+    },
+    {
+      "group": "conformance",
+      "id": "core-docs",
+      "kind": "files-present",
+      "modules": [
+        "core"
+      ],
+      "paths": [
+        "SECURITY.md",
+        "CLAUDE.md",
+        "docs/privacy.md",
+        "docs/workflow.md",
+        "docs/definition-of-done.md"
+      ],
+      "title": "Security policy and core docs"
+    },
+    {
+      "group": "conformance",
+      "id": "vault-docs",
+      "kind": "vault-files-present",
+      "modules": [
+        "core"
+      ],
+      "paths": [
+        "{repo}/threat-model.md"
+      ],
+      "repository": "{owner}-vault",
+      "step": "github:core:vault",
+      "title": "Private docs in the vault"
+    },
+    {
+      "group": "conformance",
+      "id": "dependabot",
+      "kind": "dependabot",
+      "modules": [
+        "core"
+      ],
+      "paths": [
+        ".github/dependabot.yml"
+      ],
+      "title": "Dependabot"
+    },
+    {
+      "group": "conformance",
+      "id": "board-sync",
+      "kind": "workflow-healthy",
+      "modules": [
+        "core"
+      ],
+      "step": "github:core:5",
+      "title": "Board sync",
+      "workflow": "project-status-sync.yml"
+    },
+    {
+      "group": "conformance",
+      "id": "release-gate",
+      "kind": "engage-protection-rule",
+      "modules": [
+        "core"
+      ],
+      "title": "Engage release gate"
+    },
+    {
+      "group": "conformance",
+      "id": "no-cloudflare-secret",
+      "kind": "secrets-absent",
+      "modules": [
+        "cloudflare-opentofu",
+        "cloudflare-identity",
+        "cloudflare-tofu-base"
+      ],
+      "names": [
+        "CLOUDFLARE_API_TOKEN"
+      ],
+      "title": "No long-lived Cloudflare secret"
+    },
+    {
+      "group": "security",
+      "id": "ruleset-enforced",
+      "kind": "ruleset-enforced",
+      "modules": [],
+      "notExpected": {
+        "plans": [
+          "free"
+        ],
+        "visibility": "private"
+      },
+      "ruleset": "default-branch-protection",
+      "scope": "repository",
+      "title": "Default branch ruleset enforced"
+    },
+    {
+      "group": "security",
+      "id": "visibility",
+      "kind": "visibility",
+      "modules": [],
+      "scope": "repository",
+      "title": "Visibility"
+    },
+    {
+      "group": "security",
+      "id": "collaborators",
+      "kind": "collaborators-owners-only",
+      "modules": [],
+      "scope": "repository",
+      "title": "Owners only"
+    },
+    {
+      "group": "security",
+      "id": "deploy-keys",
+      "kind": "deploy-keys-none",
+      "modules": [],
+      "scope": "repository",
+      "title": "Deploy keys"
+    },
+    {
+      "group": "security",
+      "id": "webhooks",
+      "kind": "webhooks-none",
+      "modules": [],
+      "scope": "repository",
+      "title": "Webhooks"
+    },
+    {
+      "group": "security",
+      "id": "security-features",
+      "kind": "security-features",
+      "modules": [],
+      "scope": "repository",
+      "title": "Security features"
+    },
+    {
+      "group": "security",
+      "id": "actions-settings",
+      "kind": "actions-permissions-match",
+      "modules": [],
+      "scope": "repository",
+      "title": "Actions workflow permissions"
+    },
+    {
+      "group": "security",
+      "id": "environments",
+      "kind": "environments-match",
+      "modules": [],
+      "scope": "repository",
+      "title": "Environments"
+    },
+    {
+      "group": "security",
+      "id": "secrets-known",
+      "kind": "secrets-known",
+      "modules": [],
+      "scope": "repository",
+      "title": "Known secrets only"
+    },
+    {
+      "group": "security",
+      "id": "org-members",
+      "kind": "org-members",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation members"
+    },
+    {
+      "group": "security",
+      "id": "org-2fa",
+      "kind": "org-2fa",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation two-factor"
+    },
+    {
+      "group": "security",
+      "id": "org-apps",
+      "kind": "org-apps",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation Apps"
+    },
+    {
+      "group": "security",
+      "id": "org-webhooks",
+      "kind": "org-webhooks-none",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation webhooks"
+    },
+    {
+      "group": "security",
+      "id": "org-secrets",
+      "kind": "org-secrets-known",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation secrets"
+    },
+    {
+      "group": "security",
+      "id": "org-settings",
+      "kind": "org-settings-match",
+      "modules": [],
+      "scope": "organisation",
+      "title": "Organisation settings"
+    }
+  ],
+  "expected": {
+    "actionsPermissions": {
+      "can_approve_pull_request_reviews": false,
+      "default_workflow_permissions": "read"
+    },
+    "apps": {
+      "core": [
+        {
+          "slug": "{repo}-release"
+        }
+      ]
+    },
+    "environments": {
+      "android-toolchain": [
+        {
+          "name": "release",
+          "refs": [
+            "tag:v*"
+          ],
+          "step": "github:android-toolchain:1"
+        }
+      ],
+      "cloudflare-opentofu": [
+        {
+          "name": "production",
+          "refs": [
+            {
+              "ref": "branch:main",
+              "when": [
+                "beta",
+                "admin",
+                "turnstile"
+              ]
+            },
+            "tag:v*"
+          ],
+          "step": "github:cloudflare-opentofu:1"
+        },
+        {
+          "name": "beta",
+          "refs": [
+            "tag:v*"
+          ],
+          "step": "github:cloudflare-opentofu:1",
+          "when": "beta"
+        }
+      ],
+      "cloudflare-tofu-base": [
+        {
+          "name": "infra",
+          "refs": [
+            "branch:main"
+          ],
+          "step": "github:cloudflare-tofu-base:1"
+        }
+      ]
+    },
+    "labels": [
+      {
+        "color": "b60205",
+        "description": "Breaking change: next release bumps the major version",
+        "name": "release: major"
+      },
+      {
+        "color": "0e8a16",
+        "description": "New capability: next release bumps the minor version",
+        "name": "release: minor"
+      },
+      {
+        "color": "1d76db",
+        "description": "Fix or polish: next release bumps the patch version",
+        "name": "release: patch"
+      },
+      {
+        "color": "cccccc",
+        "description": "Never reaches users: no release",
+        "name": "release: none"
+      }
+    ],
+    "ruleset": {
+      "bypass_actors": [],
+      "conditions": {
+        "ref_name": {
+          "exclude": [],
+          "include": [
+            "~DEFAULT_BRANCH"
+          ]
+        }
+      },
+      "enforcement": "active",
+      "name": "default-branch-protection",
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "parameters": {
+            "allowed_merge_methods": [
+              "squash"
+            ],
+            "dismiss_stale_reviews_on_push": false,
+            "require_code_owner_review": false,
+            "require_last_push_approval": false,
+            "required_approving_review_count": 0,
+            "required_review_thread_resolution": false
+          },
+          "type": "pull_request"
+        },
+        {
+          "parameters": {
+            "do_not_enforce_on_create": false,
+            "required_status_checks": [],
+            "strict_required_status_checks_policy": false
+          },
+          "type": "required_status_checks"
+        },
+        {
+          "type": "required_signatures"
+        }
+      ],
+      "target": "branch"
+    },
+    "secrets": {
+      "android-toolchain": [
+        {
+          "environment": "release",
+          "name": "ANDROID_KEYSTORE_BASE64",
+          "scope": "environment",
+          "step": "github:android-toolchain:1"
+        },
+        {
+          "environment": "release",
+          "name": "ANDROID_KEYSTORE_PASSWORD",
+          "scope": "environment",
+          "step": "github:android-toolchain:1"
+        },
+        {
+          "environment": "release",
+          "name": "ANDROID_KEY_ALIAS",
+          "scope": "environment",
+          "step": "github:android-toolchain:1"
+        },
+        {
+          "environment": "release",
+          "name": "ANDROID_KEY_PASSWORD",
+          "scope": "environment",
+          "step": "github:android-toolchain:1"
+        }
+      ],
+      "cloudflare-identity": [
+        {
+          "name": "OWNER_EMAIL"
+        }
+      ],
+      "cloudflare-opentofu": [
+        {
+          "name": "CLOUDFLARE_PREVIEW_TOKEN"
+        },
+        {
+          "environment": "production",
+          "name": "CLOUDFLARE_DEPLOY_TOKEN",
+          "scope": "environment",
+          "step": "github:cloudflare-opentofu:1"
+        },
+        {
+          "environment": "beta",
+          "name": "CLOUDFLARE_DEPLOY_TOKEN",
+          "scope": "environment",
+          "step": "github:cloudflare-opentofu:1",
+          "when": "beta"
+        },
+        {
+          "environment": "production",
+          "name": "OWNER_EMAIL",
+          "scope": "environment",
+          "step": "github:cloudflare-opentofu:1",
+          "when": "admin"
+        },
+        {
+          "environment": "production",
+          "name": "TURNSTILE_SECRET_KEY",
+          "scope": "environment",
+          "step": "github:cloudflare-opentofu:1",
+          "when": "turnstile"
+        }
+      ],
+      "cloudflare-tofu-base": [
+        {
+          "name": "CLOUDFLARE_INFRA_PLAN_TOKEN"
+        },
+        {
+          "environment": "infra",
+          "name": "CLOUDFLARE_INFRA_APPLY_TOKEN",
+          "scope": "environment",
+          "step": "github:cloudflare-tofu-base:1"
+        },
+        {
+          "name": "TF_STATE_READ_ACCESS_KEY_ID"
+        },
+        {
+          "name": "TF_STATE_READ_SECRET_ACCESS_KEY"
+        },
+        {
+          "environment": "infra",
+          "name": "TF_STATE_ACCESS_KEY_ID",
+          "scope": "environment",
+          "step": "github:cloudflare-tofu-base:1"
+        },
+        {
+          "environment": "infra",
+          "name": "TF_STATE_SECRET_ACCESS_KEY",
+          "scope": "environment",
+          "step": "github:cloudflare-tofu-base:1"
+        }
+      ],
+      "core": [
+        {
+          "name": "RELEASE_APP_PRIVATE_KEY"
+        },
+        {
+          "name": "PROJECT_STATUS_PAT",
+          "when": "!owner_org"
+        },
+        {
+          "name": "BOARD_SYNC_APP_PRIVATE_KEY",
+          "when": "owner_org"
+        }
+      ]
+    },
+    "securityFeatures": {
+      "private": [],
+      "public": [
+        "secret_scanning",
+        "secret_scanning_push_protection",
+        "dependabot_security_updates",
+        "private_vulnerability_reporting"
+      ]
+    },
+    "settings": {
+      "private": {
+        "allow_auto_merge": false,
+        "allow_merge_commit": false,
+        "allow_rebase_merge": false,
+        "allow_squash_merge": true,
+        "delete_branch_on_merge": true,
+        "has_wiki": false,
+        "squash_merge_commit_message": "COMMIT_MESSAGES",
+        "squash_merge_commit_title": "COMMIT_OR_PR_TITLE"
+      },
+      "public": {
+        "allow_auto_merge": false,
+        "allow_merge_commit": false,
+        "allow_rebase_merge": false,
+        "allow_squash_merge": true,
+        "delete_branch_on_merge": true,
+        "has_wiki": false,
+        "security_and_analysis": {
+          "dependabot_security_updates": {
+            "status": "enabled"
+          },
+          "secret_scanning": {
+            "status": "enabled"
+          },
+          "secret_scanning_push_protection": {
+            "status": "enabled"
+          }
+        },
+        "squash_merge_commit_message": "COMMIT_MESSAGES",
+        "squash_merge_commit_title": "COMMIT_OR_PR_TITLE"
+      }
+    }
+  },
+  "organisation": {
+    "apps": [
+      {
+        "slug": "{owner}-board-sync"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "BOARD_SYNC_APP_PRIVATE_KEY"
+      }
+    ],
+    "settings": {
+      "default_repository_permission": "read",
+      "members_can_create_repositories": false,
+      "members_can_fork_private_repositories": false,
+      "two_factor_requirement_enabled": true
+    }
+  },
+  "requiredChecks": {
+    "android-toolchain": [
+      "check"
+    ],
+    "cloudflare-identity": [],
+    "cloudflare-opentofu": [],
+    "cloudflare-tofu-base": [],
+    "core": [
+      "check-label",
+      "check-public-pages"
+    ],
+    "js-toolchain": [
+      "lint",
+      "typecheck",
+      "test"
+    ],
+    "python-toolchain": [
+      "check"
+    ],
+    "web-app": [
+      "e2e",
+      {
+        "context": "e2e-safari",
+        "when": "!private"
+      }
+    ]
+  },
+  "version": 2
+}
